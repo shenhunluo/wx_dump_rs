@@ -1,5 +1,6 @@
 # wx_dump_rs
 <a href="https://github.com/AdminTest0/SharpWxDump">SharpWxDump</a>、<a href="https://github.com/SpenserCai/GoWxDump">GoWxDump</a>的rust语言版。包括获取信息，复制数据库，解密数据库，搜索内存等功能
+
 在原版基础上添加解密wal文件，可以不关闭微信而获取正在产生的新记录
 
 ## 免责声明
