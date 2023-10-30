@@ -17,7 +17,7 @@ use crate::{
     util::u8_to_string,
 };
 
-/// Simple program to greet a person
+/// SharpWxDump、GoWxDump的rust语言版。包括获取信息，复制数据库，解密数据库，搜索内存等功能
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
