@@ -7,7 +7,9 @@
 cargo build --release
 
 ## 运行
-    --help 可获取帮助信息
+target\release\wx_dump_rs.exe 执行 获取信息、复制数据库、解密数据库 三项基础功能
+
+target\release\wx_dump_rs.exe --help 可获取帮助信息
 
 
 ## 免责声明
