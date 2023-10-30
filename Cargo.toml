@@ -1,0 +1,26 @@
+[package]
+name = "wx_dump_rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+windows = {version = "*", features = [
+    "Win32_Foundation",
+    "Win32_System_Threading",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_System_LibraryLoader",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Storage_FileSystem"]}
+anyhow = { version = "*", features = ["backtrace"]}
+serde_json = "*"
+clap = { version = "*", features = ["derive"]}
+base64 = "*"
+dirs = "*"
+pbkdf2 = { version = "*", features = ["hmac"]}
+sha1 = "*"
+hmac = "*"
+cbc = "*"
+aes ="*"
+byteorder = "*"
