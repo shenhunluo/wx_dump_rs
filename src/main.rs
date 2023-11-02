@@ -1,7 +1,7 @@
 use action::{
     decrypt::{decrypt, dev},
     get_database::get_database,
-    memory_search::memory_search,
+    memory_search::{memory_search, memory_search_from_wechat_all_modules},
 };
 use anyhow::Ok;
 
@@ -85,7 +85,13 @@ pub enum SubCommands {
         real_addr: bool,
         /// 从微信的所有模块中搜索数据
         #[arg(long)]
+        from_all_modules: bool,
+        /// 从微信的所有数据中搜索数据
+        #[arg(long)]
         from_all_data: bool,
+        /// 显示未搜索到的数据信息
+        #[arg(long)]
+        show_no_found_info: bool,
     },
     /// 从内存中指定的位置搜索信息
     GetMemory {
@@ -152,13 +158,19 @@ fn main() -> anyhow::Result<()> {
                 encode,
                 real_addr,
                 from_all_data,
+                from_all_modules,
+                show_no_found_info,
             } => {
                 let mut wechat_info = wx_util::WeChatInfo::default();
                 wx_util::open_wechat_process(&mut wechat_info, &args.offset_map)?;
                 let data = string_to_u8_vec(&str, &encode)?;
                 if from_all_data {
-                    memory_search_from_wechat_all_data(&wechat_info, &data, real_addr)?;
-                } else {
+                    memory_search_from_wechat_all_data(&wechat_info, &data, real_addr,show_no_found_info)?;
+                }
+                if from_all_modules {
+                    memory_search_from_wechat_all_modules(&wechat_info, &data, real_addr,show_no_found_info)?;
+                }
+                if !(from_all_modules || from_all_data) {
                     println!("{:?}", memory_search(&wechat_info, &data, real_addr)?);
                 }
             }
