@@ -43,6 +43,54 @@ pub fn string_to_u8_vec(data: &String, encode: &String) -> anyhow::Result<Vec<u8
             buffer = data.as_bytes().to_vec();
             Ok(buffer)
         }
+        "u64be" => {
+            let i = data.parse::<u64>()?;
+            Ok(i.to_be_bytes().to_vec())
+        }
+        "u64le" => {
+            let i = data.parse::<u64>()?;
+            Ok(i.to_le_bytes().to_vec())
+        }
+        "u32be" => {
+            let i = data.parse::<u32>()?;
+            Ok(i.to_be_bytes().to_vec())
+        }
+        "u32le" => {
+            let i = data.parse::<u32>()?;
+            Ok(i.to_le_bytes().to_vec())
+        }
+        "u16be" => {
+            let i = data.parse::<u16>()?;
+            Ok(i.to_be_bytes().to_vec())
+        }
+        "u16le" => {
+            let i = data.parse::<u16>()?;
+            Ok(i.to_le_bytes().to_vec())
+        }
+        "i64be" => {
+            let i = data.parse::<i64>()?;
+            Ok(i.to_be_bytes().to_vec())
+        }
+        "i64le" => {
+            let i = data.parse::<i64>()?;
+            Ok(i.to_le_bytes().to_vec())
+        }
+        "i32be" => {
+            let i = data.parse::<i32>()?;
+            Ok(i.to_be_bytes().to_vec())
+        }
+        "i32le" => {
+            let i = data.parse::<i32>()?;
+            Ok(i.to_le_bytes().to_vec())
+        }
+        "i16be" => {
+            let i = data.parse::<i16>()?;
+            Ok(i.to_be_bytes().to_vec())
+        }
+        "i16le" => {
+            let i = data.parse::<i16>()?;
+            Ok(i.to_le_bytes().to_vec())
+        }
         _ => Err(anyhow!("错误的编码格式")),
     }
 }
