@@ -8,7 +8,8 @@ use windows::Win32::{
 };
 
 use crate::util::{
-    get_data_by_real_addr, get_module_by_name, get_process_by_name, get_process_handle, get_version, get_process_by_id,
+    get_data_by_real_addr, get_module_by_name, get_process_by_id, get_process_by_name,
+    get_process_handle, get_version,
 };
 
 fn get_wechat_info(wechat_info: &mut WeChatInfo) -> anyhow::Result<()> {
@@ -46,7 +47,6 @@ pub fn open_wechat_process(
     process_id: &Option<u32>,
     process_name: &String,
     module_name: &String,
-
 ) -> anyhow::Result<()> {
     wechat_info.process = if let Some(id) = process_id {
         get_process_by_id(*id)?
@@ -55,7 +55,7 @@ pub fn open_wechat_process(
     };
     wechat_info.handle = get_process_handle(wechat_info.process.th32ProcessID)?;
 
-    wechat_info.module = get_module_by_name(wechat_info.process,&module_name)?;
+    wechat_info.module = get_module_by_name(wechat_info.process, &module_name)?;
     get_wechat_info(wechat_info)?;
     let mut offset_map_file = File::open(&offset_map)?;
     let mut buf = String::new();

@@ -101,6 +101,9 @@ pub enum SubCommands {
         /// 显示未搜索到的数据信息
         #[arg(long)]
         show_no_found_info: bool,
+        /// 显示错误信息
+        #[arg(long)]
+        show_error_info: bool,
     },
     /// 从内存中指定的位置搜索信息
     GetMemory {
@@ -127,7 +130,13 @@ fn main() -> anyhow::Result<()> {
         Some(sub_commands) => match sub_commands {
             SubCommands::ShowUserInfo => {
                 let mut wechat_info = wx_util::WeChatInfo::default();
-                wx_util::open_wechat_process(&mut wechat_info, &args.offset_map,&args.process_id,&args.process_name,&args.module_name)?;
+                wx_util::open_wechat_process(
+                    &mut wechat_info,
+                    &args.offset_map,
+                    &args.process_id,
+                    &args.process_name,
+                    &args.module_name,
+                )?;
                 action::show_info::show_user_info(&wechat_info)?;
             }
             SubCommands::GetDatabase { account } => {
@@ -135,7 +144,13 @@ fn main() -> anyhow::Result<()> {
                 if let Some(account) = account {
                     wechat_info.account = account;
                 } else {
-                    wx_util::open_wechat_process(&mut wechat_info, &args.offset_map,&args.process_id,&args.process_name,&args.module_name)?;
+                    wx_util::open_wechat_process(
+                        &mut wechat_info,
+                        &args.offset_map,
+                        &args.process_id,
+                        &args.process_name,
+                        &args.module_name,
+                    )?;
                 }
                 get_database(&args.wechat_dir, &args.save_path, &wechat_info.account)?;
             }
@@ -153,7 +168,13 @@ fn main() -> anyhow::Result<()> {
                         wechat_info.key = key_vec[0..32].try_into()?;
                     }
                 } else {
-                    wx_util::open_wechat_process(&mut wechat_info, &args.offset_map,&args.process_id,&args.process_name,&args.module_name)?;
+                    wx_util::open_wechat_process(
+                        &mut wechat_info,
+                        &args.offset_map,
+                        &args.process_id,
+                        &args.process_name,
+                        &args.module_name,
+                    )?;
                 };
                 decrypt(
                     &args.save_path,
@@ -169,15 +190,34 @@ fn main() -> anyhow::Result<()> {
                 from_all_data,
                 from_all_modules,
                 show_no_found_info,
+                show_error_info,
             } => {
                 let mut wechat_info = wx_util::WeChatInfo::default();
-                wx_util::open_wechat_process(&mut wechat_info, &args.offset_map,&args.process_id,&args.process_name,&args.module_name)?;
+                wx_util::open_wechat_process(
+                    &mut wechat_info,
+                    &args.offset_map,
+                    &args.process_id,
+                    &args.process_name,
+                    &args.module_name,
+                )?;
                 let data = string_to_u8_vec(&str, &encode)?;
                 if from_all_data {
-                    memory_search_from_wechat_all_data(&wechat_info, &data, real_addr,show_no_found_info)?;
+                    memory_search_from_wechat_all_data(
+                        &wechat_info,
+                        &data,
+                        real_addr,
+                        show_no_found_info,
+                        show_error_info,
+                    )?;
                 }
                 if from_all_modules {
-                    memory_search_from_wechat_all_modules(&wechat_info, &data, real_addr,show_no_found_info)?;
+                    memory_search_from_wechat_all_modules(
+                        &wechat_info,
+                        &data,
+                        real_addr,
+                        show_no_found_info,
+                        show_error_info,
+                    )?;
                 }
                 if !(from_all_modules || from_all_data) {
                     println!("{:?}", memory_search(&wechat_info, &data, real_addr)?);
@@ -190,7 +230,13 @@ fn main() -> anyhow::Result<()> {
                 real_addr,
             } => {
                 let mut wechat_info = wx_util::WeChatInfo::default();
-                wx_util::open_wechat_process(&mut wechat_info, &args.offset_map,&args.process_id,&args.process_name,&args.module_name)?;
+                wx_util::open_wechat_process(
+                    &mut wechat_info,
+                    &args.offset_map,
+                    &args.process_id,
+                    &args.process_name,
+                    &args.module_name,
+                )?;
                 let data = get_memory(&wechat_info, index, len, real_addr)?;
                 if let Some(encode) = encode {
                     println!("{}", u8_to_string(&data, &encode)?);
@@ -204,7 +250,13 @@ fn main() -> anyhow::Result<()> {
         },
         None => {
             let mut wechat_info = wx_util::WeChatInfo::default();
-            wx_util::open_wechat_process(&mut wechat_info, &args.offset_map,&args.process_id,&args.process_name,&args.module_name)?;
+            wx_util::open_wechat_process(
+                &mut wechat_info,
+                &args.offset_map,
+                &args.process_id,
+                &args.process_name,
+                &args.module_name,
+            )?;
             action::show_info::show_user_info(&wechat_info)?;
             get_database(&args.wechat_dir, &args.save_path, &wechat_info.account)?;
             decrypt(&args.save_path, &args.decrypt_path, &wechat_info.key, false)?;

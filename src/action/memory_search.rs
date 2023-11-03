@@ -30,7 +30,8 @@ pub fn memory_search_from_wechat_all_modules(
     wechat_info: &WeChatInfo,
     data: &[u8],
     real_addr: bool,
-    show_no_found_info: bool
+    show_no_found_info: bool,
+    show_error_info: bool,
 ) -> anyhow::Result<()> {
     for module in get_modules(wechat_info.process)? {
         let vec = get_data_by_real_addr(
@@ -65,16 +66,20 @@ pub fn memory_search_from_wechat_all_modules(
                 }
             }
             Err(err) => {
-                println!(
-                    "获取内存失败。module: {}。err: {err:?}",
-                    String::from_utf8(module.szModule.split(|n| *n == 0).next().unwrap().to_vec())?
-                );
-                println!(
-                    "addr start: {:?},size: {:?},end: {:?}",
-                    module.modBaseAddr as usize,
-                    module.modBaseSize as usize,
-                    module.modBaseAddr as usize + module.modBaseSize as usize
-                );
+                if show_error_info {
+                    println!(
+                        "获取内存失败。module: {}。err: {err:?}",
+                        String::from_utf8(
+                            module.szModule.split(|n| *n == 0).next().unwrap().to_vec()
+                        )?
+                    );
+                    println!(
+                        "addr start: {:?},size: {:?},end: {:?}",
+                        module.modBaseAddr as usize,
+                        module.modBaseSize as usize,
+                        module.modBaseAddr as usize + module.modBaseSize as usize
+                    );
+                }
                 continue;
             }
         }
@@ -86,7 +91,8 @@ pub fn memory_search_from_wechat_all_data(
     wechat_info: &WeChatInfo,
     data: &[u8],
     real_addr: bool,
-    show_no_found_info: bool
+    show_no_found_info: bool,
+    show_error_info: bool,
 ) -> anyhow::Result<()> {
     for (base_addr, size) in get_all_memory_by_handle(&wechat_info.handle)? {
         let vec = get_data_by_real_addr(wechat_info.process.th32ProcessID, base_addr, size);
@@ -112,7 +118,9 @@ pub fn memory_search_from_wechat_all_data(
                 }
             }
             Err(err) => {
-                println!("获取内存失败。base_addr: {base_addr}。 size: {size}, err: {err:?}");
+                if show_error_info {
+                    println!("获取内存失败。base_addr: {base_addr}。 size: {size}, err: {err:?}");
+                }
                 continue;
             }
         }
