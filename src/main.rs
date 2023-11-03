@@ -86,7 +86,7 @@ pub enum SubCommands {
         /// 要搜索的内容
         #[arg(short, long)]
         str: String,
-        /// key的编码格式，可选值：[hex,base64,string]
+        /// key的编码格式，可选值：[hex,base64,string, u64be, u64le, u32be, u32le, u16be, u16le, i64be, i64le, i32be, i32le, i164be, i16le]
         #[arg(short = 'd', long, default_value = "string")]
         encode: String,
         /// 返回真实地址
