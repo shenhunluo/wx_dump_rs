@@ -11,18 +11,6 @@ use crate::util::{
     get_data_by_real_addr, get_module_by_name, get_process_by_name, get_process_handle, get_version, get_process_by_id,
 };
 
-fn get_wechat_process_by_name(name: &str) -> anyhow::Result<PROCESSENTRY32> {
-    get_process_by_name(name)
-}
-
-fn get_wechat_process_by_id(id: u32) -> anyhow::Result<PROCESSENTRY32> {
-    get_process_by_id(id)
-}
-
-fn get_wechat_module(process: PROCESSENTRY32,module_name: &str) -> anyhow::Result<MODULEENTRY32> {
-    get_module_by_name(process, module_name)
-}
-
 fn get_wechat_info(wechat_info: &mut WeChatInfo) -> anyhow::Result<()> {
     wechat_info.version = get_version(&wechat_info.module)?;
     Ok(())
@@ -67,7 +55,7 @@ pub fn open_wechat_process(
     };
     wechat_info.handle = get_process_handle(wechat_info.process.th32ProcessID)?;
 
-    wechat_info.module = get_wechat_module(wechat_info.process,&module_name)?;
+    wechat_info.module = get_module_by_name(wechat_info.process,&module_name)?;
     get_wechat_info(wechat_info)?;
     let mut offset_map_file = File::open(&offset_map)?;
     let mut buf = String::new();
