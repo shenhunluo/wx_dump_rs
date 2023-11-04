@@ -24,7 +24,8 @@ target\release\wx_dump_rs.exe decrypt --help
 ```
 target\release\wx_dump_rs.exe search -s "你的用户名"
 ```
-\\ 将会在终端打印你搜索内容的偏移量。可能不唯一，可以关闭再打开微信挑选固定的值
+将会在终端打印你搜索内容的偏移量。可能不唯一，可以关闭再打开微信挑选固定的值
+
 [63486760, 63488320]
 
 #### 获取key的偏移量
@@ -32,12 +33,14 @@ target\release\wx_dump_rs.exe search -s "你的用户名"
 target\release\wx_dump_rs.exe search -s "你的key" --encode hex --from-all-data --real-addr
 ```
 可以在内存中搜索你的key，并打印出你的key在虚拟内存中的地址 ：
+
 base_addr: 2489020645376
 [2489021885024]
 ```
 target\release\wx_dump_rs.exe search -s "地址(例如当前例子中的2489021885024)" --encode u64le
 ```
 在内存中搜索上一条命令打印出的地址，可以获得当前key的偏移量
+
 [63488256]
 
 
