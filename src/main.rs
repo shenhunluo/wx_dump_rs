@@ -193,9 +193,8 @@ fn main() -> anyhow::Result<()> {
                 show_error_info,
             } => {
                 let mut wechat_info = wx_util::WeChatInfo::default();
-                wx_util::open_wechat_process(
+                wx_util::open_wechat_process_with_out_info(
                     &mut wechat_info,
-                    &args.offset_map,
                     &args.process_id,
                     &args.process_name,
                     &args.module_name,
@@ -230,9 +229,8 @@ fn main() -> anyhow::Result<()> {
                 real_addr,
             } => {
                 let mut wechat_info = wx_util::WeChatInfo::default();
-                wx_util::open_wechat_process(
+                wx_util::open_wechat_process_with_out_info(
                     &mut wechat_info,
-                    &args.offset_map,
                     &args.process_id,
                     &args.process_name,
                     &args.module_name,

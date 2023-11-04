@@ -74,6 +74,22 @@ pub fn open_wechat_process(
     Ok(())
 }
 
+pub fn open_wechat_process_with_out_info(
+    wechat_info: &mut WeChatInfo,
+    process_id: &Option<u32>,
+    process_name: &String,
+    module_name: &String,
+) -> anyhow::Result<()> {
+    wechat_info.process = if let Some(id) = process_id {
+        get_process_by_id(*id)?
+    } else {
+        get_process_by_name(&process_name)?
+    };
+    wechat_info.handle = get_process_handle(wechat_info.process.th32ProcessID)?;
+    wechat_info.module = get_module_by_name(wechat_info.process, &module_name)?;
+    Ok(())
+}
+
 #[derive(Debug, Default)]
 pub struct WeChatInfo {
     pub version: String,
