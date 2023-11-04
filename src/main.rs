@@ -73,12 +73,12 @@ pub enum SubCommands {
     Decrypt {
         /// 获取到的key
         #[arg(short, long)]
-        /// key的编码格式，可选值：[hex,base64,string]
         key: Option<String>,
+        /// key的编码格式，可选值：[hex,base64,string]
         #[arg(short = 'd', long, default_value = "hex")]
-        /// 是否在解密时检查hmac
         encode: String,
         #[arg(long, default_value = "false")]
+        /// 是否在解密时检查hmac
         check_hmac: bool,
     },
     /// 从内存中搜索指定信息
