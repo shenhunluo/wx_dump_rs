@@ -67,9 +67,9 @@ pub fn open_wechat_process(
             "微信版本为：{}，{}文件中并未找到该版本的偏移量",
             wechat_info.version, offset_map
         )))?;
-    wechat_info.nick_name = get_wechat_data(wechat_info, offsets[0])?;
-    wechat_info.account = get_wechat_data(wechat_info, offsets[1])?;
-    wechat_info.mobile = get_wechat_data(wechat_info, offsets[2])?;
+    wechat_info.nick_name = get_wechat_data(wechat_info, offsets[0]).unwrap_or_else(|e| e.to_string());
+    wechat_info.account = get_wechat_data(wechat_info, offsets[1]).unwrap_or_else(|e| e.to_string());
+    wechat_info.mobile = get_wechat_data(wechat_info, offsets[2]).unwrap_or_else(|e| e.to_string());
     wechat_info.key = get_wechat_key(wechat_info, offsets[4])?;
     Ok(())
 }
