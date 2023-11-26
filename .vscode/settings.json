@@ -1,18 +1,33 @@
 {
     "cSpell.words": [
         "byteorder",
+        "CLSCTX",
         "DATAFILE",
         "Decryptor",
+        "FILESYSPATH",
         "FIXEDFILEINFO",
         "Hmac",
+        "INPROC",
+        "lpstr",
         "MODULEENTRY",
         "numberofbytesread",
+        "OPENFILENAMEA",
         "PCSTR",
+        "PICKFOLDERS",
         "PROCESSENTRY",
+        "PSTR",
+        "SIGDN",
         "SNAPMODULE",
         "SNAPPROCESS",
         "Toolhelp",
         "wechat",
-        "WMPF"
+        "WMPF",
+        "msgtrans",
+        "dbinfo"
+    ],
+    "rust-analyzer.linkedProjects": [
+        ".\\Cargo.toml",
+        ".\\Cargo.toml",
+        ".\\Cargo.toml"
     ]
 }

@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use action::{
     decrypt::{decrypt, dev},
     get_database::get_database,
@@ -137,7 +139,7 @@ fn main() -> anyhow::Result<()> {
                     &args.process_name,
                     &args.module_name,
                 )?;
-                action::show_info::show_user_info(&wechat_info)?;
+                action::show_info::show_user_info(&wechat_info,|s| println!("{s}"))?;
             }
             SubCommands::GetDatabase { account } => {
                 let mut wechat_info = wx_util::WeChatInfo::default();
@@ -152,7 +154,35 @@ fn main() -> anyhow::Result<()> {
                         &args.module_name,
                     )?;
                 }
-                get_database(&args.wechat_dir, &args.save_path, &wechat_info.account)?;
+                futures::executor::block_on(async {
+                get_database(
+                    &args.wechat_dir,
+                    &args.save_path, 
+                    &wechat_info.account,
+                    |s| println!("{s}"),
+                    |keys| async move {
+                        let r = loop {
+                            print!("请输入编号:");
+                            std::io::stdout().flush().unwrap();
+                            let mut input = String::new();
+                            std::io::stdin().read_line(&mut input)?;
+                            let index = input.trim().parse::<usize>();
+                            if let Result::Ok(index) = index {
+                                if keys.contains(&index) {
+                                    break index;
+                                } else {
+                                    println!("请输入正确的编号:");
+                                    continue;
+                                }
+                            } else {
+                                println!("输入的不是数字，请输入数字编号");
+                                continue;
+                            }
+                        };
+                        Ok(r)
+                    }
+                ).await
+                })?;
             }
             SubCommands::Decrypt {
                 key,
@@ -181,6 +211,7 @@ fn main() -> anyhow::Result<()> {
                     &args.decrypt_path,
                     &wechat_info.key,
                     check_hmac,
+                    |s| println!("{s}")
                 )?;
             }
             SubCommands::Search {
@@ -255,9 +286,37 @@ fn main() -> anyhow::Result<()> {
                 &args.process_name,
                 &args.module_name,
             )?;
-            action::show_info::show_user_info(&wechat_info)?;
-            get_database(&args.wechat_dir, &args.save_path, &wechat_info.account)?;
-            decrypt(&args.save_path, &args.decrypt_path, &wechat_info.key, false)?;
+            action::show_info::show_user_info(&wechat_info, |s| println!("{s}"))?;
+            futures::executor::block_on(async {
+                get_database(
+                    &args.wechat_dir, 
+                    &args.save_path, 
+                    &wechat_info.account,
+                    |s| println!("{s}"),
+                        |keys| async move {
+                            let r = loop {
+                                print!("请输入编号:");
+                                std::io::stdout().flush().unwrap();
+                                let mut input = String::new();
+                                std::io::stdin().read_line(&mut input)?;
+                                let index = input.trim().parse::<usize>();
+                                if let Result::Ok(index) = index {
+                                    if keys.contains(&index) {
+                                        break index;
+                                    } else {
+                                        println!("请输入正确的编号:");
+                                        continue;
+                                    }
+                                } else {
+                                    println!("输入的不是数字，请输入数字编号");
+                                    continue;
+                                }
+                            };
+                            Ok(r)
+                        }
+                ).await
+            })?;
+            decrypt(&args.save_path, &args.decrypt_path, &wechat_info.key, false, |s| println!("{s}"))?;
         }
     }
     Ok(())

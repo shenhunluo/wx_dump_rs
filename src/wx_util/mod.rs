@@ -13,14 +13,14 @@ use crate::util::{
 };
 
 fn get_wechat_info(wechat_info: &mut WeChatInfo) -> anyhow::Result<()> {
-    wechat_info.version = get_version(&wechat_info.module)?;
+    wechat_info.version = get_version(&wechat_info.get_module())?;
     Ok(())
 }
 
 fn get_wechat_data(wechat_info: &mut WeChatInfo, offset: usize) -> anyhow::Result<String> {
     let buffer = get_data_by_real_addr(
-        wechat_info.process.th32ProcessID,
-        wechat_info.module.modBaseAddr as usize + offset,
+        wechat_info.get_process().th32ProcessID,
+        wechat_info.get_module().modBaseAddr as usize + offset,
         100,
     )?;
     return Ok(format!(
@@ -30,14 +30,15 @@ fn get_wechat_data(wechat_info: &mut WeChatInfo, offset: usize) -> anyhow::Resul
 }
 
 fn get_wechat_key(wechat_info: &mut WeChatInfo, offset: usize) -> anyhow::Result<[u8; 32]> {
+    let process = wechat_info.get_process();
     let buffer = get_data_by_real_addr(
-        wechat_info.process.th32ProcessID,
-        wechat_info.module.modBaseAddr as usize + offset,
+        process.th32ProcessID,
+        wechat_info.get_module().modBaseAddr as usize + offset,
         8,
     )?;
     let mut cur = std::io::Cursor::new(&buffer);
     let offset = cur.read_u64::<LittleEndian>()?;
-    let key_buffer = get_data_by_real_addr(wechat_info.process.th32ProcessID, offset as usize, 32)?;
+    let key_buffer = get_data_by_real_addr(process.th32ProcessID, offset as usize, 32)?;
     return Ok(*&key_buffer[..].try_into()?);
 }
 
@@ -48,14 +49,14 @@ pub fn open_wechat_process(
     process_name: &String,
     module_name: &String,
 ) -> anyhow::Result<()> {
-    wechat_info.process = if let Some(id) = process_id {
+    wechat_info.set_process(if let Some(id) = process_id {
         get_process_by_id(*id)?
     } else {
         get_process_by_name(&process_name)?
-    };
-    wechat_info.handle = get_process_handle(wechat_info.process.th32ProcessID)?;
+    });
+    wechat_info.set_handle(get_process_handle( wechat_info.get_process().th32ProcessID)?);
 
-    wechat_info.module = get_module_by_name(wechat_info.process, &module_name)?;
+    wechat_info.set_module(get_module_by_name( wechat_info.get_process(), &module_name)?);
     get_wechat_info(wechat_info)?;
     let mut offset_map_file = File::open(&offset_map)?;
     let mut buf = String::new();
@@ -80,13 +81,13 @@ pub fn open_wechat_process_with_out_info(
     process_name: &String,
     module_name: &String,
 ) -> anyhow::Result<()> {
-    wechat_info.process = if let Some(id) = process_id {
+    wechat_info.set_process(if let Some(id) = process_id {
         get_process_by_id(*id)?
     } else {
         get_process_by_name(&process_name)?
-    };
-    wechat_info.handle = get_process_handle(wechat_info.process.th32ProcessID)?;
-    wechat_info.module = get_module_by_name(wechat_info.process, &module_name)?;
+    });
+    wechat_info.set_handle(get_process_handle(wechat_info.get_process().th32ProcessID)?);
+    wechat_info.set_module(get_module_by_name(wechat_info.get_process(), &module_name)?);
     Ok(())
 }
 
@@ -97,7 +98,28 @@ pub struct WeChatInfo {
     pub account: String,
     pub mobile: String,
     pub key: [u8; 32],
-    pub process: PROCESSENTRY32,
-    pub handle: HANDLE,
-    pub module: MODULEENTRY32,
+    process: PROCESSENTRY32,
+    handle: HANDLE,
+    module: MODULEENTRY32,
+}
+
+impl WeChatInfo {
+    pub fn set_process(&mut self, process: PROCESSENTRY32) {
+        self.process = process;
+    }
+    pub fn get_process(&self) -> &PROCESSENTRY32 {
+        &self.process
+    }
+    pub fn set_handle(&mut self, handle: HANDLE) {
+        self.handle = handle;
+    }
+    pub fn get_handle(&self) -> &HANDLE {
+        &self.handle
+    }
+    pub fn set_module(&mut self, module: MODULEENTRY32) {
+        self.module = module;
+    }
+    pub fn get_module(&self) -> &MODULEENTRY32 {
+        &self.module
+    }
 }

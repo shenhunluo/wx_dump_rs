@@ -8,16 +8,18 @@ pub fn memory_search(
     data: &[u8],
     real_addr: bool,
 ) -> anyhow::Result<Vec<usize>> {
+    let process = wechat_info.get_process();
+    let module = wechat_info.get_module();
     let vec = get_data_by_real_addr(
-        wechat_info.process.th32ProcessID,
-        wechat_info.module.modBaseAddr as usize,
-        wechat_info.module.modBaseSize as usize,
+        process.th32ProcessID,
+        module.modBaseAddr as usize,
+        module.modBaseSize as usize,
     )?;
     let r = (0..vec.len() - data.len())
         .filter(|&i| &vec[i..i + data.len()] == data)
         .map(|i| {
             if real_addr {
-                wechat_info.module.modBaseAddr as usize + i
+                module.modBaseAddr as usize + i
             } else {
                 i
             }
@@ -33,9 +35,10 @@ pub fn memory_search_from_wechat_all_modules(
     show_no_found_info: bool,
     show_error_info: bool,
 ) -> anyhow::Result<()> {
-    for module in get_modules(wechat_info.process)? {
+    let process = wechat_info.get_process();
+    for module in get_modules(&process)? {
         let vec = get_data_by_real_addr(
-            wechat_info.process.th32ProcessID,
+            process.th32ProcessID,
             module.modBaseAddr as usize,
             module.modBaseSize as usize,
         );
@@ -94,8 +97,8 @@ pub fn memory_search_from_wechat_all_data(
     show_no_found_info: bool,
     show_error_info: bool,
 ) -> anyhow::Result<()> {
-    for (base_addr, size) in get_all_memory_by_handle(&wechat_info.handle)? {
-        let vec = get_data_by_real_addr(wechat_info.process.th32ProcessID, base_addr, size);
+    for (base_addr, size) in get_all_memory_by_handle(&wechat_info.get_handle())? {
+        let vec = get_data_by_real_addr(wechat_info.get_process().th32ProcessID, base_addr, size);
         match vec {
             Ok(vec) => {
                 let r: Vec<usize> = (0..vec.len() - data.len())
@@ -134,12 +137,13 @@ pub fn get_memory(
     len: usize,
     real_addr: bool,
 ) -> anyhow::Result<Vec<u8>> {
+    let process = wechat_info.get_process();
     let vec = if real_addr {
-        get_data_by_real_addr(wechat_info.process.th32ProcessID, index, len)?
+        get_data_by_real_addr(process.th32ProcessID, index, len)?
     } else {
         get_data_by_real_addr(
-            wechat_info.process.th32ProcessID,
-            wechat_info.module.modBaseAddr as usize + index,
+            process.th32ProcessID,
+            wechat_info.get_module().modBaseAddr as usize + index,
             len,
         )?
     };

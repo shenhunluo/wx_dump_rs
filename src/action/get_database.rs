@@ -1,17 +1,24 @@
 use std::{
     collections::HashMap,
     fs::{create_dir, read_dir, File},
-    io::stdin,
-    path::{Path, PathBuf},
+    path::{Path, PathBuf}, future::Future,
 };
 
 use anyhow::anyhow;
 
-pub fn get_database(
+pub async fn get_database<FPI,FSI,R,E>(
     wechat_path: &Option<String>,
     save_dir: &String,
     account: &String,
-) -> anyhow::Result<()> {
+    print_info: FPI,
+    set_index: FSI,
+) -> anyhow::Result<()>
+where
+    FPI: Fn(String) -> (),
+    FSI: Fn(Vec<usize>) -> R,
+    R: Future<Output = Result<usize,E>>,
+    E: Into<anyhow::Error>
+{
     let mut map = HashMap::new();
     let mut wechat_path_buf;
     let path = if let Some(wechat_path) = wechat_path {
@@ -25,7 +32,7 @@ pub fn get_database(
     if !path.exists() || !path.is_dir() {
         return Err(anyhow!(format!(
             "指定的微信主目录不存在或者不是文件夹，请检查。{:?}",
-            path.file_name()
+            path.display()
         )));
     }
     for entity in read_dir(path)? {
@@ -50,14 +57,14 @@ pub fn get_database(
         let mut path_buf = path.clone();
         path_buf.push("Msg");
         path_buf.push("Multi");
-        if path_buf.exists() && path_buf.is_dir() {
+        if !path_buf.exists() || !path_buf.is_dir() {
             return Err(anyhow!(format!(
                 "未找到该用户名对应的文件夹. account: {account}"
             )));
         }
         path_buf
     } else {
-        println!("请从下列中选择想要获取数据库的id:");
+        print_info(format!("请从下列中选择想要获取数据库的id:"));
         let mut index_map = HashMap::new();
         for (index, file_name) in map.keys().enumerate() {
             let mut path_buf = map.get(file_name).ok_or(anyhow!("路径获取失败"))?.clone();
@@ -65,26 +72,27 @@ pub fn get_database(
             path_buf.push("Multi");
             if path_buf.exists() && path_buf.is_dir() {
                 index_map.insert(index + 1, file_name);
-                println!("[{}]:{}", index + 1, file_name);
+                print_info(format!("[{}]:{}", index + 1, file_name));
             }
         }
-        let key = loop {
-            println!("请输入编号:");
-            let mut input = String::new();
-            stdin().read_line(&mut input)?;
-            let index = input.trim().parse::<usize>();
-            if let Ok(index) = index {
-                if let Some(file_name) = index_map.get(&index) {
-                    break *file_name;
-                } else {
-                    println!("请输入正确的编号");
-                }
-            } else {
-                println!("输入的不是数字，请输入数字编号");
-                continue;
-            }
-        };
-        let mut path_buf = map.get(key).ok_or(anyhow!("路径获取失败"))?.clone();
+            // let mut input = String::new();
+            // stdin().read_line(&mut input)?;
+            // let index = input.trim().parse::<usize>();
+            // if let Ok(index) = index {
+            //     if let Some(file_name) = index_map.get(&index) {
+            //         break *file_name;
+            //     } else {
+            //         print_info(format!("请输入正确的编号"));
+            //     }
+            // } else {
+            //     print_info(format!("输入的不是数字，请输入数字编号"));
+            //     continue;
+            // }
+        let keys = index_map.keys().map(|k| *k).collect::<Vec<_>>();
+        let key = index_map.get(&set_index(keys).await.map_err(|e| e.into())?)
+                .ok_or(anyhow::Error::msg("错误的编号"))?
+        ;
+        let mut path_buf = map.get(*key).ok_or(anyhow!("路径获取失败"))?.clone();
         path_buf.push("Msg");
         path_buf.push("Multi");
         path_buf
@@ -98,7 +106,9 @@ pub fn get_database(
         ));
     }
     if save_path.exists() {
+        print_info(format!("开始清空文件夹：{}",save_path.display()));
         std::fs::remove_dir_all(save_path)?;
+        print_info(format!("已清空文件夹：{}",save_path.display()));
     }
     create_dir(save_path)?;
 
@@ -116,9 +126,11 @@ pub fn get_database(
         {
             let mut in_file = File::open(entry.path())?;
             let mut save_path_buf = PathBuf::from(save_path);
-            save_path_buf.push(file_name);
+            save_path_buf.push(&file_name);
             let mut out_file = File::create(save_path_buf)?;
+            print_info(format!("开始复制{}文件",file_name));
             std::io::copy(&mut in_file, &mut out_file)?;
+            print_info(format!("{}文件复制完成",file_name));
         }
     }
     path_buf.pop();

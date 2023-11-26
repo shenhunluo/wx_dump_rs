@@ -3,6 +3,21 @@ name = "wx_dump_rs"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "wx_dump_rs"
+path = "src/main.rs"
+required-features = ["default"]
+[[bin]]
+name = "wx_dump_rs_gui"
+path = "src/main_gui.rs"
+required-features = ["gui"]
+
+[features]
+default = ["shell"]
+shell = ["windows","futures"]
+gui = ["iced","iced_runtime","diesel/sqlite","diesel/chrono","tokio","windows/Win32_System_Com","windows/Win32_UI_Shell"]
+
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -13,7 +28,7 @@ windows = {version = "*", features = [
     "Win32_System_Diagnostics_ToolHelp",
     "Win32_System_LibraryLoader",
     "Win32_UI_WindowsAndMessaging",
-    "Win32_Storage_FileSystem"]}
+    "Win32_Storage_FileSystem"], optional = true }
 anyhow = { version = "*", features = ["backtrace"]}
 serde_json = "*"
 clap = { version = "*", features = ["derive"]}
@@ -25,3 +40,8 @@ hmac = "*"
 cbc = "*"
 aes ="*"
 byteorder = "*"
+iced = {version = "*", features = ["tokio", "debug","default","qr_code","image","canvas","system"], optional = true}
+iced_runtime = {version = "*", optional = true}
+tokio = {version = "*", features = ["sync"],optional = true}
+futures = {version = "*", optional = true}
+diesel = {version = "*", optional = true}

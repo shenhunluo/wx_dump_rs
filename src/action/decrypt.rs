@@ -19,6 +19,7 @@ pub fn decrypt(
     decrypt_path_str: &String,
     key: &[u8],
     need_check_hmac: bool,
+    print_info: impl Fn(String)
 ) -> Result<()> {
     let save_path = Path::new(save_path_str);
     if !save_path.exists() || !save_path.is_dir() {
@@ -57,7 +58,7 @@ pub fn decrypt(
         let first = &buffer[16..4096];
         let mac_salt = salt.iter().map(|i| i ^ 58).collect::<Vec<_>>();
         if check_hmac(first, &byte_key, &mac_salt, 1, 32)? {
-            println!("文件{:?}密码正确", entry.file_name());
+            print_info(format!("文件{:?}密码正确", entry.file_name()));
             let pages: Vec<&[u8]> = buffer[..].chunks(4096).collect();
             let mut path_buf = PathBuf::from(decrypt_path);
             path_buf.push("decrypted_".to_owned() + entry.file_name().to_str().unwrap());
@@ -88,7 +89,7 @@ pub fn decrypt(
                 out_file.write_all(&decrypted_page)?;
             }
             out_file.flush()?;
-            println!("文件{:?}解密成功", entry.file_name());
+            print_info(format!("文件{:?}解密成功", entry.file_name()));
 
             let saved_wal_file_str = save_path_str.to_owned()
                 + std::path::MAIN_SEPARATOR_STR
@@ -177,7 +178,7 @@ pub fn decrypt(
                             decrypted_wal_file.write_all(&decrypt_buf)?;
                         }
                     }
-                    println!("文件{:?}解密成功", saved_wal_file_path.file_name().unwrap());
+                    print_info(format!("文件{:?}解密成功", saved_wal_file_path.file_name().unwrap()));
                 }
 
                 let saved_shm_file_str = save_path_str.to_owned()
@@ -198,7 +199,7 @@ pub fn decrypt(
                 }
             }
         } else {
-            println!("文件{:?}密码错误", entry.file_name());
+            print_info(format!("文件{:?}密码错误", entry.file_name()));
         }
     }
     Ok(())

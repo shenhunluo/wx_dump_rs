@@ -196,7 +196,7 @@ pub fn get_process_by_id(process_id: u32) -> anyhow::Result<PROCESSENTRY32> {
 }
 
 pub fn get_module_by_name(
-    process: PROCESSENTRY32,
+    process: &PROCESSENTRY32,
     module_name: &str,
 ) -> anyhow::Result<MODULEENTRY32> {
     let mut module = MODULEENTRY32::default();
@@ -212,7 +212,7 @@ pub fn get_module_by_name(
     }
 }
 
-pub fn get_modules(process: PROCESSENTRY32) -> anyhow::Result<Vec<MODULEENTRY32>> {
+pub fn get_modules(process: &PROCESSENTRY32) -> anyhow::Result<Vec<MODULEENTRY32>> {
     let mut vec = vec![];
     unsafe {
         let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, process.th32ProcessID)?;
@@ -333,4 +333,29 @@ pub fn get_all_memory_by_handle(handle: &HANDLE) -> anyhow::Result<Vec<(usize, u
     }
 
     Ok(vec)
+}
+
+#[cfg(feature = "gui")]
+pub fn get_file_dialog() -> Result<String,anyhow::Error> {
+    use windows::Win32::{System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER}, UI::Shell::{IFileDialog, SIGDN_FILESYSPATH}};
+    unsafe {
+        let file_dialog : IFileDialog = CoCreateInstance(&windows::core::GUID::from_u128(0xdc1c5a9ce88a4ddea5a160f82a20aef7), None, CLSCTX_INPROC_SERVER)?; 
+        file_dialog.Show(None)?;
+        let result = file_dialog.GetResult()?;
+        let result = result.GetDisplayName(SIGDN_FILESYSPATH)?.to_string()?;
+        Ok(result)
+    }
+}
+
+#[cfg(feature = "gui")]
+pub fn get_folder_dialog() -> Result<String,anyhow::Error> {
+    use windows::Win32::{System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER}, UI::Shell::{IFileDialog, SIGDN_FILESYSPATH, FOS_PICKFOLDERS}};
+    unsafe {
+        let file_dialog : IFileDialog = CoCreateInstance(&windows::core::GUID::from_u128(0xdc1c5a9ce88a4ddea5a160f82a20aef7), None, CLSCTX_INPROC_SERVER)?; 
+        file_dialog.SetOptions(FOS_PICKFOLDERS)?;
+        file_dialog.Show(None)?;
+        let result = file_dialog.GetResult()?;
+        let result = result.GetDisplayName(SIGDN_FILESYSPATH)?.to_string()?;
+        Ok(result)
+    }
 }
