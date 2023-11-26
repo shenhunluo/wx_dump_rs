@@ -122,9 +122,14 @@ impl AnalysisDatabaseBody {
                 col = col.push({
                     let mut row = Row::new();
                     let container = Container::new(
-                        Column::new().push(
-                            Text::new(msg.str_content.clone().unwrap_or("".to_owned())).size(18).shaping(Shaping::Advanced)
-                        )
+                        Column::new().spacing(3)
+                            .push(
+                                Space::with_height(3)
+                            ).push(
+                                Text::new(msg.str_content.clone().unwrap_or("".to_owned())).size(18).shaping(Shaping::Advanced)
+                            ).push(
+                                Space::with_height(3)
+                            )
                     ).width(700);
                     if msg.is_sender == Some(1) {
                         row = row
