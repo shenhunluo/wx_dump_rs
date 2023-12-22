@@ -1,8 +1,8 @@
 use std::{path::Path, fs::read_dir, collections::HashMap};
 
 use diesel::SqliteConnection;
-use iced::{widget::{Container, Space, Column, Text, Button, Scrollable, Row}, Length, Color};
-use iced_runtime::core::text::Shaping;
+use iced::{widget::{Container, Space, Column, Text, Button, Scrollable, Row, Image, TextInput}, Length, Color};
+use iced_runtime::core::{text::Shaping, image::Handle};
 
 use self::module::module_macro_msg::{Session, Contact};
 
@@ -23,6 +23,10 @@ pub struct AnalysisDatabaseBody {
     msg_list: Vec<module::module_msg::Msg>,
     message_title: String,
     message_scroll_id: iced::widget::scrollable::Id,
+    session_scroll_id: iced::widget::scrollable::Id,
+    wechat_path: Option<String>,
+    msg_page: usize,
+    msg_page_input: String,
 }
 
 impl AnalysisDatabaseBody {
@@ -39,6 +43,10 @@ impl AnalysisDatabaseBody {
             msg_list: vec![],
             message_title: String::new(),
             message_scroll_id: iced::widget::scrollable::Id::new("analysis_message_scroll"),
+            session_scroll_id: iced::widget::scrollable::Id::new("analysis_session_scroll"),
+            wechat_path: None,
+            msg_page: 0,
+            msg_page_input: "1".to_string(),
         }
     }
 
@@ -46,6 +54,7 @@ impl AnalysisDatabaseBody {
         match msg {
             AnalysisDatabaseMessage::UpdateAnalysisDatabase => {
                 self.decrypted_path = config_body.decrypt_path.trim().to_owned();
+                self.wechat_path = config_body.wechat_dir.to_owned();
                 iced::Command::none()
             },
             AnalysisDatabaseMessage::ButtonAnalysis => {
@@ -77,6 +86,8 @@ impl AnalysisDatabaseBody {
                 match module::module_msg::get_msg_by_user_name(&self.session_list[index].str_usr_name, &mut self.conn.as_mut().unwrap().msg_conn_map) {
                     Ok(s) => {
                         self.msg_list = s;
+                        self.msg_page = self.msg_list.len() / 100;
+                        self.msg_page_input = (self.msg_page + 1).to_string();
                         self.message_title = message_title;
                         self.body = Body::Msg;
                         self.msg_getting = false;
@@ -89,7 +100,28 @@ impl AnalysisDatabaseBody {
             },
             AnalysisDatabaseMessage::ButtonBack => {
                 self.msg_list = vec![];
+                self.msg_page = 0;
+                self.msg_page_input = (self.msg_page + 1).to_string();
                 self.body = Body::Session;
+                iced::Command::none()
+            },
+            AnalysisDatabaseMessage::ButtonMsgPrev => {
+                self.msg_page -= 1;
+                self.msg_page_input = (self.msg_page + 1).to_string();
+                iced::Command::none()
+            },
+            AnalysisDatabaseMessage::ButtonMsgNext => {
+                self.msg_page += 1;
+                self.msg_page_input = (self.msg_page + 1).to_string();
+                iced::Command::none()
+            },
+            AnalysisDatabaseMessage::InputMsgPage(s) => {
+                self.msg_page_input = s;
+                iced::Command::none()
+            },
+            AnalysisDatabaseMessage::ButtonMsgJumpTo(p) => {
+                self.msg_page = p;
+                self.msg_page_input = (self.msg_page + 1).to_string();
                 iced::Command::none()
             },
         }
@@ -118,19 +150,61 @@ impl AnalysisDatabaseBody {
     fn draw_message(&self) -> Container<Message> {
         Container::new({
             let mut col = Column::new().spacing(10);
-            for msg in &self.msg_list {
+            let list = if (self.msg_page+1) * 100 > self.msg_list.len() {
+                &self.msg_list[self.msg_page * 100..]
+            } else {
+                &self.msg_list[self.msg_page * 100..(self.msg_page+1) * 100]
+            };
+            for msg in list {
                 col = col.push({
                     let mut row = Row::new();
-                    let container = Container::new(
-                        Column::new().spacing(3)
-                            .push(
+                    let container = Container::new({
+                        let mut col = Column::new().spacing(3);
+                        if let Some(byte_ex) = &msg.bytes_extra {
+                            if let Some(data) = byte_ex.map.get(&1) {
+                                if let Some(data) = data.get(0) {
+                                    if let Some(contact) = self.contact.get(&Some(data.to_owned())) {
+                                        let mut text = contact.nick_name.as_ref().cloned().unwrap_or("".to_string());
+                                        if let Some(remark) = &contact.remark {
+                                            if remark.len() > 0 {
+                                                text = format!("{}({})",text,remark);
+                                            }
+                                        }
+                                        col = col.push(Text::new(text).size(19).shaping(Shaping::Advanced));
+                                    }
+                                }
+                            }
+                        }
+                        col = col.push(
                                 Space::with_height(3)
                             ).push(
-                                Text::new(msg.str_content.clone().unwrap_or("".to_owned())).size(18).shaping(Shaping::Advanced)
+                                match msg.load_msg_data(&self.wechat_path) {
+                                    module::module_msg::MsgData::Text(s) => {
+                                        Container::new(
+                                            Text::new(s).size(18).shaping(Shaping::Advanced)
+                                        )
+                                    },
+                                    module::module_msg::MsgData::Image(image) => {
+                                        match image {
+                                            Ok(image) => {
+                                                Container::new(Image::new(Handle::from_memory(image)))
+                                            },
+                                            Err(err) => {
+                                                Container::new(Text::new(format!("图片获取失败，错误信息： {}",err.to_string())).size(18))
+                                            },
+                                        }
+                                    },
+                                    module::module_msg::MsgData::Other(s) => {
+                                        Container::new(
+                                            Text::new(s).size(18).shaping(Shaping::Advanced)
+                                        )
+                                    },
+                                }
                             ).push(
                                 Space::with_height(3)
-                            )
-                    ).width(700);
+                            );
+                        col
+                    }).width(700);
                     if msg.is_sender == Some(1) {
                         row = row
                             .push(Space::with_width(Length::Fill))
@@ -193,7 +267,7 @@ impl AnalysisDatabaseBody {
                         col = col.push(
                             Scrollable::new(
                                 self.draw_session().width(Length::Fill)
-                            ).height(Length::Fill)
+                            ).height(Length::Fill).id(self.session_scroll_id.clone())
                         );
                     },
                     Body::Msg => {
@@ -206,15 +280,56 @@ impl AnalysisDatabaseBody {
                             ).height(Length::Fill).id(self.message_scroll_id.clone())
                         );
                         col = col.push(
-                            Row::new().spacing(5).push(Space::with_width(5)).push(
-                                Button::new("返回").on_press_maybe(
-                                    if  !self.analysis_running && !self.msg_getting {
-                                        Some(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonBack))
-                                    } else {
-                                        None
-                                    }
+                            Row::new().spacing(5).push(Space::with_width(5))
+                                .push(
+                                    Button::new("上一页").on_press_maybe(
+                                        if self.msg_page == 0 {
+                                            None
+                                        } else {
+                                            Some(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonMsgPrev))
+                                        }
+                                    )
                                 )
-                            )
+                                .push(
+                                    TextInput::new("",&self.msg_page_input)
+                                        .width(45).on_input(|s| Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::InputMsgPage(s)))
+                                )
+                                .push(
+                                    Text::new(format!("总页数：{}",self.msg_list.len() / 100 + 1)).height(Length::Shrink)
+                                )
+                                .push(
+                                    Button::new("跳转").on_press_maybe(
+                                        {
+                                            if let Ok(p) = self.msg_page_input.trim().parse::<usize>() {
+                                                if p < 1 || (p-1) * 100 > self.msg_list.len() {
+                                                    None
+                                                } else {
+                                                    Some(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonMsgJumpTo(p-1)))
+                                                }
+                                            } else {
+                                                None
+                                            }
+                                        }
+                                    )
+                                )
+                                .push(
+                                    Button::new("下一页").on_press_maybe(
+                                        if (self.msg_page+1) * 100 > self.msg_list.len() {
+                                            None
+                                        } else {
+                                            Some(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonMsgNext))
+                                        }
+                                    )
+                                )
+                                .push(
+                                    Button::new("返回").on_press_maybe(
+                                        if  !self.analysis_running && !self.msg_getting {
+                                            Some(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonBack))
+                                        } else {
+                                            None
+                                        }
+                                    )
+                                )
                         );
                     },
                 }
@@ -243,6 +358,10 @@ pub enum AnalysisDatabaseMessage {
     ButtonAnalysis,
     ButtonSession(usize, String),
     ButtonBack,
+    ButtonMsgPrev,
+    ButtonMsgNext,
+    InputMsgPage(String),
+    ButtonMsgJumpTo(usize),
 }
 
 impl Into<Message> for AnalysisDatabaseMessage {
@@ -277,7 +396,8 @@ impl iced::widget::container::StyleSheet for MsgContainerTheme {
                 s.background = Some(iced::Background::Color(Color::from_rgb(0.8, 0.8, 0.8)))
             },
             MsgContainerTheme::Right => {
-                s.background = Some(iced::Background::Color(Color::from_rgb(0.2, 0.2, 0.8)))
+                s.background = Some(iced::Background::Color(Color::from_rgb(0.2, 0.2, 0.8)));
+                s.text_color = Some(Color::from_rgb(0.8, 0.8, 0.2));
             }
         }
         s
