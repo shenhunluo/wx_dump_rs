@@ -17,3 +17,5 @@ Cargo.lock
 sqlite3.dll
 sqlite3.lib
 wx_dump_rs_gui.exe
+wx_dump_rs.exe
+wx_dump_rs_x64_msvc.zip

@@ -3,6 +3,7 @@
         "byteorder",
         "CLSCTX",
         "DATAFILE",
+        "dbinfo",
         "Decryptor",
         "FILESYSPATH",
         "FIXEDFILEINFO",
@@ -10,6 +11,7 @@
         "INPROC",
         "lpstr",
         "MODULEENTRY",
+        "msgtrans",
         "numberofbytesread",
         "OPENFILENAMEA",
         "PCSTR",
@@ -19,11 +21,10 @@
         "SIGDN",
         "SNAPMODULE",
         "SNAPPROCESS",
+        "splitn",
         "Toolhelp",
         "wechat",
-        "WMPF",
-        "msgtrans",
-        "dbinfo"
+        "WMPF"
     ],
     "rust-analyzer.linkedProjects": [
         ".\\Cargo.toml",
