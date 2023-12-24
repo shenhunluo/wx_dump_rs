@@ -119,7 +119,7 @@ where
             .into_string()
             .map_err(|e| anyhow!(format!("fail to get String by OsString : {:?}", e)))?;
         if entry.path().is_file()
-            && file_name.starts_with("MSG")
+            && (file_name.starts_with("MSG") || file_name.starts_with("MediaMSG"))
             && (file_name.ends_with(".db")
                 || file_name.ends_with(".db-wal")
                 || file_name.ends_with(".db-shm"))

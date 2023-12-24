@@ -2,6 +2,7 @@ use diesel::{SqliteConnection, Connection};
 
 pub mod module_macro_msg;
 pub mod module_msg;
+pub mod module_media_msg;
 
 
 pub fn get_conn(file_path: impl ToString) -> Result<SqliteConnection, anyhow::Error> {

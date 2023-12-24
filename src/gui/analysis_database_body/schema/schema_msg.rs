@@ -10,7 +10,7 @@ diesel::table! {
     MSG (localId) {
         localId -> Nullable<Integer>,
         TalkerId -> Nullable<Integer>,
-        MsgSvrID -> Nullable<Integer>,
+        MsgSvrID -> Nullable<BigInt>,
         Type -> Nullable<Integer>,
         SubType -> Nullable<Integer>,
         IsSender -> Nullable<Integer>,

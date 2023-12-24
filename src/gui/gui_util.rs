@@ -1,5 +1,7 @@
-use std::sync::RwLock;
+use std::{sync::RwLock, io::Cursor};
 
+use byteorder::{ReadBytesExt, LittleEndian};
+use cpal::{traits::{HostTrait, DeviceTrait, StreamTrait}, SampleFormat, StreamConfig, Stream};
 use iced::{widget::{Column, Text, TextInput, Row, Container, Button, Space, Scrollable}, alignment::{Vertical, Horizontal}, Color, Length};
 use iced_runtime::Command;
 
@@ -129,4 +131,61 @@ impl PrintInfoText {
             .id(self.scroll_id.clone()).height(Length::Fill)
         ).padding(4)
     }
+}
+
+
+pub fn play_audio(data: &[u8]) -> Result<Stream,anyhow::Error> {
+    let host = cpal::default_host();
+    let device = host.default_output_device().ok_or(anyhow::anyhow!("未找到音频设备"))?;
+    let mut configs = device.supported_output_configs()?;
+    let supported_config = configs.next().ok_or(anyhow::anyhow!("未找到配置"))?.with_max_sample_rate();
+    let sample_format = supported_config.sample_format();
+    let config: StreamConfig = supported_config.into();
+    let c = config.sample_rate.0 as f64 / 24000.0;
+    let mut src = vec![];
+    let mut cursor = Cursor::new(data);
+    for _ in 0..data.len() / 2 {
+        let d = cursor.read_i16::<LittleEndian>().unwrap();
+        src.push(d);
+    }
+    let mut output = vec![0i16;(src.len() as f64 * c) as usize];
+    for i in 0..output.len() {
+        output[i] = src[(i as f64 / c) as usize];
+    }
+    let mut index = 0;
+    let channels = config.channels as usize;
+    let err_fn = |err| eprintln!("an error occurred on the output audio stream: {}", err);
+    let stream = match sample_format {
+        SampleFormat::F32 => device.build_output_stream(&config, move |data, _| {
+            for d in data.chunks_mut(channels) {
+                for d in d.iter_mut() {
+                    if index < output.len() {
+                        *d = output[index] as f32 / i16::MAX as f32;
+                    } else {
+                        *d = 0.0;
+                    }
+                }
+                if index < output.len() {
+                    index += 1;
+                }
+            }
+        }, err_fn, None),
+        SampleFormat::I16 => device.build_output_stream(&config, move |data, _| {
+            for d in data.chunks_mut(channels) {
+                for d in d.iter_mut() {
+                    if index < output.len() {
+                        *d = output[index];
+                    } else {
+                        *d = 0i16;
+                    }
+                }
+                if index < output.len() {
+                    index += 1;
+                }
+            }
+        }, err_fn, None),
+        sample_format => panic!("Unsupported sample format '{sample_format}'")
+    }.unwrap();
+    stream.play()?;
+    Ok(stream)
 }

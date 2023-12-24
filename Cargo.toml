@@ -15,7 +15,7 @@ required-features = ["gui"]
 [features]
 default = ["shell"]
 shell = ["windows","futures"]
-gui = ["iced","iced_runtime","diesel/sqlite","diesel/chrono","tokio","windows/Win32_System_Com","windows/Win32_UI_Shell"]
+gui = ["iced","iced_runtime","diesel/sqlite","diesel/chrono","tokio","windows/Win32_System_Com","windows/Win32_UI_Shell","silk-sys","cpal",]
 
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -45,3 +45,5 @@ iced_runtime = {version = "*", optional = true}
 tokio = {version = "*", features = ["sync"],optional = true}
 futures = {version = "*", optional = true}
 diesel = {version = "*", optional = true}
+silk-sys = {path = "silk-sys", optional = true}
+cpal = {version = "*", optional = true}

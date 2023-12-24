@@ -15,7 +15,7 @@ pub struct Dbinfo {
 pub struct Msg {
     pub local_id: Option<i32>,
     pub talker_id: Option<i32>,
-    pub msg_svr_id: Option<i32>,
+    pub msg_svr_id: Option<i64>,
     pub r#type: Option<i32>,
     pub sub_type: Option<i32>,
     pub is_sender: Option<i32>,
@@ -46,6 +46,7 @@ impl Msg {
         match self.r#type.unwrap() {
             1 => MsgData::Text(self.str_content.clone().unwrap_or("".to_string())),
             3 => MsgData::Image(Self::load_image_data(wechat_path, self.bytes_extra.as_ref().unwrap().map.get(&4).map(|v| v[0].clone()))),
+            34 => MsgData::Audio(self.msg_svr_id.unwrap()),
             _ => MsgData::Other(self.str_content.clone().unwrap_or("".to_string())),
         }
     }
@@ -95,6 +96,7 @@ const IMAGE_HEADER: &'static [(&str, &'static [u8])] = &[
 pub enum MsgData {
     Text(String),
     Image(Result<Vec<u8>,anyhow::Error>),
+    Audio(i64),
     Other(String)
 }
 
@@ -161,7 +163,7 @@ pub struct Name2Id {
     pub usr_name: Option<String>,
 }
 
-pub fn get_msg_by_user_name(user_name: &Option<String>, conns: &mut HashMap<usize,SqliteConnection>) -> Result<Vec<Msg>, anyhow::Error> {
+pub fn get_msg_by_user_name(user_name: &Option<String>, conns: &mut HashMap<usize,SqliteConnection>) -> Result<Vec<(usize,Msg)>, anyhow::Error> {
     let mut keys = conns.keys().map(|k| *k).collect::<Vec<_>>();
     keys.sort();
     let mut vec = vec![];
@@ -171,8 +173,9 @@ pub fn get_msg_by_user_name(user_name: &Option<String>, conns: &mut HashMap<usiz
             .filter(schema_msg::MSG::StrTalker.eq(user_name))
             .order_by(schema_msg::MSG::CreateTime)
         ;
-        let mut r = sql.load::<Msg>(conn)?;
-        vec.append(&mut r);
+        for msg in sql.load::<Msg>(conn)? {
+            vec.push((k,msg));
+        }
     }
     Ok(vec)
 }

@@ -1,12 +1,13 @@
-use std::{path::Path, fs::read_dir, collections::HashMap};
+use std::{path::Path, fs::read_dir, collections::HashMap, time::{SystemTime, Duration}, ops::Add};
 
+use cpal::Stream;
 use diesel::SqliteConnection;
 use iced::{widget::{Container, Space, Column, Text, Button, Scrollable, Row, Image, TextInput}, Length, Color};
 use iced_runtime::core::{text::Shaping, image::Handle};
 
 use self::module::module_macro_msg::{Session, Contact};
 
-use super::{Message, config_body::ConfigBody, gui_util::set_col_with_text};
+use super::{Message, config_body::ConfigBody, gui_util::{set_col_with_text, self}};
 
 mod schema;
 mod module;
@@ -20,13 +21,15 @@ pub struct AnalysisDatabaseBody {
     contact: HashMap<Option<String>, Contact>,
     analysis_running: bool,
     msg_getting: bool,
-    msg_list: Vec<module::module_msg::Msg>,
+    msg_list: Vec<(usize,module::module_msg::Msg)>,
     message_title: String,
     message_scroll_id: iced::widget::scrollable::Id,
     session_scroll_id: iced::widget::scrollable::Id,
     wechat_path: Option<String>,
     msg_page: usize,
     msg_page_input: String,
+    audio_err_texts: HashMap<i64,String>,
+    audio_stream: Option<(Stream,i64)>,
 }
 
 impl AnalysisDatabaseBody {
@@ -47,6 +50,8 @@ impl AnalysisDatabaseBody {
             wechat_path: None,
             msg_page: 0,
             msg_page_input: "1".to_string(),
+            audio_err_texts: HashMap::new(),
+            audio_stream: None,
         }
     }
 
@@ -124,12 +129,39 @@ impl AnalysisDatabaseBody {
                 self.msg_page_input = (self.msg_page + 1).to_string();
                 iced::Command::none()
             },
+            AnalysisDatabaseMessage::ButtonMsgPlayAudio(id , key) => {
+                if let Some(conn) = self.conn.as_mut().unwrap().media_msg_conn_map.get_mut(&key) {
+                    match module::module_media_msg::get_audio_pcm(id,conn) {
+                        Ok(data) => {
+                            match gui_util::play_audio(&data) {
+                                Ok(stream) => {
+                                    self.audio_stream = Some((stream,id));
+                                },
+                                Err(e) => {
+                                    self.audio_err_texts.insert(id, e.to_string());
+                                },
+                            }
+                        },
+                        Err(err) => {
+                            self.audio_err_texts.insert(id, err.to_string());
+                        },
+                    }
+                } else {
+                    self.audio_err_texts.insert(id, "未找到音频数据库".to_string());
+                }
+                iced::Command::none()
+            },
+            AnalysisDatabaseMessage::ButtonMsgStopAudio => {
+                self.audio_stream = None;
+                iced::Command::none()
+            },
         }
     }
 
     fn get_conn(&self) -> Result<Conn,anyhow::Error> {
         let decrypted_path = Path::new(self.decrypted_path.trim());
-        let mut map = HashMap::new();
+        let mut msg_conn_map = HashMap::new();
+        let mut media_msg_conn_map = HashMap::new();
         let mut macro_msg_conn = None;
         for entry in read_dir(decrypted_path)? {
             let entry = entry?;
@@ -137,7 +169,11 @@ impl AnalysisDatabaseBody {
                 if let Some(filename) = entry.file_name().to_str() {
                     if filename.starts_with("decrypted_MSG") && filename.ends_with(".db") {
                         if let Ok(index) = filename.replace("decrypted_MSG", "").replace(".db", "").parse::<usize>() {
-                            map.insert(index, module::get_conn(entry.path().display())?);
+                            msg_conn_map.insert(index, module::get_conn(entry.path().display())?);
+                        }
+                    } else if filename.starts_with("decrypted_MediaMSG") && filename.ends_with(".db") {
+                        if let Ok(index) = filename.replace("decrypted_MediaMSG", "").replace(".db", "").parse::<usize>() {
+                            media_msg_conn_map.insert(index, module::get_conn(entry.path().display())?);
                         }
                     } else if filename == "decrypted_MicroMsg.db" {
                         macro_msg_conn = Some(module::get_conn(entry.path().display())?);
@@ -145,7 +181,7 @@ impl AnalysisDatabaseBody {
                 }
             }
         }
-        Ok(Conn { msg_conn_map: map, macro_msg_conn: macro_msg_conn.ok_or(anyhow::anyhow!("未找到MicroMsg数据库"))? })
+        Ok(Conn { msg_conn_map, media_msg_conn_map, macro_msg_conn: macro_msg_conn.ok_or(anyhow::anyhow!("未找到MicroMsg数据库"))? })
     }
     fn draw_message(&self) -> Container<Message> {
         Container::new({
@@ -155,7 +191,7 @@ impl AnalysisDatabaseBody {
             } else {
                 &self.msg_list[self.msg_page * 100..(self.msg_page+1) * 100]
             };
-            for msg in list {
+            for (index,msg) in list {
                 col = col.push({
                     let mut row = Row::new();
                     let container = Container::new({
@@ -197,6 +233,39 @@ impl AnalysisDatabaseBody {
                                     module::module_msg::MsgData::Other(s) => {
                                         Container::new(
                                             Text::new(s).size(18).shaping(Shaping::Advanced)
+                                        )
+                                    },
+                                    module::module_msg::MsgData::Audio(id) => {
+                                        Container::new(
+                                            {
+                                                let mut col = Column::new();
+                                                col = col.push(
+                                                    {
+                                                        let mut row = Row::new().spacing(5);
+                                                        row = row.push(
+                                                            Button::new("播放音频").on_press(
+                                                                Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonMsgPlayAudio(id, *index))
+                                                            )
+                                                        );
+                                                        if let Some((_,playing_id)) = self.audio_stream {
+                                                            if playing_id == id {
+                                                                row = row.push(
+                                                                    Button::new("停止播放").on_press(
+                                                                        Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonMsgStopAudio)
+                                                                    )
+                                                                )
+                                                            }
+                                                        }
+                                                        row
+                                                    }
+                                                );
+                                                if let Some(s) = self.audio_err_texts.get(&id) {
+                                                    col = col.push(
+                                                        Text::new(s).style(iced::theme::Text::Color(Color::from_rgb(1.0, 0.0, 0.0)))
+                                                    )
+                                                }
+                                                col
+                                            }
                                         )
                                     },
                                 }
@@ -362,6 +431,8 @@ pub enum AnalysisDatabaseMessage {
     ButtonMsgNext,
     InputMsgPage(String),
     ButtonMsgJumpTo(usize),
+    ButtonMsgPlayAudio(i64,usize),
+    ButtonMsgStopAudio
 }
 
 impl Into<Message> for AnalysisDatabaseMessage {
@@ -373,6 +444,7 @@ impl Into<Message> for AnalysisDatabaseMessage {
 struct Conn {
     msg_conn_map: HashMap<usize, SqliteConnection>,
     macro_msg_conn: SqliteConnection,
+    media_msg_conn_map: HashMap<usize, SqliteConnection>,
 }
 
 #[derive(PartialEq,Eq)]
