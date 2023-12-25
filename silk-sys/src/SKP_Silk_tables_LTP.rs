@@ -180,11 +180,11 @@ pub static mut SKP_Silk_LTP_gain_BITS_Q6_2: [libc::c_short; 40] = [
     455 as libc::c_int as libc::c_short,
 ];
 #[no_mangle]
-pub static mut SKP_Silk_LTP_gain_CDF_ptrs: [*const libc::c_ushort; 3] = unsafe {
+pub static mut SKP_Silk_LTP_gain_CDF_ptrs: [&'static [u16]; 3] = unsafe {
     [
-        SKP_Silk_LTP_gain_CDF_0.as_ptr(),
-        SKP_Silk_LTP_gain_CDF_1.as_ptr(),
-        SKP_Silk_LTP_gain_CDF_2.as_ptr(),
+        &SKP_Silk_LTP_gain_CDF_0,
+        &SKP_Silk_LTP_gain_CDF_1,
+        &SKP_Silk_LTP_gain_CDF_2,
     ]
 };
 #[no_mangle]

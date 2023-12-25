@@ -7,6 +7,20 @@ macro_rules! skp_s_mul_wb {
 }
 
 #[macro_export]
+macro_rules! skp_l_shift {
+    ($a:expr,$shift:expr) => {{
+        crate::skp_l_shift_32!($a,$shift)
+    }}
+}
+
+#[macro_export]
+macro_rules! skp_l_shift_32 {
+    ($a:expr,$shift:expr) => {{
+        $a << $shift
+    }}
+}
+
+#[macro_export]
 macro_rules! skp_r_shift {
     ($a:expr,$shift:expr) => {{
         crate::skp_r_shift_32!($a,$shift)
@@ -62,5 +76,12 @@ macro_rules! skp_r_shift_round {
         } else {
             (($a >> ($shift - 1)) + 1) >> 1
         }
+    }}
+}
+
+#[macro_export]
+macro_rules! skp_s_mul_b_b {
+    ($a32:expr,$b32:expr) => {{
+        ($a32 as i16 as i32) * ($b32 as i16 as i32)
     }}
 }

@@ -57,7 +57,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_signs(
             SKP_Silk_range_decoder(
                 &mut data,
                 sRC,
-                cdf.as_mut_ptr() as *const libc::c_ushort,
+                &cdf,
                 1 as libc::c_int,
             );
             *q.offset(i as isize) *= (data << 1 as libc::c_int) - 1 as libc::c_int;

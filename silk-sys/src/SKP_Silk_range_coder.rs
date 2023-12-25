@@ -137,10 +137,10 @@ pub unsafe extern "C" fn SKP_Silk_range_encoder_multi(
     }
 }
 #[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_range_decoder(
+pub unsafe fn SKP_Silk_range_decoder(
     mut data: *mut libc::c_int,
     mut psRC: *mut SKP_Silk_range_coder_state,
-    mut prob: *const libc::c_ushort,
+    mut prob: &[u16],
     mut probIx: libc::c_int,
 ) {
     let mut low_Q16: libc::c_uint = 0;
@@ -157,12 +157,12 @@ pub unsafe extern "C" fn SKP_Silk_range_decoder(
         *data = 0 as libc::c_int;
         return;
     }
-    high_Q16 = *prob.offset(probIx as isize) as libc::c_uint;
+    high_Q16 = prob[probIx as usize] as libc::c_uint;
     base_tmp = range_Q16.wrapping_mul(high_Q16);
     if base_tmp > base_Q32 {
         loop {
             probIx -= 1;
-            low_Q16 = *prob.offset(probIx as isize) as libc::c_uint;
+            low_Q16 = prob[probIx as usize] as libc::c_uint;
             base_tmp = range_Q16.wrapping_mul(low_Q16);
             if base_tmp <= base_Q32 {
                 break;
@@ -178,7 +178,7 @@ pub unsafe extern "C" fn SKP_Silk_range_decoder(
         loop {
             low_Q16 = high_Q16;
             probIx += 1;
-            high_Q16 = *prob.offset(probIx as isize) as libc::c_uint;
+            high_Q16 = prob[probIx as usize] as libc::c_uint;
             base_tmp = range_Q16.wrapping_mul(high_Q16);
             if base_tmp > base_Q32 {
                 probIx -= 1;
@@ -234,11 +234,11 @@ pub unsafe extern "C" fn SKP_Silk_range_decoder(
     (*psRC).bufferIx = bufferIx;
 }
 #[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_range_decoder_multi(
+pub unsafe fn SKP_Silk_range_decoder_multi(
     mut data: *mut libc::c_int,
     mut psRC: *mut SKP_Silk_range_coder_state,
-    mut prob: *const *const libc::c_ushort,
-    mut probStartIx: *const libc::c_int,
+    mut prob: &[&[u16]],
+    mut probStartIx: &[i32],
     nSymbols: libc::c_int,
 ) {
     let mut k: libc::c_int = 0;
@@ -247,8 +247,8 @@ pub unsafe extern "C" fn SKP_Silk_range_decoder_multi(
         SKP_Silk_range_decoder(
             &mut *data.offset(k as isize),
             psRC,
-            *prob.offset(k as isize),
-            *probStartIx.offset(k as isize),
+            &prob[k as usize],
+            probStartIx[k as usize],
         );
         k += 1;
     }

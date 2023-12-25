@@ -2861,6 +2861,7 @@ version = "0.1.0"
 dependencies = [
  "bytes",
  "libc",
+ "once_cell",
  "thiserror",
 ]
 

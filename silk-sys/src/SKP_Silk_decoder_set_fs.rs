@@ -122,12 +122,12 @@ pub unsafe extern "C" fn SKP_Silk_decoder_set_fs(
             as libc::c_int * fs_kHz as libc::c_short as libc::c_int;
         if (*psDec).fs_kHz == 8 as libc::c_int {
             (*psDec).LPC_order = 10 as libc::c_int;
-            (*psDec).psNLSF_CB[0 as libc::c_int as usize] = &SKP_Silk_NLSF_CB0_10;
-            (*psDec).psNLSF_CB[1 as libc::c_int as usize] = &SKP_Silk_NLSF_CB1_10;
+            (*psDec).psNLSF_CB[0 as libc::c_int as usize] = Some(&SKP_Silk_NLSF_CB0_10);
+            (*psDec).psNLSF_CB[1 as libc::c_int as usize] = Some(&SKP_Silk_NLSF_CB1_10);
         } else {
             (*psDec).LPC_order = 16 as libc::c_int;
-            (*psDec).psNLSF_CB[0 as libc::c_int as usize] = &SKP_Silk_NLSF_CB0_16;
-            (*psDec).psNLSF_CB[1 as libc::c_int as usize] = &SKP_Silk_NLSF_CB1_16;
+            (*psDec).psNLSF_CB[0 as libc::c_int as usize] = Some(&SKP_Silk_NLSF_CB0_16);
+            (*psDec).psNLSF_CB[1 as libc::c_int as usize] = Some(&SKP_Silk_NLSF_CB1_16);
         }
         memset(
             ((*psDec).sLPC_Q14).as_mut_ptr() as *mut libc::c_void,
