@@ -30,14 +30,14 @@ pub mod SKP_Silk_LPC_synthesis_filter;
 pub mod SKP_Silk_sum_sqr_shift;
 pub mod SKP_Silk_LPC_inv_pred_gain;
 pub mod SKP_Silk_MA;
-pub mod SKP_Silk_NLSF_stabilize;
+pub mod skp_silk_nlsf_stabilize;
 pub mod SKP_Silk_lin2log;
 pub mod SKP_Silk_log2lin;
 pub mod SKP_Silk_NLSF2A;
 pub mod SKP_Silk_shell_coder;
 pub mod SKP_Silk_code_signs;
 pub mod SKP_Silk_sort;
-pub mod SKP_Silk_bwexpander_32;
+pub mod skp_silk_bwexpander_32;
 pub mod SKP_Silk_resampler_rom;
 pub mod SKP_Silk_tables_other;
 pub mod SKP_Silk_tables_type_offset;
@@ -52,6 +52,8 @@ pub mod SKP_Silk_pitch_est_tables;
 pub mod SKP_Silk_tables_pulses_per_block;
 pub mod SKP_Silk_tables_sign;
 pub mod SKP_Silk_LSF_cos_table;
+
+pub mod skp_silk_macro;
 
 pub mod error;
 

@@ -1494,7 +1494,7 @@ pub static mut SKP_Silk_NLSF_CB0_10: SKP_Silk_NLSF_CB_struct = unsafe {
         let mut init = SKP_Silk_NLSF_CB_struct {
             nStages: 6 as libc::c_int,
             CBStages: SKP_Silk_NLSF_CB0_10_Stage_info.as_ptr(),
-            NDeltaMin_Q15: SKP_Silk_NLSF_MSVQ_CB0_10_ndelta_min_Q15.as_ptr(),
+            NDeltaMin_Q15: &SKP_Silk_NLSF_MSVQ_CB0_10_ndelta_min_Q15,
             CDF: SKP_Silk_NLSF_MSVQ_CB0_10_CDF.as_ptr(),
             StartPtr: SKP_Silk_NLSF_MSVQ_CB0_10_CDF_start_ptr.as_ptr(),
             MiddleIx: SKP_Silk_NLSF_MSVQ_CB0_10_CDF_middle_idx.as_ptr(),

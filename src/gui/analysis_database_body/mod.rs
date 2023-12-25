@@ -1,4 +1,4 @@
-use std::{path::Path, fs::read_dir, collections::HashMap, time::{SystemTime, Duration}, ops::Add};
+use std::{path::Path, fs::read_dir, collections::HashMap};
 
 use cpal::Stream;
 use diesel::SqliteConnection;
@@ -153,6 +153,10 @@ impl AnalysisDatabaseBody {
             },
             AnalysisDatabaseMessage::ButtonMsgStopAudio => {
                 self.audio_stream = None;
+                iced::Command::none()
+            },
+            AnalysisDatabaseMessage::ButtonTestSilkSdk => {
+                module::module_media_msg::test_for_silk(self.conn.as_mut().unwrap().media_msg_conn_map.get_mut(&0).unwrap()).unwrap();
                 iced::Command::none()
             },
         }
@@ -399,6 +403,11 @@ impl AnalysisDatabaseBody {
                                         }
                                     )
                                 )
+                                .push(
+                                    Button::new("开发用：测试silk库").on_press(
+                                        Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonTestSilkSdk)
+                                    )
+                                )
                         );
                     },
                 }
@@ -427,6 +436,7 @@ pub enum AnalysisDatabaseMessage {
     ButtonAnalysis,
     ButtonSession(usize, String),
     ButtonBack,
+    ButtonTestSilkSdk,
     ButtonMsgPrev,
     ButtonMsgNext,
     InputMsgPage(String),

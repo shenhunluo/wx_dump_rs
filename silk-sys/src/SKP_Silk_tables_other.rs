@@ -1,229 +1,229 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
-#[no_mangle]
-pub static mut TargetRate_table_NB: [libc::c_int; 8] = [
-    0 as libc::c_int,
-    8000 as libc::c_int,
-    9000 as libc::c_int,
-    11000 as libc::c_int,
-    13000 as libc::c_int,
-    16000 as libc::c_int,
-    22000 as libc::c_int,
-    100000 as libc::c_int,
+
+pub static TargetRate_table_NB: [i32; 8] = [
+    0,
+    8000,
+    9000,
+    11000,
+    13000,
+    16000,
+    22000,
+    100000,
 ];
-#[no_mangle]
-pub static mut TargetRate_table_MB: [libc::c_int; 8] = [
-    0 as libc::c_int,
-    10000 as libc::c_int,
-    12000 as libc::c_int,
-    14000 as libc::c_int,
-    17000 as libc::c_int,
-    21000 as libc::c_int,
-    28000 as libc::c_int,
-    100000 as libc::c_int,
+
+pub static TargetRate_table_MB: [i32; 8] = [
+    0,
+    10000,
+    12000,
+    14000,
+    17000,
+    21000,
+    28000,
+    100000,
 ];
-#[no_mangle]
-pub static mut TargetRate_table_WB: [libc::c_int; 8] = [
-    0 as libc::c_int,
-    11000 as libc::c_int,
-    14000 as libc::c_int,
-    17000 as libc::c_int,
-    21000 as libc::c_int,
-    26000 as libc::c_int,
-    36000 as libc::c_int,
-    100000 as libc::c_int,
+
+pub static TargetRate_table_WB: [i32; 8] = [
+    0,
+    11000,
+    14000,
+    17000,
+    21000,
+    26000,
+    36000,
+    100000,
 ];
-#[no_mangle]
-pub static mut TargetRate_table_SWB: [libc::c_int; 8] = [
-    0 as libc::c_int,
-    13000 as libc::c_int,
-    16000 as libc::c_int,
-    19000 as libc::c_int,
-    25000 as libc::c_int,
-    32000 as libc::c_int,
-    46000 as libc::c_int,
-    100000 as libc::c_int,
+
+pub static TargetRate_table_SWB: [i32; 8] = [
+    0,
+    13000,
+    16000,
+    19000,
+    25000,
+    32000,
+    46000,
+    100000,
 ];
-#[no_mangle]
-pub static mut SNR_table_Q1: [libc::c_int; 8] = [
-    19 as libc::c_int,
-    31 as libc::c_int,
-    35 as libc::c_int,
-    39 as libc::c_int,
-    43 as libc::c_int,
-    47 as libc::c_int,
-    54 as libc::c_int,
-    64 as libc::c_int,
+
+pub static SNR_table_Q1: [i32; 8] = [
+    19,
+    31,
+    35,
+    39,
+    43,
+    47,
+    54,
+    64,
 ];
-#[no_mangle]
-pub static mut SNR_table_one_bit_per_sample_Q7: [libc::c_int; 4] = [
-    1984 as libc::c_int,
-    2240 as libc::c_int,
-    2408 as libc::c_int,
-    2708 as libc::c_int,
+
+pub static SNR_table_one_bit_per_sample_Q7: [i32; 4] = [
+    1984,
+    2240,
+    2408,
+    2708,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_SWB_detect_B_HP_Q13: [[libc::c_short; 3]; 3] = [
+
+pub static SKP_Silk_SWB_detect_B_HP_Q13: [[i16; 3]; 3] = [
     [
-        575 as libc::c_int as libc::c_short,
-        -(948 as libc::c_int) as libc::c_short,
-        575 as libc::c_int as libc::c_short,
+        575i16,
+        -948i16,
+        575i16,
     ],
     [
-        575 as libc::c_int as libc::c_short,
-        -(221 as libc::c_int) as libc::c_short,
-        575 as libc::c_int as libc::c_short,
+        575i16,
+        -221i16,
+        575i16,
     ],
     [
-        575 as libc::c_int as libc::c_short,
-        104 as libc::c_int as libc::c_short,
-        575 as libc::c_int as libc::c_short,
+        575i16,
+        104i16,
+        575i16,
     ],
 ];
-#[no_mangle]
-pub static mut SKP_Silk_SWB_detect_A_HP_Q13: [[libc::c_short; 2]; 3] = [
-    [14613 as libc::c_int as libc::c_short, 6868 as libc::c_int as libc::c_short],
-    [12883 as libc::c_int as libc::c_short, 7337 as libc::c_int as libc::c_short],
-    [11586 as libc::c_int as libc::c_short, 7911 as libc::c_int as libc::c_short],
+
+pub static SKP_Silk_SWB_detect_A_HP_Q13: [[i16; 2]; 3] = [
+    [14613i16, 6868i16],
+    [12883i16, 7337i16],
+    [11586i16, 7911i16],
 ];
-#[no_mangle]
-pub static mut SKP_Silk_Dec_A_HP_24: [libc::c_short; 2] = [
-    -(16220 as libc::c_int) as libc::c_short,
-    8030 as libc::c_int as libc::c_short,
+
+pub static SKP_Silk_Dec_A_HP_24: [i16; 2] = [
+    -16220i16,
+    8030i16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_Dec_B_HP_24: [libc::c_short; 3] = [
-    8000 as libc::c_int as libc::c_short,
-    -(16000 as libc::c_int) as libc::c_short,
-    8000 as libc::c_int as libc::c_short,
+
+pub static SKP_Silk_Dec_B_HP_24: [i16; 3] = [
+    8000i16,
+    -16000i16,
+    8000i16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_Dec_A_HP_16: [libc::c_short; 2] = [
-    -(16127 as libc::c_int) as libc::c_short,
-    7940 as libc::c_int as libc::c_short,
+
+pub static SKP_Silk_Dec_A_HP_16: [i16; 2] = [
+    -16127i16,
+    7940i16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_Dec_B_HP_16: [libc::c_short; 3] = [
-    8000 as libc::c_int as libc::c_short,
-    -(16000 as libc::c_int) as libc::c_short,
-    8000 as libc::c_int as libc::c_short,
+
+pub static SKP_Silk_Dec_B_HP_16: [i16; 3] = [
+    8000i16,
+    -16000i16,
+    8000i16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_Dec_A_HP_12: [libc::c_short; 2] = [
-    -(16043 as libc::c_int) as libc::c_short,
-    7859 as libc::c_int as libc::c_short,
+
+pub static SKP_Silk_Dec_A_HP_12: [i16; 2] = [
+    -16043i16,
+    7859i16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_Dec_B_HP_12: [libc::c_short; 3] = [
-    8000 as libc::c_int as libc::c_short,
-    -(16000 as libc::c_int) as libc::c_short,
-    8000 as libc::c_int as libc::c_short,
+
+pub static SKP_Silk_Dec_B_HP_12: [i16; 3] = [
+    8000i16,
+    -16000i16,
+    8000i16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_Dec_A_HP_8: [libc::c_short; 2] = [
-    -(15885 as libc::c_int) as libc::c_short,
-    7710 as libc::c_int as libc::c_short,
+
+pub static SKP_Silk_Dec_A_HP_8: [i16; 2] = [
+    -15885i16,
+    7710i16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_Dec_B_HP_8: [libc::c_short; 3] = [
-    8000 as libc::c_int as libc::c_short,
-    -(16000 as libc::c_int) as libc::c_short,
-    8000 as libc::c_int as libc::c_short,
+
+pub static SKP_Silk_Dec_B_HP_8: [i16; 3] = [
+    8000i16,
+    -16000i16,
+    8000i16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_lsb_CDF: [libc::c_ushort; 3] = [
-    0 as libc::c_int as libc::c_ushort,
-    40000 as libc::c_int as libc::c_ushort,
-    65535 as libc::c_int as libc::c_ushort,
+
+pub static SKP_Silk_lsb_CDF: [u16; 3] = [
+    0u16,
+    40000u16,
+    65535u16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_LTPscale_CDF: [libc::c_ushort; 4] = [
-    0 as libc::c_int as libc::c_ushort,
-    32000 as libc::c_int as libc::c_ushort,
-    48000 as libc::c_int as libc::c_ushort,
-    65535 as libc::c_int as libc::c_ushort,
+
+pub static SKP_Silk_LTPscale_CDF: [u16; 4] = [
+    0u16,
+    32000u16,
+    48000u16,
+    65535u16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_LTPscale_offset: libc::c_int = 2 as libc::c_int;
-#[no_mangle]
-pub static mut SKP_Silk_vadflag_CDF: [libc::c_ushort; 3] = [
-    0 as libc::c_int as libc::c_ushort,
-    22000 as libc::c_int as libc::c_ushort,
-    65535 as libc::c_int as libc::c_ushort,
+
+pub static SKP_Silk_LTPscale_offset: i32 = 2;
+
+pub static SKP_Silk_vadflag_CDF: [u16; 3] = [
+    0u16,
+    22000u16,
+    65535u16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_vadflag_offset: libc::c_int = 1 as libc::c_int;
-#[no_mangle]
-pub static mut SKP_Silk_SamplingRates_table: [libc::c_int; 4] = [
-    8 as libc::c_int,
-    12 as libc::c_int,
-    16 as libc::c_int,
-    24 as libc::c_int,
+
+pub static SKP_Silk_vadflag_offset: i32 = 1;
+
+pub static SKP_Silk_SamplingRates_table: [i32; 4] = [
+    8,
+    12,
+    16,
+    24,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_SamplingRates_CDF: [libc::c_ushort; 5] = [
-    0 as libc::c_int as libc::c_ushort,
-    16000 as libc::c_int as libc::c_ushort,
-    32000 as libc::c_int as libc::c_ushort,
-    48000 as libc::c_int as libc::c_ushort,
-    65535 as libc::c_int as libc::c_ushort,
+
+pub static SKP_Silk_SamplingRates_CDF: [u16; 5] = [
+    0u16,
+    16000u16,
+    32000u16,
+    48000u16,
+    65535u16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_SamplingRates_offset: libc::c_int = 2 as libc::c_int;
-#[no_mangle]
-pub static mut SKP_Silk_NLSF_interpolation_factor_CDF: [libc::c_ushort; 6] = [
-    0 as libc::c_int as libc::c_ushort,
-    3706 as libc::c_int as libc::c_ushort,
-    8703 as libc::c_int as libc::c_ushort,
-    19226 as libc::c_int as libc::c_ushort,
-    30926 as libc::c_int as libc::c_ushort,
-    65535 as libc::c_int as libc::c_ushort,
+
+pub static SKP_Silk_SamplingRates_offset: i32 = 2;
+
+pub static SKP_Silk_NLSF_interpolation_factor_CDF: [u16; 6] = [
+    0u16,
+    3706u16,
+    8703u16,
+    19226u16,
+    30926u16,
+    65535u16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_NLSF_interpolation_factor_offset: libc::c_int = 4 as libc::c_int;
-#[no_mangle]
-pub static mut SKP_Silk_FrameTermination_CDF: [libc::c_ushort; 5] = [
-    0 as libc::c_int as libc::c_ushort,
-    20000 as libc::c_int as libc::c_ushort,
-    45000 as libc::c_int as libc::c_ushort,
-    56000 as libc::c_int as libc::c_ushort,
-    65535 as libc::c_int as libc::c_ushort,
+
+pub static SKP_Silk_NLSF_interpolation_factor_offset: i32 = 4;
+
+pub static SKP_Silk_FrameTermination_CDF: [u16; 5] = [
+    0u16,
+    20000u16,
+    45000u16,
+    56000u16,
+    65535u16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_FrameTermination_offset: libc::c_int = 2 as libc::c_int;
-#[no_mangle]
-pub static mut SKP_Silk_Seed_CDF: [libc::c_ushort; 5] = [
-    0 as libc::c_int as libc::c_ushort,
-    16384 as libc::c_int as libc::c_ushort,
-    32768 as libc::c_int as libc::c_ushort,
-    49152 as libc::c_int as libc::c_ushort,
-    65535 as libc::c_int as libc::c_ushort,
+
+pub static SKP_Silk_FrameTermination_offset: i32 = 2;
+
+pub static SKP_Silk_Seed_CDF: [u16; 5] = [
+    0u16,
+    16384u16,
+    32768u16,
+    49152u16,
+    65535u16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_Seed_offset: libc::c_int = 2 as libc::c_int;
-#[no_mangle]
-pub static mut SKP_Silk_Quantization_Offsets_Q10: [[libc::c_short; 2]; 2] = [
-    [32 as libc::c_int as libc::c_short, 100 as libc::c_int as libc::c_short],
-    [100 as libc::c_int as libc::c_short, 256 as libc::c_int as libc::c_short],
+
+pub static SKP_Silk_Seed_offset: i32 = 2;
+
+pub static SKP_Silk_Quantization_Offsets_Q10: [[i16; 2]; 2] = [
+    [32i16, 100i16],
+    [100i16, 256i16],
 ];
-#[no_mangle]
-pub static mut SKP_Silk_LTPScales_table_Q14: [libc::c_short; 3] = [
-    15565 as libc::c_int as libc::c_short,
-    11469 as libc::c_int as libc::c_short,
-    8192 as libc::c_int as libc::c_short,
+
+pub static SKP_Silk_LTPScales_table_Q14: [i16; 3] = [
+    15565i16,
+    11469i16,
+    8192i16,
 ];
-#[no_mangle]
-pub static mut SKP_Silk_Transition_LP_B_Q28: [[libc::c_int; 3]; 5] = [
-    [250767114 as libc::c_int, 501534038 as libc::c_int, 250767114 as libc::c_int],
-    [209867381 as libc::c_int, 419732057 as libc::c_int, 209867381 as libc::c_int],
-    [170987846 as libc::c_int, 341967853 as libc::c_int, 170987846 as libc::c_int],
-    [131531482 as libc::c_int, 263046905 as libc::c_int, 131531482 as libc::c_int],
-    [89306658 as libc::c_int, 178584282 as libc::c_int, 89306658 as libc::c_int],
+
+pub static SKP_Silk_Transition_LP_B_Q28: [[i32; 3]; 5] = [
+    [250767114, 501534038, 250767114],
+    [209867381, 419732057, 209867381],
+    [170987846, 341967853, 170987846],
+    [131531482, 263046905, 131531482],
+    [89306658, 178584282, 89306658],
 ];
-#[no_mangle]
-pub static mut SKP_Silk_Transition_LP_A_Q28: [[libc::c_int; 2]; 5] = [
-    [506393414 as libc::c_int, 239854379 as libc::c_int],
-    [411067935 as libc::c_int, 169683996 as libc::c_int],
-    [306733530 as libc::c_int, 116694253 as libc::c_int],
-    [185807084 as libc::c_int, 77959395 as libc::c_int],
-    [35497197 as libc::c_int, 57401098 as libc::c_int],
+
+pub static SKP_Silk_Transition_LP_A_Q28: [[i32; 2]; 5] = [
+    [506393414, 239854379],
+    [411067935, 169683996],
+    [306733530, 116694253],
+    [185807084, 77959395],
+    [35497197, 57401098],
 ];

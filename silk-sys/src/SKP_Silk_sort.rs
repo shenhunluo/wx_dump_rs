@@ -89,23 +89,19 @@ pub unsafe extern "C" fn SKP_Silk_insertion_sort_decreasing_int16(
         i += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_insertion_sort_increasing_all_values(
-    mut a: *mut libc::c_int,
-    L: libc::c_int,
+
+pub fn SKP_Silk_insertion_sort_increasing_all_values(
+    a: &mut [i32],
+    L: usize,
 ) {
-    let mut value: libc::c_int = 0;
-    let mut i: libc::c_int = 0;
-    let mut j: libc::c_int = 0;
-    i = 1 as libc::c_int;
-    while i < L {
-        value = *a.offset(i as isize);
-        j = i - 1 as libc::c_int;
-        while j >= 0 as libc::c_int && value < *a.offset(j as isize) {
-            *a.offset((j + 1 as libc::c_int) as isize) = *a.offset(j as isize);
-            j -= 1;
+    for i in 1..L {
+        let mut value = a[i];
+        for j in (0..i).rev() {
+            if value >= a[j] {
+                a[j + 1] = value;
+                break;
+            }
+            a[j + 1] = a[j];
         }
-        *a.offset((j + 1 as libc::c_int) as isize) = value;
-        i += 1;
     }
 }

@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{SKP_Silk_bwexpander_32::SKP_Silk_bwexpander_32, SKP_Silk_LSF_cos_table::SKP_Silk_LSFCosTab_FIX_Q12};
+use crate::{skp_silk_bwexpander_32::skp_silk_bwexpander_32, SKP_Silk_LSF_cos_table::SKP_Silk_LSFCosTab_FIX_Q12};
 pub type __int64_t = libc::c_longlong;
 pub type int64_t = __int64_t;
 #[inline]
@@ -148,7 +148,7 @@ pub unsafe extern "C" fn SKP_Silk_NLSF2A(
             - (65470 as libc::c_int >> 2 as libc::c_int)
                 * (maxabs - 0x7fff as libc::c_int)
                 / (maxabs * (idx + 1 as libc::c_int) >> 2 as libc::c_int);
-        SKP_Silk_bwexpander_32(a_int32.as_mut_ptr(), d, sc_Q16);
+        skp_silk_bwexpander_32(&mut a_int32, d as usize, sc_Q16);
         i += 1;
     }
     if i == 10 as libc::c_int {

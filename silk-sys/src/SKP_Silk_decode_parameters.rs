@@ -191,7 +191,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_parameters(
         (*psNLSF_CB).nStages,
     );
     SKP_Silk_NLSF_MSVQ_decode(
-        pNLSF_Q15.as_mut_ptr(),
+        &mut pNLSF_Q15,
         psNLSF_CB,
         NLSFIndices.as_mut_ptr(),
         (*psDec).LPC_order,
