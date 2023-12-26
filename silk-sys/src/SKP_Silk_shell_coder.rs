@@ -42,110 +42,38 @@ fn decode_split(
         (0,0)
     }
 }
-#[no_mangle]
-pub unsafe fn SKP_Silk_shell_encoder(
-    mut sRC: &mut SKP_Silk_range_coder_state,
+
+pub fn SKP_Silk_shell_encoder(
+    sRC: &mut SKP_Silk_range_coder_state,
     pulses0: &mut [i32],
 ) {
-    let mut pulses1: [libc::c_int; 8] = [0; 8];
-    let mut pulses2: [libc::c_int; 4] = [0; 4];
-    let mut pulses3: [libc::c_int; 2] = [0; 2];
-    let mut pulses4: [libc::c_int; 1] = [0; 1];
+    let mut pulses1 = [0; 8];
+    let mut pulses2 = [0; 4];
+    let mut pulses3 = [0; 2];
+    let mut pulses4 = [0; 1];
+
     combine_pulses(&mut pulses1, pulses0, 8);
     combine_pulses(&mut pulses2, &pulses1, 4);
     combine_pulses(&mut pulses3, &pulses2, 2);
     combine_pulses(&mut pulses4, &pulses3, 1);
-    encode_split(
-        sRC,
-        pulses3[0 as libc::c_int as usize],
-        pulses4[0 as libc::c_int as usize],
-        &SKP_SILK_SHELL_CODE_TABLE3,
-    );
-    encode_split(
-        sRC,
-        pulses2[0 as libc::c_int as usize],
-        pulses3[0 as libc::c_int as usize],
-        &SKP_SILK_SHELL_CODE_TABLE2,
-    );
-    encode_split(
-        sRC,
-        pulses1[0 as libc::c_int as usize],
-        pulses2[0 as libc::c_int as usize],
-        &SKP_SILK_SHELL_CODE_TABLE1,
-    );
-    encode_split(
-        sRC,
-        pulses0[0],
-        pulses1[0 as libc::c_int as usize],
-        &SKP_SILK_SHELL_CODE_TABLE0,
-    );
-    encode_split(
-        sRC,
-        pulses0[2],
-        pulses1[1 as libc::c_int as usize],
-        &SKP_SILK_SHELL_CODE_TABLE0,
-    );
-    encode_split(
-        sRC,
-        pulses1[2 as libc::c_int as usize],
-        pulses2[1 as libc::c_int as usize],
-        &SKP_SILK_SHELL_CODE_TABLE1,
-    );
-    encode_split(
-        sRC,
-        pulses0[4],
-        pulses1[2],
-        &SKP_SILK_SHELL_CODE_TABLE0,
-    );
-    encode_split(
-        sRC,
-        pulses0[6],
-        pulses1[3 as libc::c_int as usize],
-        &SKP_SILK_SHELL_CODE_TABLE0,
-    );
-    encode_split(
-        sRC,
-        pulses2[2 as libc::c_int as usize],
-        pulses3[1 as libc::c_int as usize],
-        &SKP_SILK_SHELL_CODE_TABLE2,
-    );
-    encode_split(
-        sRC,
-        pulses1[4 as libc::c_int as usize],
-        pulses2[2 as libc::c_int as usize],
-        &SKP_SILK_SHELL_CODE_TABLE1,
-    );
-    encode_split(
-        sRC,
-        pulses0[8],
-        pulses1[4 as libc::c_int as usize],
-        &SKP_SILK_SHELL_CODE_TABLE0,
-    );
-    encode_split(
-        sRC,
-        pulses0[10],
-        pulses1[5 as libc::c_int as usize],
-        &SKP_SILK_SHELL_CODE_TABLE0,
-    );
-    encode_split(
-        sRC,
-        pulses1[6 as libc::c_int as usize],
-        pulses2[3 as libc::c_int as usize],
-        &SKP_SILK_SHELL_CODE_TABLE1,
-    );
-    encode_split(
-        sRC,
-        pulses0[12],
-        pulses1[6 as libc::c_int as usize],
-        &SKP_SILK_SHELL_CODE_TABLE0,
-    );
-    encode_split(
-        sRC,
-        pulses0[14],
-        pulses1[7 as libc::c_int as usize],
-        &SKP_SILK_SHELL_CODE_TABLE0,
-    );
+
+    encode_split(sRC, pulses3[0], pulses4[0], &SKP_SILK_SHELL_CODE_TABLE3);
+    encode_split(sRC, pulses2[0], pulses3[0], &SKP_SILK_SHELL_CODE_TABLE2);
+    encode_split(sRC, pulses1[0], pulses2[0], &SKP_SILK_SHELL_CODE_TABLE1);
+    encode_split(sRC, pulses0[0], pulses1[0], &SKP_SILK_SHELL_CODE_TABLE0);
+    encode_split(sRC, pulses0[2], pulses1[1], &SKP_SILK_SHELL_CODE_TABLE0);
+    encode_split(sRC, pulses1[2], pulses2[1], &SKP_SILK_SHELL_CODE_TABLE1);
+    encode_split(sRC, pulses0[4], pulses1[2], &SKP_SILK_SHELL_CODE_TABLE0);
+    encode_split(sRC, pulses0[6], pulses1[3], &SKP_SILK_SHELL_CODE_TABLE0);
+    encode_split(sRC, pulses2[2], pulses3[1], &SKP_SILK_SHELL_CODE_TABLE2);
+    encode_split(sRC, pulses1[4], pulses2[2], &SKP_SILK_SHELL_CODE_TABLE1);
+    encode_split(sRC, pulses0[8], pulses1[4], &SKP_SILK_SHELL_CODE_TABLE0);
+    encode_split(sRC, pulses0[10],pulses1[5], &SKP_SILK_SHELL_CODE_TABLE0);
+    encode_split(sRC, pulses1[6], pulses2[3], &SKP_SILK_SHELL_CODE_TABLE1);
+    encode_split(sRC, pulses0[12],pulses1[6], &SKP_SILK_SHELL_CODE_TABLE0);
+    encode_split(sRC, pulses0[14],pulses1[7], &SKP_SILK_SHELL_CODE_TABLE0);
 }
+
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_shell_decoder(
     mut pulses0: *mut libc::c_int,
