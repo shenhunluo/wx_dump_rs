@@ -25,8 +25,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_pulses(
     let mut sum_pulses: [libc::c_int; 30] = [0; 30];
     let mut nLshifts: [libc::c_int; 30] = [0; 30];
     let mut pulses_ptr: *mut libc::c_int = 0 as *mut libc::c_int;
-    SKP_Silk_range_decoder(
-        &mut (*psDecCtrl).RateLevelIndex,
+    (*psDecCtrl).RateLevelIndex = SKP_Silk_range_decoder(
         psRC,
         &SKP_SILK_RATE_LEVELS_CDF[(*psDecCtrl).sigtype as usize],
         SKP_SILK_RATE_LEVELS_CDF_OFFSET,
@@ -36,8 +35,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_pulses(
     i = 0 as libc::c_int;
     while i < iter {
         nLshifts[i as usize] = 0 as libc::c_int;
-        SKP_Silk_range_decoder(
-            &mut *sum_pulses.as_mut_ptr().offset(i as isize),
+        sum_pulses[i as usize] = SKP_Silk_range_decoder(
             psRC,
             cdf_ptr,
             SKP_SILK_PULSES_PER_BLOCK_CDF_OFFSET,
@@ -45,8 +43,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_pulses(
         while sum_pulses[i as usize] == 18 as libc::c_int + 1 as libc::c_int {
             nLshifts[i as usize] += 1;
             nLshifts[i as usize];
-            SKP_Silk_range_decoder(
-                &mut *sum_pulses.as_mut_ptr().offset(i as isize),
+            sum_pulses[i as usize] = SKP_Silk_range_decoder(
                 psRC,
                 &SKP_SILK_PULSES_PER_BLOCK_CDF[(10 as libc::c_int - 1 as libc::c_int)
                     as usize],
@@ -96,8 +93,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_pulses(
                 j = 0 as libc::c_int;
                 while j < nLS {
                     abs_q = abs_q << 1 as libc::c_int;
-                    SKP_Silk_range_decoder(
-                        &mut bit,
+                    bit = SKP_Silk_range_decoder(
                         psRC,
                         &SKP_SILK_LSB_CDF,
                         1 as libc::c_int,

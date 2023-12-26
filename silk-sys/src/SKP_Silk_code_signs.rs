@@ -43,7 +43,6 @@ pub unsafe fn SKP_Silk_decode_signs(
     quant_offset_type: i32,
     rate_level_index: i32,
 ) {
-    let mut data = 0;
     let mut cdf = [
         0,
         SKP_SILK_SIGN_CDF[
@@ -53,8 +52,7 @@ pub unsafe fn SKP_Silk_decode_signs(
     ];
     for i in 0..length {
         if *q.offset(i as isize) > 0 {
-            SKP_Silk_range_decoder(
-                &mut data,
+            let data = SKP_Silk_range_decoder(
                 sRC,
                 &cdf,
                 1,

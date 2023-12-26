@@ -46,7 +46,7 @@ unsafe fn decode_split(
     if p > 0 as libc::c_int {
         cdf_middle = p >> 1 as libc::c_int;
         let cdf = &shell_table[SKP_SILK_SHELL_CODE_TABLE_OFFSETS[p as usize] as usize..];
-        SKP_Silk_range_decoder(p_child1, sRC, cdf, cdf_middle);
+        *p_child1 = SKP_Silk_range_decoder(sRC, cdf, cdf_middle);
         *p_child2
             .offset(
                 0 as libc::c_int as isize,

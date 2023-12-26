@@ -137,101 +137,93 @@ pub unsafe extern "C" fn SKP_Silk_range_encoder_multi(
     }
 }
 #[no_mangle]
-pub unsafe fn SKP_Silk_range_decoder(
-    mut data: *mut libc::c_int,
-    mut psRC: &mut SKP_Silk_range_coder_state,
-    mut prob: &[u16],
-    mut probIx: libc::c_int,
-) {
-    let mut low_Q16: libc::c_uint = 0;
-    let mut high_Q16: libc::c_uint = 0;
-    let mut base_tmp: libc::c_uint = 0;
-    let mut range_Q32: libc::c_uint = 0;
-    let mut base_Q32: libc::c_uint = (*psRC).base_Q32;
-    let mut range_Q16: libc::c_uint = (*psRC).range_Q16;
-    let mut bufferIx: libc::c_int = (*psRC).bufferIx;
-    let mut buffer: *mut libc::c_uchar = &mut *((*psRC).buffer)
-        .as_mut_ptr()
-        .offset(4 as libc::c_int as isize) as *mut libc::c_uchar;
-    if (*psRC).error != 0 {
-        *data = 0 as libc::c_int;
-        return;
+pub fn SKP_Silk_range_decoder(
+    psRC: &mut SKP_Silk_range_coder_state,
+    prob: &[u16],
+    mut probIx: i32,
+) -> i32 {
+    let mut low_Q16 = 0;
+    let mut high_Q16 = 0;
+    let mut base_tmp = 0;
+    let mut range_Q32 = 0;
+    let mut base_Q32 = psRC.base_Q32;
+    let mut range_Q16 = psRC.range_Q16;
+    let mut bufferIx = psRC.bufferIx;
+    let mut buffer = &psRC.buffer[4..];
+    if psRC.error != 0 {
+        return 0;
     }
-    high_Q16 = prob[probIx as usize] as libc::c_uint;
+    high_Q16 = prob[probIx as usize] as u32;
     base_tmp = range_Q16.wrapping_mul(high_Q16);
     if base_tmp > base_Q32 {
         loop {
             probIx -= 1;
-            low_Q16 = prob[probIx as usize] as libc::c_uint;
+            low_Q16 = prob[probIx as usize] as u32;
             base_tmp = range_Q16.wrapping_mul(low_Q16);
             if base_tmp <= base_Q32 {
                 break;
             }
             high_Q16 = low_Q16;
-            if high_Q16 == 0 as libc::c_int as libc::c_uint {
-                (*psRC).error = -(2 as libc::c_int);
-                *data = 0 as libc::c_int;
-                return;
+            if high_Q16 == 0 {
+                psRC.error = -2;
+                return 0;
             }
         }
     } else {
         loop {
             low_Q16 = high_Q16;
             probIx += 1;
-            high_Q16 = prob[probIx as usize] as libc::c_uint;
+            high_Q16 = prob[probIx as usize] as u32;
             base_tmp = range_Q16.wrapping_mul(high_Q16);
             if base_tmp > base_Q32 {
                 probIx -= 1;
                 break;
-            } else if high_Q16 == 0xffff as libc::c_int as libc::c_uint {
-                (*psRC).error = -(2 as libc::c_int);
-                *data = 0 as libc::c_int;
-                return;
+            } else if high_Q16 == 0xffff {
+                (*psRC).error = -2;
+                return 0;
             }
         }
     }
-    *data = probIx;
+
     base_Q32 = base_Q32.wrapping_sub(range_Q16.wrapping_mul(low_Q16));
     range_Q32 = range_Q16.wrapping_mul(high_Q16.wrapping_sub(low_Q16));
-    if range_Q32 & 0xff000000 as libc::c_uint != 0 {
-        range_Q16 = range_Q32 >> 16 as libc::c_int;
+    if range_Q32 & 0xff000000 != 0 {
+        range_Q16 = range_Q32 >> 16;
     } else {
-        if range_Q32 & 0xffff0000 as libc::c_uint != 0 {
-            range_Q16 = range_Q32 >> 8 as libc::c_int;
-            if base_Q32 >> 24 as libc::c_int != 0 {
-                (*psRC).error = -(3 as libc::c_int);
-                *data = 0 as libc::c_int;
-                return;
+        if range_Q32 & 0xffff0000 != 0 {
+            range_Q16 = range_Q32 >> 8;
+            if base_Q32 >> 24 != 0 {
+                (*psRC).error = -3;
+                return 0;
             }
         } else {
             range_Q16 = range_Q32;
-            if base_Q32 >> 16 as libc::c_int != 0 {
-                (*psRC).error = -(3 as libc::c_int);
-                *data = 0 as libc::c_int;
-                return;
+            if base_Q32 >> 16 != 0 {
+                (*psRC).error = -3;
+                return 0;
             }
-            base_Q32 = base_Q32 << 8 as libc::c_int;
+            base_Q32 = base_Q32 << 8;
             if bufferIx < (*psRC).bufferLength {
                 let fresh3 = bufferIx;
                 bufferIx = bufferIx + 1;
-                base_Q32 |= *buffer.offset(fresh3 as isize) as libc::c_uint;
+                base_Q32 |= buffer[fresh3 as usize] as u32;
             }
         }
-        base_Q32 = base_Q32 << 8 as libc::c_int;
+        base_Q32 = base_Q32 << 8;
         if bufferIx < (*psRC).bufferLength {
             let fresh4 = bufferIx;
             bufferIx = bufferIx + 1;
-            base_Q32 |= *buffer.offset(fresh4 as isize) as libc::c_uint;
+            base_Q32 |= buffer[fresh4 as usize] as u32;
         }
     }
-    if range_Q16 == 0 as libc::c_int as libc::c_uint {
-        (*psRC).error = -(4 as libc::c_int);
-        *data = 0 as libc::c_int;
-        return;
+    if range_Q16 == 0 {
+        (*psRC).error = -4;
+        return 0;
     }
-    (*psRC).base_Q32 = base_Q32;
-    (*psRC).range_Q16 = range_Q16;
-    (*psRC).bufferIx = bufferIx;
+    psRC.base_Q32 = base_Q32;
+    psRC.range_Q16 = range_Q16;
+    psRC.bufferIx = bufferIx;
+    probIx
 }
 #[no_mangle]
 pub unsafe fn SKP_Silk_range_decoder_multi(
@@ -244,8 +236,7 @@ pub unsafe fn SKP_Silk_range_decoder_multi(
     let mut k: libc::c_int = 0;
     k = 0 as libc::c_int;
     while k < nSymbols {
-        SKP_Silk_range_decoder(
-            &mut *data.offset(k as isize),
+        *data.offset(k as isize) = SKP_Silk_range_decoder(
             psRC,
             &prob[k as usize],
             probStartIx[k as usize],
