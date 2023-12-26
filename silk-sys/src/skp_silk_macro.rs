@@ -102,3 +102,10 @@ macro_rules! skp_mla {
         ($a32) + ($b32 * $c32)
     }}
 }
+
+#[macro_export]
+macro_rules! skp_dec_map {
+    ($a:expr) => {{
+        crate::skp_l_shift!($a,1)-1
+    }}
+}
