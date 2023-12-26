@@ -1,7 +1,7 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
 use crate::{SKP_Silk_range_coder::{SKP_Silk_range_coder_state, SKP_Silk_range_encoder, SKP_Silk_range_decoder}, skp_silk_tables_pulses_per_block::{SKP_SILK_SHELL_CODE_TABLE_OFFSETS, SKP_SILK_SHELL_CODE_TABLE3, SKP_SILK_SHELL_CODE_TABLE2, SKP_SILK_SHELL_CODE_TABLE1, SKP_SILK_SHELL_CODE_TABLE0}};
-#[inline]
+
 fn combine_pulses(
     mut out: &mut [i32],
     mut in_0: &[i32],
