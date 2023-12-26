@@ -7,13 +7,7 @@ use crate::skp_silk_tables_nlsf_cb0_16::SKP_SILK_NLSF_CB0_16;
 use crate::skp_silk_tables_nlsf_cb1_10::SKP_SILK_NLSF_CB1_10;
 use crate::skp_silk_tables_nlsf_cb1_16::SKP_SILK_NLSF_CB1_16;
 use crate::skp_silk_tables_other::{SKP_SILK_DEC_A_HP_24, SKP_SILK_DEC_B_HP_24, SKP_SILK_DEC_B_HP_16, SKP_SILK_DEC_A_HP_16, SKP_SILK_DEC_A_HP_12, SKP_SILK_DEC_B_HP_12, SKP_SILK_DEC_A_HP_8, SKP_SILK_DEC_B_HP_8};
-extern "C" {
-    fn memset(
-        _: *mut libc::c_void,
-        _: libc::c_int,
-        _: libc::c_ulong,
-    ) -> *mut libc::c_void;
-}
+
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct _SKP_Silk_resampler_state_struct {
