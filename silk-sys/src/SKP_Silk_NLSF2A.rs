@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{skp_silk_bwexpander_32::skp_silk_bwexpander_32, SKP_Silk_LSF_cos_table::SKP_Silk_LSFCosTab_FIX_Q12};
+use crate::{skp_silk_bwexpander_32::skp_silk_bwexpander_32, skp_silk_lsf_cos_table::SKP_SILK_LSF_COS_TAB_FIX_Q12};
 pub type __int64_t = libc::c_longlong;
 pub type int64_t = __int64_t;
 #[inline]
@@ -83,8 +83,8 @@ pub unsafe extern "C" fn SKP_Silk_NLSF2A(
         f_int = *NLSF.offset(k as isize) >> 15 as libc::c_int - 7 as libc::c_int;
         f_frac = *NLSF.offset(k as isize)
             - (f_int << 15 as libc::c_int - 7 as libc::c_int);
-        cos_val = SKP_Silk_LSFCosTab_FIX_Q12[f_int as usize];
-        delta = SKP_Silk_LSFCosTab_FIX_Q12[(f_int + 1 as libc::c_int) as usize]
+        cos_val = SKP_SILK_LSF_COS_TAB_FIX_Q12[f_int as usize];
+        delta = SKP_SILK_LSF_COS_TAB_FIX_Q12[(f_int + 1 as libc::c_int) as usize]
             - cos_val;
         cos_LSF_Q20[k as usize] = (cos_val << 8 as libc::c_int) + delta * f_frac;
         k += 1;

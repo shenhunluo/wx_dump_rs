@@ -1,11 +1,11 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
 use crate::SKP_Silk_dec_API::SKP_Silk_decoder_state;
-use crate::SKP_Silk_tables_NLSF_CB0_10::SKP_Silk_NLSF_CB0_10;
-use crate::SKP_Silk_tables_NLSF_CB0_16::SKP_Silk_NLSF_CB0_16;
-use crate::SKP_Silk_tables_NLSF_CB1_10::SKP_Silk_NLSF_CB1_10;
-use crate::SKP_Silk_tables_NLSF_CB1_16::SKP_Silk_NLSF_CB1_16;
-use crate::SKP_Silk_tables_other::{SKP_Silk_Dec_A_HP_24, SKP_Silk_Dec_B_HP_24, SKP_Silk_Dec_B_HP_16, SKP_Silk_Dec_A_HP_16, SKP_Silk_Dec_A_HP_12, SKP_Silk_Dec_B_HP_12, SKP_Silk_Dec_A_HP_8, SKP_Silk_Dec_B_HP_8};
+use crate::skp_silk_tables_nlsf_cb0_10::SKP_SILK_NLSF_CB0_10;
+use crate::skp_silk_tables_nlsf_cb0_16::SKP_SILK_NLSF_CB0_16;
+use crate::skp_silk_tables_nlsf_cb1_10::SKP_SILK_NLSF_CB1_10;
+use crate::skp_silk_tables_nlsf_cb1_16::SKP_SILK_NLSF_CB1_16;
+use crate::skp_silk_tables_other::{SKP_SILK_DEC_A_HP_24, SKP_SILK_DEC_B_HP_24, SKP_SILK_DEC_B_HP_16, SKP_SILK_DEC_A_HP_16, SKP_SILK_DEC_A_HP_12, SKP_SILK_DEC_B_HP_12, SKP_SILK_DEC_A_HP_8, SKP_SILK_DEC_B_HP_8};
 extern "C" {
     fn memset(
         _: *mut libc::c_void,
@@ -122,12 +122,12 @@ pub unsafe extern "C" fn SKP_Silk_decoder_set_fs(
             as libc::c_int * fs_kHz as libc::c_short as libc::c_int;
         if (*psDec).fs_kHz == 8 as libc::c_int {
             (*psDec).LPC_order = 10 as libc::c_int;
-            (*psDec).psNLSF_CB[0 as libc::c_int as usize] = Some(&SKP_Silk_NLSF_CB0_10);
-            (*psDec).psNLSF_CB[1 as libc::c_int as usize] = Some(&SKP_Silk_NLSF_CB1_10);
+            (*psDec).psNLSF_CB[0 as libc::c_int as usize] = Some(&SKP_SILK_NLSF_CB0_10);
+            (*psDec).psNLSF_CB[1 as libc::c_int as usize] = Some(&SKP_SILK_NLSF_CB1_10);
         } else {
             (*psDec).LPC_order = 16 as libc::c_int;
-            (*psDec).psNLSF_CB[0 as libc::c_int as usize] = Some(&SKP_Silk_NLSF_CB0_16);
-            (*psDec).psNLSF_CB[1 as libc::c_int as usize] = Some(&SKP_Silk_NLSF_CB1_16);
+            (*psDec).psNLSF_CB[0 as libc::c_int as usize] = Some(&SKP_SILK_NLSF_CB0_16);
+            (*psDec).psNLSF_CB[1 as libc::c_int as usize] = Some(&SKP_SILK_NLSF_CB1_16);
         }
         memset(
             ((*psDec).sLPC_Q14).as_mut_ptr() as *mut libc::c_void,
@@ -152,17 +152,17 @@ pub unsafe extern "C" fn SKP_Silk_decoder_set_fs(
         (*psDec).prev_sigtype = 0 as libc::c_int;
         (*psDec).first_frame_after_reset = 1 as libc::c_int;
         if fs_kHz == 24 as libc::c_int {
-            (*psDec).HP_A = SKP_Silk_Dec_A_HP_24.as_ptr();
-            (*psDec).HP_B = SKP_Silk_Dec_B_HP_24.as_ptr();
+            (*psDec).HP_A = SKP_SILK_DEC_A_HP_24.as_ptr();
+            (*psDec).HP_B = SKP_SILK_DEC_B_HP_24.as_ptr();
         } else if fs_kHz == 16 as libc::c_int {
-            (*psDec).HP_A = SKP_Silk_Dec_A_HP_16.as_ptr();
-            (*psDec).HP_B = SKP_Silk_Dec_B_HP_16.as_ptr();
+            (*psDec).HP_A = SKP_SILK_DEC_A_HP_16.as_ptr();
+            (*psDec).HP_B = SKP_SILK_DEC_B_HP_16.as_ptr();
         } else if fs_kHz == 12 as libc::c_int {
-            (*psDec).HP_A = SKP_Silk_Dec_A_HP_12.as_ptr();
-            (*psDec).HP_B = SKP_Silk_Dec_B_HP_12.as_ptr();
+            (*psDec).HP_A = SKP_SILK_DEC_A_HP_12.as_ptr();
+            (*psDec).HP_B = SKP_SILK_DEC_B_HP_12.as_ptr();
         } else if fs_kHz == 8 as libc::c_int {
-            (*psDec).HP_A = SKP_Silk_Dec_A_HP_8.as_ptr();
-            (*psDec).HP_B = SKP_Silk_Dec_B_HP_8.as_ptr();
+            (*psDec).HP_A = SKP_SILK_DEC_A_HP_8.as_ptr();
+            (*psDec).HP_B = SKP_SILK_DEC_B_HP_8.as_ptr();
         }
     }
 }

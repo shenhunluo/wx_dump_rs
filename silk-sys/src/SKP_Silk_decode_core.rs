@@ -1,5 +1,5 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
-use crate::SKP_Silk_tables_other::SKP_Silk_Quantization_Offsets_Q10;
+use crate::skp_silk_tables_other::SKP_SILK_QUANTIZATION_OFFSETS_Q10;
 #[deny(arithmetic_overflow)]
 
 use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, SKP_Silk_MA::SKP_Silk_MA_Prediction};
@@ -316,7 +316,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_core(
     let mut pres_Q10: *mut libc::c_int = 0 as *mut libc::c_int;
     let mut vec_Q10: [libc::c_int; 120] = [0; 120];
     let mut FiltState: [libc::c_int; 16] = [0; 16];
-    offset_Q10 = SKP_Silk_Quantization_Offsets_Q10[(*psDecCtrl).sigtype
+    offset_Q10 = SKP_SILK_QUANTIZATION_OFFSETS_Q10[(*psDecCtrl).sigtype
         as usize][(*psDecCtrl).QuantOffsetType as usize] as libc::c_int;
     if (*psDecCtrl).NLSFInterpCoef_Q2 < (1 as libc::c_int) << 2 as libc::c_int {
         NLSF_interpolation_flag = 1 as libc::c_int;

@@ -1,4 +1,3 @@
-
 pub mod SKP_Silk_create_init_destroy;
 pub mod SKP_Silk_dec_API;
 pub mod SKP_Silk_resampler;
@@ -40,19 +39,19 @@ pub mod SKP_Silk_code_signs;
 pub mod SKP_Silk_sort;
 pub mod skp_silk_bwexpander_32;
 pub mod SKP_Silk_resampler_rom;
-pub mod SKP_Silk_tables_other;
-pub mod SKP_Silk_tables_type_offset;
-pub mod SKP_Silk_tables_gain;
-pub mod SKP_Silk_tables_pitch_lag;
+pub mod skp_silk_tables_other;
+pub mod skp_silk_tables_type_offset;
+pub mod skp_silk_tables_gain;
+pub mod skp_silk_tables_pitch_lag;
 pub mod SKP_Silk_tables_LTP;
-pub mod SKP_Silk_tables_NLSF_CB0_10;
-pub mod SKP_Silk_tables_NLSF_CB1_10;
-pub mod SKP_Silk_tables_NLSF_CB0_16;
-pub mod SKP_Silk_tables_NLSF_CB1_16;
-pub mod SKP_Silk_pitch_est_tables;
-pub mod SKP_Silk_tables_pulses_per_block;
-pub mod SKP_Silk_tables_sign;
-pub mod SKP_Silk_LSF_cos_table;
+pub mod skp_silk_tables_nlsf_cb0_10;
+pub mod skp_silk_tables_nlsf_cb1_10;
+pub mod skp_silk_tables_nlsf_cb0_16;
+pub mod skp_silk_tables_nlsf_cb1_16;
+pub mod skp_silk_pitch_est_tables;
+pub mod skp_silk_tables_pulses_per_block;
+pub mod skp_silk_tables_sign;
+pub mod skp_silk_lsf_cos_table;
 
 pub mod skp_silk_macro;
 

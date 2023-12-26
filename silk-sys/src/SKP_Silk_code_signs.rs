@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{SKP_Silk_range_coder::{SKP_Silk_range_coder_state, SKP_Silk_range_encoder, SKP_Silk_range_decoder}, SKP_Silk_tables_sign::SKP_Silk_sign_CDF};
+use crate::{SKP_Silk_range_coder::{SKP_Silk_range_coder_state, SKP_Silk_range_encoder, SKP_Silk_range_decoder}, skp_silk_tables_sign::SKP_SILK_SIGN_CDF};
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_encode_signs(
     mut sRC: *mut SKP_Silk_range_coder_state,
@@ -17,7 +17,7 @@ pub unsafe extern "C" fn SKP_Silk_encode_signs(
         * ((sigtype << 1 as libc::c_int) + QuantOffsetType) as libc::c_short
             as libc::c_int + RateLevelIndex;
     cdf[0 as libc::c_int as usize] = 0 as libc::c_int as libc::c_ushort;
-    cdf[1 as libc::c_int as usize] = SKP_Silk_sign_CDF[i as usize];
+    cdf[1 as libc::c_int as usize] = SKP_SILK_SIGN_CDF[i as usize];
     cdf[2 as libc::c_int as usize] = 65535 as libc::c_int as libc::c_ushort;
     i = 0 as libc::c_int;
     while i < length {
@@ -49,7 +49,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_signs(
         * ((sigtype << 1 as libc::c_int) + QuantOffsetType) as libc::c_short
             as libc::c_int + RateLevelIndex;
     cdf[0 as libc::c_int as usize] = 0 as libc::c_int as libc::c_ushort;
-    cdf[1 as libc::c_int as usize] = SKP_Silk_sign_CDF[i as usize];
+    cdf[1 as libc::c_int as usize] = SKP_SILK_SIGN_CDF[i as usize];
     cdf[2 as libc::c_int as usize] = 65535 as libc::c_int as libc::c_ushort;
     i = 0 as libc::c_int;
     while i < length {

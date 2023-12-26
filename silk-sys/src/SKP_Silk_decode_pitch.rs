@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::SKP_Silk_pitch_est_tables::{SKP_Silk_CB_lags_stage2, SKP_Silk_CB_lags_stage3};
+use crate::skp_silk_pitch_est_tables::{SKP_SILK_CB_LAGS_STAGE2, SKP_SILK_CB_LAGS_STAGE3};
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_decode_pitch(
     mut lagIndex: libc::c_int,
@@ -21,7 +21,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_pitch(
                 .offset(
                     i as isize,
                 ) = lag
-                + SKP_Silk_CB_lags_stage2[i as usize][contourIndex as usize]
+                + SKP_SILK_CB_LAGS_STAGE2[i as usize][contourIndex as usize]
                     as libc::c_int;
             i += 1;
         }
@@ -32,7 +32,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_pitch(
                 .offset(
                     i as isize,
                 ) = lag
-                + SKP_Silk_CB_lags_stage3[i as usize][contourIndex as usize]
+                + SKP_SILK_CB_LAGS_STAGE3[i as usize][contourIndex as usize]
                     as libc::c_int;
             i += 1;
         }

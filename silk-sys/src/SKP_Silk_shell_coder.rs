@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{SKP_Silk_range_coder::{SKP_Silk_range_coder_state, SKP_Silk_range_encoder, SKP_Silk_range_decoder}, SKP_Silk_tables_pulses_per_block::{SKP_Silk_shell_code_table_offsets, SKP_Silk_shell_code_table3, SKP_Silk_shell_code_table2, SKP_Silk_shell_code_table1, SKP_Silk_shell_code_table0}};
+use crate::{SKP_Silk_range_coder::{SKP_Silk_range_coder_state, SKP_Silk_range_encoder, SKP_Silk_range_decoder}, skp_silk_tables_pulses_per_block::{SKP_SILK_SHELL_CODE_TABLE_OFFSETS, SKP_SILK_SHELL_CODE_TABLE3, SKP_SILK_SHELL_CODE_TABLE2, SKP_SILK_SHELL_CODE_TABLE1, SKP_SILK_SHELL_CODE_TABLE0}};
 #[inline]
 unsafe extern "C" fn combine_pulses(
     mut out: *mut libc::c_int,
@@ -29,7 +29,7 @@ unsafe extern "C" fn encode_split(
     if p > 0 as libc::c_int {
         cdf = &*shell_table
             .offset(
-                *SKP_Silk_shell_code_table_offsets.as_ptr().offset(p as isize) as isize,
+                *SKP_SILK_SHELL_CODE_TABLE_OFFSETS.as_ptr().offset(p as isize) as isize,
             ) as *const libc::c_ushort;
         SKP_Silk_range_encoder(sRC, p_child1, cdf);
     }
@@ -45,7 +45,7 @@ unsafe fn decode_split(
     let mut cdf_middle: libc::c_int = 0;
     if p > 0 as libc::c_int {
         cdf_middle = p >> 1 as libc::c_int;
-        let cdf = &shell_table[SKP_Silk_shell_code_table_offsets[p as usize] as usize..];
+        let cdf = &shell_table[SKP_SILK_SHELL_CODE_TABLE_OFFSETS[p as usize] as usize..];
         SKP_Silk_range_decoder(p_child1, sRC, cdf, cdf_middle);
         *p_child2
             .offset(
@@ -73,91 +73,91 @@ pub unsafe extern "C" fn SKP_Silk_shell_encoder(
         sRC,
         pulses3[0 as libc::c_int as usize],
         pulses4[0 as libc::c_int as usize],
-        SKP_Silk_shell_code_table3.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE3.as_ptr(),
     );
     encode_split(
         sRC,
         pulses2[0 as libc::c_int as usize],
         pulses3[0 as libc::c_int as usize],
-        SKP_Silk_shell_code_table2.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE2.as_ptr(),
     );
     encode_split(
         sRC,
         pulses1[0 as libc::c_int as usize],
         pulses2[0 as libc::c_int as usize],
-        SKP_Silk_shell_code_table1.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE1.as_ptr(),
     );
     encode_split(
         sRC,
         *pulses0.offset(0 as libc::c_int as isize),
         pulses1[0 as libc::c_int as usize],
-        SKP_Silk_shell_code_table0.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE0.as_ptr(),
     );
     encode_split(
         sRC,
         *pulses0.offset(2 as libc::c_int as isize),
         pulses1[1 as libc::c_int as usize],
-        SKP_Silk_shell_code_table0.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE0.as_ptr(),
     );
     encode_split(
         sRC,
         pulses1[2 as libc::c_int as usize],
         pulses2[1 as libc::c_int as usize],
-        SKP_Silk_shell_code_table1.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE1.as_ptr(),
     );
     encode_split(
         sRC,
         *pulses0.offset(4 as libc::c_int as isize),
         pulses1[2 as libc::c_int as usize],
-        SKP_Silk_shell_code_table0.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE0.as_ptr(),
     );
     encode_split(
         sRC,
         *pulses0.offset(6 as libc::c_int as isize),
         pulses1[3 as libc::c_int as usize],
-        SKP_Silk_shell_code_table0.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE0.as_ptr(),
     );
     encode_split(
         sRC,
         pulses2[2 as libc::c_int as usize],
         pulses3[1 as libc::c_int as usize],
-        SKP_Silk_shell_code_table2.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE2.as_ptr(),
     );
     encode_split(
         sRC,
         pulses1[4 as libc::c_int as usize],
         pulses2[2 as libc::c_int as usize],
-        SKP_Silk_shell_code_table1.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE1.as_ptr(),
     );
     encode_split(
         sRC,
         *pulses0.offset(8 as libc::c_int as isize),
         pulses1[4 as libc::c_int as usize],
-        SKP_Silk_shell_code_table0.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE0.as_ptr(),
     );
     encode_split(
         sRC,
         *pulses0.offset(10 as libc::c_int as isize),
         pulses1[5 as libc::c_int as usize],
-        SKP_Silk_shell_code_table0.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE0.as_ptr(),
     );
     encode_split(
         sRC,
         pulses1[6 as libc::c_int as usize],
         pulses2[3 as libc::c_int as usize],
-        SKP_Silk_shell_code_table1.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE1.as_ptr(),
     );
     encode_split(
         sRC,
         *pulses0.offset(12 as libc::c_int as isize),
         pulses1[6 as libc::c_int as usize],
-        SKP_Silk_shell_code_table0.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE0.as_ptr(),
     );
     encode_split(
         sRC,
         *pulses0.offset(14 as libc::c_int as isize),
         pulses1[7 as libc::c_int as usize],
-        SKP_Silk_shell_code_table0.as_ptr(),
+        SKP_SILK_SHELL_CODE_TABLE0.as_ptr(),
     );
 }
 #[no_mangle]
@@ -174,104 +174,104 @@ pub unsafe extern "C" fn SKP_Silk_shell_decoder(
         &mut *pulses3.as_mut_ptr().offset(1 as libc::c_int as isize),
         sRC,
         pulses4,
-        &SKP_Silk_shell_code_table3,
+        &SKP_SILK_SHELL_CODE_TABLE3,
     );
     decode_split(
         &mut *pulses2.as_mut_ptr().offset(0 as libc::c_int as isize),
         &mut *pulses2.as_mut_ptr().offset(1 as libc::c_int as isize),
         sRC,
         pulses3[0 as libc::c_int as usize],
-        &SKP_Silk_shell_code_table2,
+        &SKP_SILK_SHELL_CODE_TABLE2,
     );
     decode_split(
         &mut *pulses1.as_mut_ptr().offset(0 as libc::c_int as isize),
         &mut *pulses1.as_mut_ptr().offset(1 as libc::c_int as isize),
         sRC,
         pulses2[0 as libc::c_int as usize],
-        &SKP_Silk_shell_code_table1,
+        &SKP_SILK_SHELL_CODE_TABLE1,
     );
     decode_split(
         &mut *pulses0.offset(0 as libc::c_int as isize),
         &mut *pulses0.offset(1 as libc::c_int as isize),
         sRC,
         pulses1[0 as libc::c_int as usize],
-        &SKP_Silk_shell_code_table0,
+        &SKP_SILK_SHELL_CODE_TABLE0,
     );
     decode_split(
         &mut *pulses0.offset(2 as libc::c_int as isize),
         &mut *pulses0.offset(3 as libc::c_int as isize),
         sRC,
         pulses1[1 as libc::c_int as usize],
-        &SKP_Silk_shell_code_table0,
+        &SKP_SILK_SHELL_CODE_TABLE0,
     );
     decode_split(
         &mut *pulses1.as_mut_ptr().offset(2 as libc::c_int as isize),
         &mut *pulses1.as_mut_ptr().offset(3 as libc::c_int as isize),
         sRC,
         pulses2[1 as libc::c_int as usize],
-        &SKP_Silk_shell_code_table1,
+        &SKP_SILK_SHELL_CODE_TABLE1,
     );
     decode_split(
         &mut *pulses0.offset(4 as libc::c_int as isize),
         &mut *pulses0.offset(5 as libc::c_int as isize),
         sRC,
         pulses1[2 as libc::c_int as usize],
-        &SKP_Silk_shell_code_table0,
+        &SKP_SILK_SHELL_CODE_TABLE0,
     );
     decode_split(
         &mut *pulses0.offset(6 as libc::c_int as isize),
         &mut *pulses0.offset(7 as libc::c_int as isize),
         sRC,
         pulses1[3 as libc::c_int as usize],
-        &SKP_Silk_shell_code_table0,
+        &SKP_SILK_SHELL_CODE_TABLE0,
     );
     decode_split(
         &mut *pulses2.as_mut_ptr().offset(2 as libc::c_int as isize),
         &mut *pulses2.as_mut_ptr().offset(3 as libc::c_int as isize),
         sRC,
         pulses3[1 as libc::c_int as usize],
-        &SKP_Silk_shell_code_table2,
+        &SKP_SILK_SHELL_CODE_TABLE2,
     );
     decode_split(
         &mut *pulses1.as_mut_ptr().offset(4 as libc::c_int as isize),
         &mut *pulses1.as_mut_ptr().offset(5 as libc::c_int as isize),
         sRC,
         pulses2[2 as libc::c_int as usize],
-        &SKP_Silk_shell_code_table1,
+        &SKP_SILK_SHELL_CODE_TABLE1,
     );
     decode_split(
         &mut *pulses0.offset(8 as libc::c_int as isize),
         &mut *pulses0.offset(9 as libc::c_int as isize),
         sRC,
         pulses1[4 as libc::c_int as usize],
-        &SKP_Silk_shell_code_table0,
+        &SKP_SILK_SHELL_CODE_TABLE0,
     );
     decode_split(
         &mut *pulses0.offset(10 as libc::c_int as isize),
         &mut *pulses0.offset(11 as libc::c_int as isize),
         sRC,
         pulses1[5 as libc::c_int as usize],
-        &SKP_Silk_shell_code_table0,
+        &SKP_SILK_SHELL_CODE_TABLE0,
     );
     decode_split(
         &mut *pulses1.as_mut_ptr().offset(6 as libc::c_int as isize),
         &mut *pulses1.as_mut_ptr().offset(7 as libc::c_int as isize),
         sRC,
         pulses2[3 as libc::c_int as usize],
-        &SKP_Silk_shell_code_table1,
+        &SKP_SILK_SHELL_CODE_TABLE1,
     );
     decode_split(
         &mut *pulses0.offset(12 as libc::c_int as isize),
         &mut *pulses0.offset(13 as libc::c_int as isize),
         sRC,
         pulses1[6 as libc::c_int as usize],
-        &SKP_Silk_shell_code_table0,
+        &SKP_SILK_SHELL_CODE_TABLE0,
     );
     decode_split(
         &mut *pulses0.offset(14 as libc::c_int as isize),
         &mut *pulses0.offset(15 as libc::c_int as isize),
         sRC,
         pulses1[7 as libc::c_int as usize],
-        &SKP_Silk_shell_code_table0,
+        &SKP_SILK_SHELL_CODE_TABLE0,
     );
 }

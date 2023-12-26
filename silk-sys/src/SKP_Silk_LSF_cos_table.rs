@@ -1,5 +1,4 @@
-#![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
-pub static SKP_Silk_LSFCosTab_FIX_Q12: [i32; 129] = [
+pub static SKP_SILK_LSF_COS_TAB_FIX_Q12: [i32; 129] = [
     8192,
     8190,
     8182,
