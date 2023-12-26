@@ -52,12 +52,12 @@ pub unsafe fn SKP_Silk_decode_signs(
         65535,
     ];
     for i in 0..length {
-        if *q.offset(i as isize) > 0 as libc::c_int {
+        if *q.offset(i as isize) > 0 {
             SKP_Silk_range_decoder(
                 &mut data,
                 sRC,
                 &cdf,
-                1 as libc::c_int,
+                1,
             );
             *q.offset(i as isize) *= skp_dec_map!(data);
         }
