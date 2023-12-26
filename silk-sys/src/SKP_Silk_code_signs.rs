@@ -3,7 +3,7 @@
 use crate::{SKP_Silk_range_coder::{SKP_Silk_range_coder_state, SKP_Silk_range_encoder, SKP_Silk_range_decoder}, skp_silk_tables_sign::SKP_SILK_SIGN_CDF, skp_s_mul_b_b, skp_l_shift, skp_dec_map};
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_encode_signs(
-    mut sRC: *mut SKP_Silk_range_coder_state,
+    mut sRC: &mut SKP_Silk_range_coder_state,
     mut q: *const libc::c_schar,
     length: libc::c_int,
     sigtype: libc::c_int,

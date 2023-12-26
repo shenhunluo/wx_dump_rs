@@ -250,7 +250,7 @@ pub unsafe extern "C" fn SKP_Silk_encode_pulses(
         if sum_pulses[i as usize] > 0 as libc::c_int {
             SKP_Silk_shell_encoder(
                 psRC,
-                &mut *abs_pulses.as_mut_ptr().offset((i * 16 as libc::c_int) as isize),
+                &mut abs_pulses[(i * 16) as usize..],
             );
         }
         i += 1;

@@ -57,8 +57,8 @@ unsafe extern "C" fn SKP_Silk_CLZ32(mut in32: libc::c_int) -> libc::c_int {
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_range_encoder(
-    mut psRC: *mut SKP_Silk_range_coder_state,
+pub fn SKP_Silk_range_encoder(
+    mut psRC: &mut SKP_Silk_range_coder_state,
     data: libc::c_int,
     mut prob: &[u16],
 ) {
@@ -66,10 +66,10 @@ pub unsafe extern "C" fn SKP_Silk_range_encoder(
     let mut high_Q16: libc::c_uint = 0;
     let mut base_tmp: libc::c_uint = 0;
     let mut range_Q32: libc::c_uint = 0;
-    let mut base_Q32: libc::c_uint = (*psRC).base_Q32;
-    let mut range_Q16: libc::c_uint = (*psRC).range_Q16;
-    let mut bufferIx: libc::c_int = (*psRC).bufferIx;
-    let mut buffer: *mut libc::c_uchar = ((*psRC).buffer).as_mut_ptr();
+    let mut base_Q32: libc::c_uint = psRC.base_Q32;
+    let mut range_Q16: libc::c_uint = psRC.range_Q16;
+    let mut bufferIx: libc::c_int = psRC.bufferIx;
+    let mut buffer = &mut psRC.buffer;
     if (*psRC).error != 0 {
         return;
     }
@@ -82,8 +82,8 @@ pub unsafe extern "C" fn SKP_Silk_range_encoder(
         let mut bufferIx_tmp: libc::c_int = bufferIx;
         loop {
             bufferIx_tmp -= 1;
-            let ref mut fresh0 = *buffer.offset(bufferIx_tmp as isize);
-            *fresh0 = (*fresh0).wrapping_add(1);
+            let mut fresh0 = &mut buffer[bufferIx_tmp as usize];
+            *fresh0 = fresh0.wrapping_add(1);
             if !(*fresh0 as libc::c_int == 0 as libc::c_int) {
                 break;
             }
@@ -102,10 +102,7 @@ pub unsafe extern "C" fn SKP_Silk_range_encoder(
             }
             let fresh1 = bufferIx;
             bufferIx = bufferIx + 1;
-            *buffer
-                .offset(
-                    fresh1 as isize,
-                ) = (base_Q32 >> 24 as libc::c_int) as libc::c_uchar;
+            buffer[fresh1 as usize] = (base_Q32 >> 24 as libc::c_int) as libc::c_uchar;
             base_Q32 = base_Q32 << 8 as libc::c_int;
         }
         if bufferIx >= (*psRC).bufferLength {
@@ -114,17 +111,16 @@ pub unsafe extern "C" fn SKP_Silk_range_encoder(
         }
         let fresh2 = bufferIx;
         bufferIx = bufferIx + 1;
-        *buffer
-            .offset(fresh2 as isize) = (base_Q32 >> 24 as libc::c_int) as libc::c_uchar;
+        buffer[fresh2 as usize] = (base_Q32 >> 24 as libc::c_int) as libc::c_uchar;
         base_Q32 = base_Q32 << 8 as libc::c_int;
     }
-    (*psRC).base_Q32 = base_Q32;
-    (*psRC).range_Q16 = range_Q16;
-    (*psRC).bufferIx = bufferIx;
+    psRC.base_Q32 = base_Q32;
+    psRC.range_Q16 = range_Q16;
+    psRC.bufferIx = bufferIx;
 }
 #[no_mangle]
 pub unsafe fn SKP_Silk_range_encoder_multi(
-    mut psRC: *mut SKP_Silk_range_coder_state,
+    mut psRC: &mut SKP_Silk_range_coder_state,
     mut data: *const libc::c_int,
     prob: &[&[u16]],
     nSymbols: libc::c_int,
