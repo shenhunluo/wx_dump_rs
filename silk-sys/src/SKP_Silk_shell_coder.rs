@@ -12,14 +12,14 @@ fn combine_pulses(
             + in_0[2 * k + 1];
     }
 }
-#[inline]
-unsafe fn encode_split(
+
+fn encode_split(
     mut sRC: &mut SKP_Silk_range_coder_state,
-    p_child1: libc::c_int,
-    p: libc::c_int,
+    p_child1: i32,
+    p: i32,
     shell_table: &[u16],
 ) {
-    if p > 0 as libc::c_int {
+    if p > 0 {
         let cdf = &shell_table[
                 SKP_SILK_SHELL_CODE_TABLE_OFFSETS[p as usize] as usize..
             ];
