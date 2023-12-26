@@ -1,11 +1,3 @@
-
-#[macro_export]
-macro_rules! skp_s_mul_wb {
-    ($a32:expr,$b32:expr) => {{
-        (((($a32) >> 16) * ($b32 as i16) as i32) + (((($a32) & 0x0000FFFF) * ($b32 as i16) as i32) >> 16))
-    }}
-}
-
 #[macro_export]
 macro_rules! skp_l_shift {
     ($a:expr,$shift:expr) => {{
@@ -74,7 +66,7 @@ macro_rules! skp_r_shift_round {
         if $shift == 1 {
             ( $a >> 1 ) + ( $a & 1 )
         } else {
-            (($a >> ($shift - 1)) + 1) >> 1
+            ($a >> ($shift - 1)) + 1 >> 1
         }
     }}
 }
@@ -83,5 +75,30 @@ macro_rules! skp_r_shift_round {
 macro_rules! skp_s_mul_b_b {
     ($a32:expr,$b32:expr) => {{
         ($a32 as i16 as i32) * ($b32 as i16 as i32)
+    }}
+}
+
+#[macro_export]
+macro_rules! skp_s_mul_w_b {
+    ($a32:expr,$b32:expr) => {{
+        (($a32 >> 16) * ($b32 as i16 as i32)) + ((($a32 & 0xFFFF) * ($b32 as i16 as i32)) >> 16)
+    }}
+}
+
+#[macro_export]
+macro_rules! skp_s_mul_w_w {
+    ($a32:expr,$b32:expr) => {{
+        crate::skp_mla!(
+            crate::skp_s_mul_w_b!($a32, $b32),
+            $a32,
+            crate::skp_r_shift_round!($b32,16)
+        )
+    }};
+}
+
+#[macro_export]
+macro_rules! skp_mla {
+    ($a32:expr,$b32:expr,$c32:expr) => {{
+        ($a32) + ($b32 * $c32)
     }}
 }

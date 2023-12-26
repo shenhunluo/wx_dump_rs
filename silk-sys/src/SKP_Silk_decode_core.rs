@@ -1,5 +1,5 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
-use crate::skp_silk_tables_other::SKP_SILK_QUANTIZATION_OFFSETS_Q10;
+use crate::{skp_silk_tables_other::SKP_SILK_QUANTIZATION_OFFSETS_Q10, skp_s_mul_w_w};
 #[deny(arithmetic_overflow)]
 
 use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, SKP_Silk_MA::SKP_Silk_MA_Prediction};
@@ -449,28 +449,11 @@ pub unsafe extern "C" fn SKP_Silk_decode_core(
                 while i < lag + 5 as libc::c_int / 2 as libc::c_int {
                     (*psDec)
                         .sLTP_Q16[(sLTP_buf_idx - i - 1 as libc::c_int)
-                        as usize] = (gain_adj_Q16 >> 16 as libc::c_int)
-                        * (*psDec)
-                            .sLTP_Q16[(sLTP_buf_idx - i - 1 as libc::c_int) as usize]
-                            as libc::c_short as libc::c_int
-                        + ((gain_adj_Q16 & 0xffff as libc::c_int)
-                            * (*psDec)
+                        as usize] = skp_s_mul_w_w!(
+                            gain_adj_Q16,
+                            (*psDec)
                                 .sLTP_Q16[(sLTP_buf_idx - i - 1 as libc::c_int) as usize]
-                                as libc::c_short as libc::c_int >> 16 as libc::c_int)
-                        + gain_adj_Q16
-                            * (if 16 as libc::c_int == 1 as libc::c_int {
-                                ((*psDec)
-                                    .sLTP_Q16[(sLTP_buf_idx - i - 1 as libc::c_int) as usize]
-                                    >> 1 as libc::c_int)
-                                    + ((*psDec)
-                                        .sLTP_Q16[(sLTP_buf_idx - i - 1 as libc::c_int) as usize]
-                                        & 1 as libc::c_int)
-                            } else {
-                                ((*psDec)
-                                    .sLTP_Q16[(sLTP_buf_idx - i - 1 as libc::c_int) as usize]
-                                    >> 16 as libc::c_int - 1 as libc::c_int) + 1 as libc::c_int
-                                    >> 1 as libc::c_int
-                            });
+                        );
                     i += 1;
                 }
             }
