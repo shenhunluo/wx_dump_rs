@@ -27,7 +27,7 @@ pub unsafe extern "C" fn SKP_Silk_encode_signs(
             SKP_Silk_range_encoder(
                 sRC,
                 inData,
-                cdf.as_mut_ptr() as *const libc::c_ushort,
+                &cdf,
             );
         }
         i += 1;

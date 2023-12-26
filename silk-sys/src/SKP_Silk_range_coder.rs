@@ -60,7 +60,7 @@ unsafe extern "C" fn SKP_Silk_CLZ32(mut in32: libc::c_int) -> libc::c_int {
 pub unsafe extern "C" fn SKP_Silk_range_encoder(
     mut psRC: *mut SKP_Silk_range_coder_state,
     data: libc::c_int,
-    mut prob: *const libc::c_ushort,
+    mut prob: &[u16],
 ) {
     let mut low_Q16: libc::c_uint = 0;
     let mut high_Q16: libc::c_uint = 0;
@@ -73,8 +73,8 @@ pub unsafe extern "C" fn SKP_Silk_range_encoder(
     if (*psRC).error != 0 {
         return;
     }
-    low_Q16 = *prob.offset(data as isize) as libc::c_uint;
-    high_Q16 = *prob.offset((data + 1 as libc::c_int) as isize) as libc::c_uint;
+    low_Q16 = prob[data as usize] as u32;
+    high_Q16 = prob[(data + 1) as usize] as u32;
     base_tmp = base_Q32;
     base_Q32 = base_Q32.wrapping_add(range_Q16.wrapping_mul(low_Q16));
     range_Q32 = range_Q16.wrapping_mul(high_Q16.wrapping_sub(low_Q16));
@@ -123,17 +123,14 @@ pub unsafe extern "C" fn SKP_Silk_range_encoder(
     (*psRC).bufferIx = bufferIx;
 }
 #[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_range_encoder_multi(
+pub unsafe fn SKP_Silk_range_encoder_multi(
     mut psRC: *mut SKP_Silk_range_coder_state,
     mut data: *const libc::c_int,
-    mut prob: *const *const libc::c_ushort,
+    prob: &[&[u16]],
     nSymbols: libc::c_int,
 ) {
-    let mut k: libc::c_int = 0;
-    k = 0 as libc::c_int;
-    while k < nSymbols {
-        SKP_Silk_range_encoder(psRC, *data.offset(k as isize), *prob.offset(k as isize));
-        k += 1;
+    for k in 0..nSymbols as usize {
+        SKP_Silk_range_encoder(psRC, *data.offset(k as isize), &prob[k]);
     }
 }
 #[no_mangle]
