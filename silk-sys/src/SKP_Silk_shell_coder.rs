@@ -38,7 +38,7 @@ unsafe extern "C" fn encode_split(
 unsafe fn decode_split(
     mut p_child1: *mut libc::c_int,
     mut p_child2: *mut libc::c_int,
-    mut sRC: *mut SKP_Silk_range_coder_state,
+    mut sRC: &mut SKP_Silk_range_coder_state,
     p: libc::c_int,
     shell_table: &[u16],
 ) {
@@ -163,7 +163,7 @@ pub unsafe extern "C" fn SKP_Silk_shell_encoder(
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_shell_decoder(
     mut pulses0: *mut libc::c_int,
-    mut sRC: *mut SKP_Silk_range_coder_state,
+    mut sRC: &mut SKP_Silk_range_coder_state,
     pulses4: libc::c_int,
 ) {
     let mut pulses3: [libc::c_int; 2] = [0; 2];

@@ -116,7 +116,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_parameters(
     let mut pNLSF_Q15: [libc::c_int; 16] = [0; 16];
     let mut pNLSF0_Q15: [libc::c_int; 16] = [0; 16];
     let mut cbk_ptr_Q14: *const libc::c_short = 0 as *const libc::c_short;
-    let mut psRC: *mut SKP_Silk_range_coder_state = &mut (*psDec).sRC;
+    let mut psRC = &mut (*psDec).sRC;
     if (*psDec).nFramesDecoded == 0 as libc::c_int {
         SKP_Silk_range_decoder(
             &mut Ix,

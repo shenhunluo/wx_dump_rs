@@ -36,6 +36,10 @@ pub mod SKP_Silk_log2lin;
 pub mod SKP_Silk_NLSF2A;
 pub mod SKP_Silk_shell_coder;
 pub mod SKP_Silk_code_signs;
+
+pub mod SKP_Silk_tables_LTP;
+
+
 pub mod SKP_Silk_sort;
 pub mod skp_silk_bwexpander_32;
 pub mod skp_silk_resampler_rom;
@@ -43,7 +47,6 @@ pub mod skp_silk_tables_other;
 pub mod skp_silk_tables_type_offset;
 pub mod skp_silk_tables_gain;
 pub mod skp_silk_tables_pitch_lag;
-pub mod SKP_Silk_tables_LTP;
 pub mod skp_silk_tables_nlsf_cb0_10;
 pub mod skp_silk_tables_nlsf_cb1_10;
 pub mod skp_silk_tables_nlsf_cb0_16;

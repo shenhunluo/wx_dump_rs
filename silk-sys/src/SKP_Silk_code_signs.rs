@@ -35,7 +35,7 @@ pub unsafe extern "C" fn SKP_Silk_encode_signs(
 }
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_decode_signs(
-    mut sRC: *mut SKP_Silk_range_coder_state,
+    sRC: &mut SKP_Silk_range_coder_state,
     mut q: *mut libc::c_int,
     length: libc::c_int,
     sigtype: libc::c_int,

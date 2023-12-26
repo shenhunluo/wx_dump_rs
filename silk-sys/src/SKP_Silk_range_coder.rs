@@ -139,7 +139,7 @@ pub unsafe extern "C" fn SKP_Silk_range_encoder_multi(
 #[no_mangle]
 pub unsafe fn SKP_Silk_range_decoder(
     mut data: *mut libc::c_int,
-    mut psRC: *mut SKP_Silk_range_coder_state,
+    mut psRC: &mut SKP_Silk_range_coder_state,
     mut prob: &[u16],
     mut probIx: libc::c_int,
 ) {
@@ -236,7 +236,7 @@ pub unsafe fn SKP_Silk_range_decoder(
 #[no_mangle]
 pub unsafe fn SKP_Silk_range_decoder_multi(
     mut data: *mut libc::c_int,
-    mut psRC: *mut SKP_Silk_range_coder_state,
+    mut psRC: &mut SKP_Silk_range_coder_state,
     mut prob: &[&[u16]],
     mut probStartIx: &[i32],
     nSymbols: libc::c_int,

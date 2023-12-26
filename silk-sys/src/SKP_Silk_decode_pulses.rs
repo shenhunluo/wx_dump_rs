@@ -10,7 +10,7 @@ extern "C" {
 }
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_decode_pulses(
-    mut psRC: *mut SKP_Silk_range_coder_state,
+    mut psRC: &mut SKP_Silk_range_coder_state,
     mut psDecCtrl: *mut SKP_Silk_decoder_control,
     mut q: *mut libc::c_int,
     frame_length: libc::c_int,
