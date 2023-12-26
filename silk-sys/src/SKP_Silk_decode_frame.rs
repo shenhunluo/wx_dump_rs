@@ -122,7 +122,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_frame(
         PERIndex: 0,
         RateLevelIndex: 0,
         QuantOffsetType: 0,
-        sigtype: 0,
+        sig_type: 0,
         NLSFInterpCoef_Q2: 0,
     };
     let mut L: libc::c_int = 0;
@@ -140,7 +140,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_frame(
         SKP_Silk_decode_parameters(
             psDec,
             &mut sDecCtrl,
-            Pulses.as_mut_ptr(),
+            &mut Pulses,
             1 as libc::c_int,
         );
         if (*psDec).sRC.error != 0 {
@@ -166,7 +166,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_frame(
             );
             SKP_Silk_PLC(psDec, &mut sDecCtrl, pOut, L, action);
             (*psDec).lossCnt = 0 as libc::c_int;
-            (*psDec).prev_sigtype = sDecCtrl.sigtype;
+            (*psDec).prev_sigtype = sDecCtrl.sig_type;
             (*psDec).first_frame_after_reset = 0 as libc::c_int;
         }
     }

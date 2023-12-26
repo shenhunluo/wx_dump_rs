@@ -34,10 +34,9 @@ pub unsafe extern "C" fn SKP_Silk_encode_signs(
     }
 }
 
-#[no_mangle]
-pub unsafe fn SKP_Silk_decode_signs(
+pub fn SKP_Silk_decode_signs(
     sRC: &mut SKP_Silk_range_coder_state,
-    mut q: *mut libc::c_int,
+    q: &mut [i32],
     length: i32,
     sig_type: i32,
     quant_offset_type: i32,
@@ -50,14 +49,14 @@ pub unsafe fn SKP_Silk_decode_signs(
         ],
         65535,
     ];
-    for i in 0..length {
-        if *q.offset(i as isize) > 0 {
+    for i in 0..length as usize {
+        if q[i] > 0 {
             let data = SKP_Silk_range_decoder(
                 sRC,
                 &cdf,
                 1,
             );
-            *q.offset(i as isize) *= skp_dec_map!(data);
+            q[i] *= skp_dec_map!(data);
         }
     }
 }

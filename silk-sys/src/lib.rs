@@ -24,7 +24,7 @@ pub mod SKP_Silk_bwexpander;
 pub mod SKP_Silk_decode_pitch;
 pub mod SKP_Silk_gain_quant;
 pub mod SKP_Silk_NLSF2A_stable;
-pub mod SKP_Silk_decode_pulses;
+pub mod skp_silk_decode_pulses;
 pub mod SKP_Silk_LPC_synthesis_order16;
 pub mod SKP_Silk_LPC_synthesis_filter;
 pub mod SKP_Silk_sum_sqr_shift;

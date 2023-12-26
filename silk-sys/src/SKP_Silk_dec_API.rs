@@ -106,7 +106,7 @@ pub struct SKP_Silk_decoder_control {
     pub PERIndex: libc::c_int,
     pub RateLevelIndex: libc::c_int,
     pub QuantOffsetType: libc::c_int,
-    pub sigtype: libc::c_int,
+    pub sig_type: libc::c_int,
     pub NLSFInterpCoef_Q2: libc::c_int,
 }
 #[no_mangle]
@@ -346,7 +346,7 @@ pub unsafe extern "C" fn SKP_Silk_SDK_search_for_LBRR(
         PERIndex: 0,
         RateLevelIndex: 0,
         QuantOffsetType: 0,
-        sigtype: 0,
+        sig_type: 0,
         NLSFInterpCoef_Q2: 0,
     };
     let mut TempQ: [libc::c_int; 480] = [0; 480];
@@ -368,7 +368,7 @@ pub unsafe extern "C" fn SKP_Silk_SDK_search_for_LBRR(
         SKP_Silk_decode_parameters(
             &mut sDec,
             &mut sDecCtrl,
-            TempQ.as_mut_ptr(),
+            &mut TempQ,
             0 as libc::c_int,
         );
         if sDec.sRC.error != 0 {
@@ -500,7 +500,7 @@ pub unsafe extern "C" fn SKP_Silk_SDK_get_TOC(
         PERIndex: 0,
         RateLevelIndex: 0,
         QuantOffsetType: 0,
-        sigtype: 0,
+        sig_type: 0,
         NLSFInterpCoef_Q2: 0,
     };
     let mut TempQ: [libc::c_int; 480] = [0; 480];
@@ -512,11 +512,11 @@ pub unsafe extern "C" fn SKP_Silk_SDK_get_TOC(
         SKP_Silk_decode_parameters(
             &mut sDec,
             &mut sDecCtrl,
-            TempQ.as_mut_ptr(),
+            &mut TempQ,
             0 as libc::c_int,
         );
         (*Silk_TOC).vadFlags[sDec.nFramesDecoded as usize] = sDec.vadFlag;
-        (*Silk_TOC).sigtypeFlags[sDec.nFramesDecoded as usize] = sDecCtrl.sigtype;
+        (*Silk_TOC).sigtypeFlags[sDec.nFramesDecoded as usize] = sDecCtrl.sig_type;
         if sDec.sRC.error != 0 {
             (*Silk_TOC).corrupt = 1 as libc::c_int;
             break;

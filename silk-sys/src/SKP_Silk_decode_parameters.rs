@@ -1,5 +1,5 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
-use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, SKP_Silk_NLSF_MSVQ_decode::{SKP_Silk_NLSF_MSVQ_decode, SKP_Silk_NLSF_CB_struct}, SKP_Silk_bwexpander::SKP_Silk_bwexpander, SKP_Silk_decode_pitch::SKP_Silk_decode_pitch, SKP_Silk_range_coder::{SKP_Silk_range_decoder, SKP_Silk_range_decoder_multi, SKP_Silk_range_coder_get_length, SKP_Silk_range_coder_check_after_decoding}, SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs, SKP_Silk_gain_quant::SKP_Silk_gains_dequant, SKP_Silk_NLSF2A_stable::SKP_Silk_NLSF2A_stable, SKP_Silk_decode_pulses::SKP_Silk_decode_pulses, skp_silk_tables_other::{SKP_SILK_SAMPLING_RATES_CDF, SKP_SILK_SAMPLING_RATES_OFFSET, SKP_SILK_SAMPLING_RATES_TABLE, SKP_SILK_NLSF_INTERPOLATION_FACTOR_CDF, SKP_SILK_NLSF_INTERPOLATION_FACTOR_OFFSET, SKP_SILK_LTP_SCALE_CDF, SKP_SILK_LTP_SCALE_OFFSET, SKP_SILK_LTP_SCALES_TABLE_Q14, SKP_SILK_SEED_CDF, SKP_SILK_SEED_OFFSET, SKP_SILK_VAD_FLAG_CDF, SKP_SILK_VAD_FLAG_OFFSET, SKP_SILK_FRAME_TERMINATION_CDF, SKP_SILK_FRAME_TERMINATION_OFFSET}, skp_silk_tables_type_offset::{SKP_SILK_TYPE_OFFSET_CDF, SKP_SILK_TYPE_OFFSET_CDF_OFFSET, SKP_SILK_TYPE_OFFSET_JOINT_CDF}, skp_silk_tables_gain::{SKP_SILK_GAIN_CDF, SKP_SILK_GAIN_CDF_OFFSET, SKP_SILK_DELTA_GAIN_CDF, SKP_SILK_DELTA_GAIN_CDF_OFFSET}, skp_silk_tables_pitch_lag::{SKP_SILK_PITCH_LAG_NB_CDF, SKP_SILK_PITCH_LAG_NB_CDF_OFFSET, SKP_SILK_PITCH_LAG_MB_CDF, SKP_SILK_PITCH_LAG_MB_CDF_OFFSET, SKP_SILK_PITCH_LAG_WB_CDF, SKP_SILK_PITCH_LAG_WB_CDF_OFFSET, SKP_SILK_PITCH_LAG_SWB_CDF, SKP_SILK_PITCH_LAG_SWB_CDF_OFFSET, SKP_SILK_PITCH_CONTOUR_NB_CDF, SKP_SILK_PITCH_CONTOUR_NB_CDF_OFFSET, SKP_SILK_PITCH_CONTOUR_CDF, SKP_SILK_PITCH_CONTOUR_CDF_OFFSET}, SKP_Silk_tables_LTP::{SKP_Silk_LTP_per_index_CDF, SKP_Silk_LTP_per_index_CDF_offset, SKP_Silk_LTP_vq_ptrs_Q14, SKP_Silk_LTP_gain_CDF_ptrs, SKP_Silk_LTP_gain_CDF_offsets}};
+use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, SKP_Silk_NLSF_MSVQ_decode::{SKP_Silk_NLSF_MSVQ_decode, SKP_Silk_NLSF_CB_struct}, SKP_Silk_bwexpander::SKP_Silk_bwexpander, SKP_Silk_decode_pitch::SKP_Silk_decode_pitch, SKP_Silk_range_coder::{SKP_Silk_range_decoder, SKP_Silk_range_decoder_multi, SKP_Silk_range_coder_get_length, SKP_Silk_range_coder_check_after_decoding}, SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs, SKP_Silk_gain_quant::SKP_Silk_gains_dequant, SKP_Silk_NLSF2A_stable::SKP_Silk_NLSF2A_stable, skp_silk_decode_pulses::skp_silk_decode_pulses, skp_silk_tables_other::{SKP_SILK_SAMPLING_RATES_CDF, SKP_SILK_SAMPLING_RATES_OFFSET, SKP_SILK_SAMPLING_RATES_TABLE, SKP_SILK_NLSF_INTERPOLATION_FACTOR_CDF, SKP_SILK_NLSF_INTERPOLATION_FACTOR_OFFSET, SKP_SILK_LTP_SCALE_CDF, SKP_SILK_LTP_SCALE_OFFSET, SKP_SILK_LTP_SCALES_TABLE_Q14, SKP_SILK_SEED_CDF, SKP_SILK_SEED_OFFSET, SKP_SILK_VAD_FLAG_CDF, SKP_SILK_VAD_FLAG_OFFSET, SKP_SILK_FRAME_TERMINATION_CDF, SKP_SILK_FRAME_TERMINATION_OFFSET}, skp_silk_tables_type_offset::{SKP_SILK_TYPE_OFFSET_CDF, SKP_SILK_TYPE_OFFSET_CDF_OFFSET, SKP_SILK_TYPE_OFFSET_JOINT_CDF}, skp_silk_tables_gain::{SKP_SILK_GAIN_CDF, SKP_SILK_GAIN_CDF_OFFSET, SKP_SILK_DELTA_GAIN_CDF, SKP_SILK_DELTA_GAIN_CDF_OFFSET}, skp_silk_tables_pitch_lag::{SKP_SILK_PITCH_LAG_NB_CDF, SKP_SILK_PITCH_LAG_NB_CDF_OFFSET, SKP_SILK_PITCH_LAG_MB_CDF, SKP_SILK_PITCH_LAG_MB_CDF_OFFSET, SKP_SILK_PITCH_LAG_WB_CDF, SKP_SILK_PITCH_LAG_WB_CDF_OFFSET, SKP_SILK_PITCH_LAG_SWB_CDF, SKP_SILK_PITCH_LAG_SWB_CDF_OFFSET, SKP_SILK_PITCH_CONTOUR_NB_CDF, SKP_SILK_PITCH_CONTOUR_NB_CDF_OFFSET, SKP_SILK_PITCH_CONTOUR_CDF, SKP_SILK_PITCH_CONTOUR_CDF_OFFSET}, SKP_Silk_tables_LTP::{SKP_Silk_LTP_per_index_CDF, SKP_Silk_LTP_per_index_CDF_offset, SKP_Silk_LTP_vq_ptrs_Q14, SKP_Silk_LTP_gain_CDF_ptrs, SKP_Silk_LTP_gain_CDF_offsets}};
 extern "C" {
     fn memset(
         _: *mut libc::c_void,
@@ -97,10 +97,10 @@ pub struct SKP_Silk_CNG_struct {
     pub fs_kHz: libc::c_int,
 }
 #[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_decode_parameters(
+pub unsafe fn SKP_Silk_decode_parameters(
     mut psDec: *mut SKP_Silk_decoder_state,
-    mut psDecCtrl: *mut SKP_Silk_decoder_control,
-    mut q: *mut libc::c_int,
+    psDecCtrl: &mut SKP_Silk_decoder_control,
+    mut q: &mut [i32],
     fullDecoding: libc::c_int,
 ) {
     let mut i: libc::c_int = 0;
@@ -141,13 +141,13 @@ pub unsafe extern "C" fn SKP_Silk_decode_parameters(
             SKP_SILK_TYPE_OFFSET_CDF_OFFSET,
         );
     }
-    (*psDecCtrl).sigtype = Ix >> 1 as libc::c_int;
+    (*psDecCtrl).sig_type = Ix >> 1 as libc::c_int;
     (*psDecCtrl).QuantOffsetType = Ix & 1 as libc::c_int;
     (*psDec).typeOffsetPrev = Ix;
     if (*psDec).nFramesDecoded == 0 as libc::c_int {
         GainsIndices[0] = SKP_Silk_range_decoder(
             psRC,
-            &SKP_SILK_GAIN_CDF[(*psDecCtrl).sigtype as usize],
+            &SKP_SILK_GAIN_CDF[(*psDecCtrl).sig_type as usize],
             SKP_SILK_GAIN_CDF_OFFSET,
         );
     } else {
@@ -172,7 +172,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_parameters(
         &mut (*psDec).LastGainIndex,
         (*psDec).nFramesDecoded,
     );
-    let psNLSF_CB:&SKP_Silk_NLSF_CB_struct  = (*psDec).psNLSF_CB[(*psDecCtrl).sigtype as usize].unwrap();
+    let psNLSF_CB:&SKP_Silk_NLSF_CB_struct  = (*psDec).psNLSF_CB[(*psDecCtrl).sig_type as usize].unwrap();
     SKP_Silk_range_decoder_multi(
         NLSFIndices.as_mut_ptr(),
         psRC,
@@ -246,7 +246,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_parameters(
             63570 as libc::c_int,
         );
     }
-    if (*psDecCtrl).sigtype == 0 as libc::c_int {
+    if (*psDecCtrl).sig_type == 0 as libc::c_int {
         if (*psDec).fs_kHz == 8 as libc::c_int {
             Ixs[0] = SKP_Silk_range_decoder(
                 psRC,
@@ -343,7 +343,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_parameters(
         SKP_SILK_SEED_OFFSET,
     );
     (*psDecCtrl).Seed = Ix;
-    SKP_Silk_decode_pulses(psRC, psDecCtrl, q, (*psDec).frame_length);
+    skp_silk_decode_pulses(psRC, psDecCtrl, q, (*psDec).frame_length);
     (*psDec).vadFlag = SKP_Silk_range_decoder(
         psRC,
         &SKP_SILK_VAD_FLAG_CDF,

@@ -75,10 +75,10 @@ pub fn SKP_Silk_shell_encoder(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_shell_decoder(
-    mut pulses0: *mut libc::c_int,
+pub fn SKP_Silk_shell_decoder(
+    mut pulses0: &mut [i32],
     mut sRC: &mut SKP_Silk_range_coder_state,
-    pulses4: libc::c_int,
+    pulses4: i32,
 ) {
     let mut pulses3: [libc::c_int; 2] = [0; 2];
     let mut pulses2: [libc::c_int; 4] = [0; 4];
@@ -98,12 +98,12 @@ pub unsafe extern "C" fn SKP_Silk_shell_decoder(
         pulses2[0 as libc::c_int as usize],
         &SKP_SILK_SHELL_CODE_TABLE1,
     );
-    (*pulses0.offset(0),*pulses0.offset(1)) = decode_split(
+    (pulses0[0],pulses0[1]) = decode_split(
         sRC,
         pulses1[0 as libc::c_int as usize],
         &SKP_SILK_SHELL_CODE_TABLE0,
     );
-    (*pulses0.offset(2),*pulses0.offset(3)) = decode_split(
+    (pulses0[2],pulses0[3]) = decode_split(
         sRC,
         pulses1[1 as libc::c_int as usize],
         &SKP_SILK_SHELL_CODE_TABLE0,
@@ -113,12 +113,12 @@ pub unsafe extern "C" fn SKP_Silk_shell_decoder(
         pulses2[1 as libc::c_int as usize],
         &SKP_SILK_SHELL_CODE_TABLE1,
     );
-    (*pulses0.offset(4),*pulses0.offset(5)) = decode_split(
+    (pulses0[4],pulses0[5]) = decode_split(
         sRC,
         pulses1[2 as libc::c_int as usize],
         &SKP_SILK_SHELL_CODE_TABLE0,
     );
-    (*pulses0.offset(6),*pulses0.offset(7)) = decode_split(
+    (pulses0[6],pulses0[7]) = decode_split(
         sRC,
         pulses1[3 as libc::c_int as usize],
         &SKP_SILK_SHELL_CODE_TABLE0,
@@ -133,12 +133,12 @@ pub unsafe extern "C" fn SKP_Silk_shell_decoder(
         pulses2[2 as libc::c_int as usize],
         &SKP_SILK_SHELL_CODE_TABLE1,
     );
-    (*pulses0.offset(8),*pulses0.offset(9)) = decode_split(
+    (pulses0[8],pulses0[9]) = decode_split(
         sRC,
         pulses1[4 as libc::c_int as usize],
         &SKP_SILK_SHELL_CODE_TABLE0,
     );
-    (*pulses0.offset(10),*pulses0.offset(11)) = decode_split(
+    (pulses0[10],pulses0[11]) = decode_split(
         sRC,
         pulses1[5 as libc::c_int as usize],
         &SKP_SILK_SHELL_CODE_TABLE0,
@@ -148,12 +148,12 @@ pub unsafe extern "C" fn SKP_Silk_shell_decoder(
         pulses2[3 as libc::c_int as usize],
         &SKP_SILK_SHELL_CODE_TABLE1,
     );
-    (*pulses0.offset(12),*pulses0.offset(13)) = decode_split(
+    (pulses0[12],pulses0[13]) = decode_split(
         sRC,
         pulses1[6 as libc::c_int as usize],
         &SKP_SILK_SHELL_CODE_TABLE0,
     );
-    (*pulses0.offset(14),*pulses0.offset(15)) = decode_split(
+    (pulses0[14],pulses0[15]) = decode_split(
         sRC,
         pulses1[7 as libc::c_int as usize],
         &SKP_SILK_SHELL_CODE_TABLE0,

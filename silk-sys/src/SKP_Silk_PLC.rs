@@ -290,9 +290,9 @@ pub unsafe extern "C" fn SKP_Silk_PLC_update(
     let mut j: libc::c_int = 0;
     let mut psPLC: *mut SKP_Silk_PLC_struct = 0 as *mut SKP_Silk_PLC_struct;
     psPLC = &mut (*psDec).sPLC;
-    (*psDec).prev_sigtype = (*psDecCtrl).sigtype;
+    (*psDec).prev_sigtype = (*psDecCtrl).sig_type;
     LTP_Gain_Q14 = 0 as libc::c_int;
-    if (*psDecCtrl).sigtype == 0 as libc::c_int {
+    if (*psDecCtrl).sig_type == 0 as libc::c_int {
         j = 0 as libc::c_int;
         while j * (*psDec).subfr_length
             < (*psDecCtrl).pitchL[(4 as libc::c_int - 1 as libc::c_int) as usize]

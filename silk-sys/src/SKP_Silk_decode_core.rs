@@ -316,7 +316,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_core(
     let mut pres_Q10: *mut libc::c_int = 0 as *mut libc::c_int;
     let mut vec_Q10: [libc::c_int; 120] = [0; 120];
     let mut FiltState: [libc::c_int; 16] = [0; 16];
-    offset_Q10 = SKP_SILK_QUANTIZATION_OFFSETS_Q10[(*psDecCtrl).sigtype
+    offset_Q10 = SKP_SILK_QUANTIZATION_OFFSETS_Q10[(*psDecCtrl).sig_type
         as usize][(*psDecCtrl).QuantOffsetType as usize] as libc::c_int;
     if (*psDecCtrl).NLSFInterpCoef_Q2 < (1 as libc::c_int) << 2 as libc::c_int {
         NLSF_interpolation_flag = 1 as libc::c_int;
@@ -358,7 +358,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_core(
             .as_mut_ptr()
             .offset((k * 5 as libc::c_int) as isize) as *mut libc::c_short;
         Gain_Q16 = (*psDecCtrl).Gains_Q16[k as usize];
-        sigtype = (*psDecCtrl).sigtype;
+        sigtype = (*psDecCtrl).sig_type;
         inv_gain_Q16 = SKP_INVERSE32_varQ(
             if Gain_Q16 > 1 as libc::c_int { Gain_Q16 } else { 1 as libc::c_int },
             32 as libc::c_int,
@@ -377,7 +377,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_core(
             );
         }
         if (*psDec).lossCnt != 0 && (*psDec).prev_sigtype == 0 as libc::c_int
-            && (*psDecCtrl).sigtype == 1 as libc::c_int
+            && (*psDecCtrl).sig_type == 1 as libc::c_int
             && k < 4 as libc::c_int >> 1 as libc::c_int
         {
             memset(
