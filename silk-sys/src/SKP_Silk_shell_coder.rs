@@ -14,7 +14,7 @@ fn combine_pulses(
 }
 
 fn encode_split(
-    mut sRC: &mut SKP_Silk_range_coder_state,
+    sRC: &mut SKP_Silk_range_coder_state,
     p_child1: i32,
     p: i32,
     shell_table: &[u16],
