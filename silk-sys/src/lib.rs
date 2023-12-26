@@ -38,7 +38,7 @@ pub mod SKP_Silk_shell_coder;
 pub mod SKP_Silk_code_signs;
 pub mod SKP_Silk_sort;
 pub mod skp_silk_bwexpander_32;
-pub mod SKP_Silk_resampler_rom;
+pub mod skp_silk_resampler_rom;
 pub mod skp_silk_tables_other;
 pub mod skp_silk_tables_type_offset;
 pub mod skp_silk_tables_gain;

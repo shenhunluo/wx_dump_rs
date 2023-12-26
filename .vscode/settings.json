@@ -1,8 +1,10 @@
 {
     "cSpell.words": [
+        "ARMA",
         "bwexpander",
         "byteorder",
         "CLSCTX",
+        "COEFS",
         "DATAFILE",
         "dbinfo",
         "Decryptor",
@@ -23,6 +25,7 @@
         "PROCESSENTRY",
         "PSTR",
         "repr",
+        "resampler",
         "SIGDN",
         "SNAPMODULE",
         "SNAPPROCESS",

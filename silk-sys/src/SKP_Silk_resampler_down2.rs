@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::SKP_Silk_resampler_rom::{SKP_Silk_resampler_down2_1, SKP_Silk_resampler_down2_0};
+use crate::skp_silk_resampler_rom::{SKP_SILK_RESAMPLER_DOWN2_1, SKP_SILK_RESAMPLER_DOWN2_0};
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_resampler_down2(
     mut S: *mut libc::c_int,
@@ -20,16 +20,16 @@ pub unsafe extern "C" fn SKP_Silk_resampler_down2(
             << 10 as libc::c_int;
         Y = in32 - *S.offset(0 as libc::c_int as isize);
         X = Y
-            + ((Y >> 16 as libc::c_int) * SKP_Silk_resampler_down2_1 as libc::c_int
+            + ((Y >> 16 as libc::c_int) * SKP_SILK_RESAMPLER_DOWN2_1 as libc::c_int
                 + ((Y & 0xffff as libc::c_int)
-                    * SKP_Silk_resampler_down2_1 as libc::c_int >> 16 as libc::c_int));
+                    * SKP_SILK_RESAMPLER_DOWN2_1 as libc::c_int >> 16 as libc::c_int));
         out32 = *S.offset(0 as libc::c_int as isize) + X;
         *S.offset(0 as libc::c_int as isize) = in32 + X;
         in32 = (*in_0.offset((2 as libc::c_int * k + 1 as libc::c_int) as isize)
             as libc::c_int) << 10 as libc::c_int;
         Y = in32 - *S.offset(1 as libc::c_int as isize);
-        X = (Y >> 16 as libc::c_int) * SKP_Silk_resampler_down2_0 as libc::c_int
-            + ((Y & 0xffff as libc::c_int) * SKP_Silk_resampler_down2_0 as libc::c_int
+        X = (Y >> 16 as libc::c_int) * SKP_SILK_RESAMPLER_DOWN2_0 as libc::c_int
+            + ((Y & 0xffff as libc::c_int) * SKP_SILK_RESAMPLER_DOWN2_0 as libc::c_int
                 >> 16 as libc::c_int);
         out32 = out32 + *S.offset(1 as libc::c_int as isize);
         out32 = out32 + X;

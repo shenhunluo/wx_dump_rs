@@ -6,7 +6,7 @@ extern "C" {
         _: libc::c_ulong,
     ) -> *mut libc::c_void;
 }
-use crate::{SKP_Silk_resampler_private_ARMA4::SKP_Silk_resampler_private_ARMA4, SKP_Silk_resampler_rom::SKP_Silk_resampler_frac_FIR_144};
+use crate::{SKP_Silk_resampler_private_ARMA4::SKP_Silk_resampler_private_ARMA4, skp_silk_resampler_rom::SKP_SILK_RESAMPLER_FRAC_FIR_144};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct _SKP_Silk_resampler_state_struct {
@@ -80,27 +80,27 @@ unsafe extern "C" fn SKP_Silk_resampler_private_IIR_FIR_INTERPOL(
         buf_ptr = &mut *buf.offset((index_Q16 >> 16 as libc::c_int) as isize)
             as *mut libc::c_short;
         res_Q15 = *buf_ptr.offset(0 as libc::c_int as isize) as libc::c_int
-            * SKP_Silk_resampler_frac_FIR_144[table_index
+            * SKP_SILK_RESAMPLER_FRAC_FIR_144[table_index
                 as usize][0 as libc::c_int as usize] as libc::c_int;
         res_Q15 = res_Q15
             + *buf_ptr.offset(1 as libc::c_int as isize) as libc::c_int
-                * SKP_Silk_resampler_frac_FIR_144[table_index
+                * SKP_SILK_RESAMPLER_FRAC_FIR_144[table_index
                     as usize][1 as libc::c_int as usize] as libc::c_int;
         res_Q15 = res_Q15
             + *buf_ptr.offset(2 as libc::c_int as isize) as libc::c_int
-                * SKP_Silk_resampler_frac_FIR_144[table_index
+                * SKP_SILK_RESAMPLER_FRAC_FIR_144[table_index
                     as usize][2 as libc::c_int as usize] as libc::c_int;
         res_Q15 = res_Q15
             + *buf_ptr.offset(3 as libc::c_int as isize) as libc::c_int
-                * SKP_Silk_resampler_frac_FIR_144[(143 as libc::c_int - table_index)
+                * SKP_SILK_RESAMPLER_FRAC_FIR_144[(143 as libc::c_int - table_index)
                     as usize][2 as libc::c_int as usize] as libc::c_int;
         res_Q15 = res_Q15
             + *buf_ptr.offset(4 as libc::c_int as isize) as libc::c_int
-                * SKP_Silk_resampler_frac_FIR_144[(143 as libc::c_int - table_index)
+                * SKP_SILK_RESAMPLER_FRAC_FIR_144[(143 as libc::c_int - table_index)
                     as usize][1 as libc::c_int as usize] as libc::c_int;
         res_Q15 = res_Q15
             + *buf_ptr.offset(5 as libc::c_int as isize) as libc::c_int
-                * SKP_Silk_resampler_frac_FIR_144[(143 as libc::c_int - table_index)
+                * SKP_SILK_RESAMPLER_FRAC_FIR_144[(143 as libc::c_int - table_index)
                     as usize][0 as libc::c_int as usize] as libc::c_int;
         let fresh0 = out;
         out = out.offset(1);

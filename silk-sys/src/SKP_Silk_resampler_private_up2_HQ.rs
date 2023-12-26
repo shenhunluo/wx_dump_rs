@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::SKP_Silk_resampler_rom::{SKP_Silk_resampler_up2_hq_0, SKP_Silk_resampler_up2_hq_notch, SKP_Silk_resampler_up2_hq_1};
+use crate::skp_silk_resampler_rom::{SKP_SILK_RESAMPLER_UP2_HQ_0, SKP_SILK_RESAMPLER_UP2_HQ_NOTCH, SKP_SILK_RESAMPLER_UP2_HQ_1};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct _SKP_Silk_resampler_state_struct {
@@ -71,41 +71,41 @@ pub unsafe extern "C" fn SKP_Silk_resampler_private_up2_HQ(
         in32 = (*in_0.offset(k as isize) as libc::c_int) << 10 as libc::c_int;
         Y = in32 - *S.offset(0 as libc::c_int as isize);
         X = (Y >> 16 as libc::c_int)
-            * SKP_Silk_resampler_up2_hq_0[0 as libc::c_int as usize] as libc::c_int
+            * SKP_SILK_RESAMPLER_UP2_HQ_0[0 as libc::c_int as usize] as libc::c_int
             + ((Y & 0xffff as libc::c_int)
-                * SKP_Silk_resampler_up2_hq_0[0 as libc::c_int as usize] as libc::c_int
+                * SKP_SILK_RESAMPLER_UP2_HQ_0[0 as libc::c_int as usize] as libc::c_int
                 >> 16 as libc::c_int);
         out32_1 = *S.offset(0 as libc::c_int as isize) + X;
         *S.offset(0 as libc::c_int as isize) = in32 + X;
         Y = out32_1 - *S.offset(1 as libc::c_int as isize);
         X = Y
             + ((Y >> 16 as libc::c_int)
-                * SKP_Silk_resampler_up2_hq_0[1 as libc::c_int as usize] as libc::c_int
+                * SKP_SILK_RESAMPLER_UP2_HQ_0[1 as libc::c_int as usize] as libc::c_int
                 + ((Y & 0xffff as libc::c_int)
-                    * SKP_Silk_resampler_up2_hq_0[1 as libc::c_int as usize]
+                    * SKP_SILK_RESAMPLER_UP2_HQ_0[1 as libc::c_int as usize]
                         as libc::c_int >> 16 as libc::c_int));
         out32_2 = *S.offset(1 as libc::c_int as isize) + X;
         *S.offset(1 as libc::c_int as isize) = out32_1 + X;
         out32_2 = out32_2
             + ((*S.offset(5 as libc::c_int as isize) >> 16 as libc::c_int)
-                * SKP_Silk_resampler_up2_hq_notch[2 as libc::c_int as usize]
+                * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[2 as libc::c_int as usize]
                     as libc::c_int
                 + ((*S.offset(5 as libc::c_int as isize) & 0xffff as libc::c_int)
-                    * SKP_Silk_resampler_up2_hq_notch[2 as libc::c_int as usize]
+                    * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[2 as libc::c_int as usize]
                         as libc::c_int >> 16 as libc::c_int));
         out32_2 = out32_2
             + ((*S.offset(4 as libc::c_int as isize) >> 16 as libc::c_int)
-                * SKP_Silk_resampler_up2_hq_notch[1 as libc::c_int as usize]
+                * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[1 as libc::c_int as usize]
                     as libc::c_int
                 + ((*S.offset(4 as libc::c_int as isize) & 0xffff as libc::c_int)
-                    * SKP_Silk_resampler_up2_hq_notch[1 as libc::c_int as usize]
+                    * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[1 as libc::c_int as usize]
                         as libc::c_int >> 16 as libc::c_int));
         out32_1 = out32_2
             + ((*S.offset(4 as libc::c_int as isize) >> 16 as libc::c_int)
-                * SKP_Silk_resampler_up2_hq_notch[0 as libc::c_int as usize]
+                * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[0 as libc::c_int as usize]
                     as libc::c_int
                 + ((*S.offset(4 as libc::c_int as isize) & 0xffff as libc::c_int)
-                    * SKP_Silk_resampler_up2_hq_notch[0 as libc::c_int as usize]
+                    * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[0 as libc::c_int as usize]
                         as libc::c_int >> 16 as libc::c_int));
         *S
             .offset(
@@ -116,20 +116,20 @@ pub unsafe extern "C" fn SKP_Silk_resampler_private_up2_HQ(
                 (2 as libc::c_int * k) as isize,
             ) = (if 256 as libc::c_int
             + ((out32_1 >> 16 as libc::c_int)
-                * SKP_Silk_resampler_up2_hq_notch[3 as libc::c_int as usize]
+                * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[3 as libc::c_int as usize]
                     as libc::c_int
                 + ((out32_1 & 0xffff as libc::c_int)
-                    * SKP_Silk_resampler_up2_hq_notch[3 as libc::c_int as usize]
+                    * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[3 as libc::c_int as usize]
                         as libc::c_int >> 16 as libc::c_int)) >> 9 as libc::c_int
             > 0x7fff as libc::c_int
         {
             0x7fff as libc::c_int
         } else if (256 as libc::c_int
             + ((out32_1 >> 16 as libc::c_int)
-                * SKP_Silk_resampler_up2_hq_notch[3 as libc::c_int as usize]
+                * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[3 as libc::c_int as usize]
                     as libc::c_int
                 + ((out32_1 & 0xffff as libc::c_int)
-                    * SKP_Silk_resampler_up2_hq_notch[3 as libc::c_int as usize]
+                    * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[3 as libc::c_int as usize]
                         as libc::c_int >> 16 as libc::c_int)) >> 9 as libc::c_int)
             < 0x8000 as libc::c_int as libc::c_short as libc::c_int
         {
@@ -137,49 +137,49 @@ pub unsafe extern "C" fn SKP_Silk_resampler_private_up2_HQ(
         } else {
             256 as libc::c_int
                 + ((out32_1 >> 16 as libc::c_int)
-                    * SKP_Silk_resampler_up2_hq_notch[3 as libc::c_int as usize]
+                    * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[3 as libc::c_int as usize]
                         as libc::c_int
                     + ((out32_1 & 0xffff as libc::c_int)
-                        * SKP_Silk_resampler_up2_hq_notch[3 as libc::c_int as usize]
+                        * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[3 as libc::c_int as usize]
                             as libc::c_int >> 16 as libc::c_int)) >> 9 as libc::c_int
         }) as libc::c_short;
         Y = in32 - *S.offset(2 as libc::c_int as isize);
         X = (Y >> 16 as libc::c_int)
-            * SKP_Silk_resampler_up2_hq_1[0 as libc::c_int as usize] as libc::c_int
+            * SKP_SILK_RESAMPLER_UP2_HQ_1[0 as libc::c_int as usize] as libc::c_int
             + ((Y & 0xffff as libc::c_int)
-                * SKP_Silk_resampler_up2_hq_1[0 as libc::c_int as usize] as libc::c_int
+                * SKP_SILK_RESAMPLER_UP2_HQ_1[0 as libc::c_int as usize] as libc::c_int
                 >> 16 as libc::c_int);
         out32_1 = *S.offset(2 as libc::c_int as isize) + X;
         *S.offset(2 as libc::c_int as isize) = in32 + X;
         Y = out32_1 - *S.offset(3 as libc::c_int as isize);
         X = Y
             + ((Y >> 16 as libc::c_int)
-                * SKP_Silk_resampler_up2_hq_1[1 as libc::c_int as usize] as libc::c_int
+                * SKP_SILK_RESAMPLER_UP2_HQ_1[1 as libc::c_int as usize] as libc::c_int
                 + ((Y & 0xffff as libc::c_int)
-                    * SKP_Silk_resampler_up2_hq_1[1 as libc::c_int as usize]
+                    * SKP_SILK_RESAMPLER_UP2_HQ_1[1 as libc::c_int as usize]
                         as libc::c_int >> 16 as libc::c_int));
         out32_2 = *S.offset(3 as libc::c_int as isize) + X;
         *S.offset(3 as libc::c_int as isize) = out32_1 + X;
         out32_2 = out32_2
             + ((*S.offset(4 as libc::c_int as isize) >> 16 as libc::c_int)
-                * SKP_Silk_resampler_up2_hq_notch[2 as libc::c_int as usize]
+                * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[2 as libc::c_int as usize]
                     as libc::c_int
                 + ((*S.offset(4 as libc::c_int as isize) & 0xffff as libc::c_int)
-                    * SKP_Silk_resampler_up2_hq_notch[2 as libc::c_int as usize]
+                    * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[2 as libc::c_int as usize]
                         as libc::c_int >> 16 as libc::c_int));
         out32_2 = out32_2
             + ((*S.offset(5 as libc::c_int as isize) >> 16 as libc::c_int)
-                * SKP_Silk_resampler_up2_hq_notch[1 as libc::c_int as usize]
+                * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[1 as libc::c_int as usize]
                     as libc::c_int
                 + ((*S.offset(5 as libc::c_int as isize) & 0xffff as libc::c_int)
-                    * SKP_Silk_resampler_up2_hq_notch[1 as libc::c_int as usize]
+                    * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[1 as libc::c_int as usize]
                         as libc::c_int >> 16 as libc::c_int));
         out32_1 = out32_2
             + ((*S.offset(5 as libc::c_int as isize) >> 16 as libc::c_int)
-                * SKP_Silk_resampler_up2_hq_notch[0 as libc::c_int as usize]
+                * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[0 as libc::c_int as usize]
                     as libc::c_int
                 + ((*S.offset(5 as libc::c_int as isize) & 0xffff as libc::c_int)
-                    * SKP_Silk_resampler_up2_hq_notch[0 as libc::c_int as usize]
+                    * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[0 as libc::c_int as usize]
                         as libc::c_int >> 16 as libc::c_int));
         *S
             .offset(
@@ -190,20 +190,20 @@ pub unsafe extern "C" fn SKP_Silk_resampler_private_up2_HQ(
                 (2 as libc::c_int * k + 1 as libc::c_int) as isize,
             ) = (if 256 as libc::c_int
             + ((out32_1 >> 16 as libc::c_int)
-                * SKP_Silk_resampler_up2_hq_notch[3 as libc::c_int as usize]
+                * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[3 as libc::c_int as usize]
                     as libc::c_int
                 + ((out32_1 & 0xffff as libc::c_int)
-                    * SKP_Silk_resampler_up2_hq_notch[3 as libc::c_int as usize]
+                    * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[3 as libc::c_int as usize]
                         as libc::c_int >> 16 as libc::c_int)) >> 9 as libc::c_int
             > 0x7fff as libc::c_int
         {
             0x7fff as libc::c_int
         } else if (256 as libc::c_int
             + ((out32_1 >> 16 as libc::c_int)
-                * SKP_Silk_resampler_up2_hq_notch[3 as libc::c_int as usize]
+                * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[3 as libc::c_int as usize]
                     as libc::c_int
                 + ((out32_1 & 0xffff as libc::c_int)
-                    * SKP_Silk_resampler_up2_hq_notch[3 as libc::c_int as usize]
+                    * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[3 as libc::c_int as usize]
                         as libc::c_int >> 16 as libc::c_int)) >> 9 as libc::c_int)
             < 0x8000 as libc::c_int as libc::c_short as libc::c_int
         {
@@ -211,10 +211,10 @@ pub unsafe extern "C" fn SKP_Silk_resampler_private_up2_HQ(
         } else {
             256 as libc::c_int
                 + ((out32_1 >> 16 as libc::c_int)
-                    * SKP_Silk_resampler_up2_hq_notch[3 as libc::c_int as usize]
+                    * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[3 as libc::c_int as usize]
                         as libc::c_int
                     + ((out32_1 & 0xffff as libc::c_int)
-                        * SKP_Silk_resampler_up2_hq_notch[3 as libc::c_int as usize]
+                        * SKP_SILK_RESAMPLER_UP2_HQ_NOTCH[3 as libc::c_int as usize]
                             as libc::c_int >> 16 as libc::c_int)) >> 9 as libc::c_int
         }) as libc::c_short;
         k += 1;

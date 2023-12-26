@@ -13,7 +13,7 @@ use crate::SKP_Silk_resampler_down2::SKP_Silk_resampler_down2;
 use crate::SKP_Silk_resampler_private_up2_HQ::{SKP_Silk_resampler_private_up2_HQ_wrapper,SKP_Silk_resampler_private_up2_HQ};
 use crate::SKP_Silk_resampler_private_down_FIR::SKP_Silk_resampler_private_down_FIR;
 use crate::SKP_Silk_resampler_private_copy::SKP_Silk_resampler_private_copy;
-use crate::SKP_Silk_resampler_rom::{SKP_Silk_Resampler_3_4_COEFS, SKP_Silk_Resampler_2_3_COEFS, SKP_Silk_Resampler_1_2_COEFS, SKP_Silk_Resampler_3_8_COEFS, SKP_Silk_Resampler_1_3_COEFS, SKP_Silk_Resampler_80_441_ARMA4_COEFS, SKP_Silk_Resampler_120_441_ARMA4_COEFS, SKP_Silk_Resampler_160_441_ARMA4_COEFS, SKP_Silk_Resampler_240_441_ARMA4_COEFS, SKP_Silk_Resampler_320_441_ARMA4_COEFS};
+use crate::skp_silk_resampler_rom::{SKP_SILK_RESAMPLER_3_4_COEFS, SKP_SILK_RESAMPLER_2_3_COEFS, SKP_SILK_RESAMPLER_1_2_COEFS, SKP_SILK_RESAMPLER_3_8_COEFS, SKP_SILK_RESAMPLER_1_3_COEFS, SKP_SILK_RESAMPLER_80_441_ARMA4_COEFS, SKP_SILK_RESAMPLER_120_441_ARMA4_COEFS, SKP_SILK_RESAMPLER_160_441_ARMA4_COEFS, SKP_SILK_RESAMPLER_240_441_ARMA4_COEFS, SKP_SILK_RESAMPLER_320_441_ARMA4_COEFS};
 use crate::SKP_Silk_resampler_up2::SKP_Silk_resampler_up2;
 use crate::SKP_Silk_resampler_private_IIR_FIR::SKP_Silk_resampler_private_IIR_FIR;
 
@@ -235,7 +235,7 @@ pub unsafe extern "C" fn SKP_Silk_resampler_init(
     } else if Fs_Hz_out < Fs_Hz_in {
         if Fs_Hz_out * 4 as libc::c_int == Fs_Hz_in * 3 as libc::c_int {
             (*S).FIR_Fracs = 3 as libc::c_int;
-            (*S).Coefs = SKP_Silk_Resampler_3_4_COEFS.as_ptr();
+            (*S).Coefs = SKP_SILK_RESAMPLER_3_4_COEFS.as_ptr();
             (*S)
                 .resampler_function = Some(
                 SKP_Silk_resampler_private_down_FIR
@@ -248,7 +248,7 @@ pub unsafe extern "C" fn SKP_Silk_resampler_init(
             );
         } else if Fs_Hz_out * 3 as libc::c_int == Fs_Hz_in * 2 as libc::c_int {
             (*S).FIR_Fracs = 2 as libc::c_int;
-            (*S).Coefs = SKP_Silk_Resampler_2_3_COEFS.as_ptr();
+            (*S).Coefs = SKP_SILK_RESAMPLER_2_3_COEFS.as_ptr();
             (*S)
                 .resampler_function = Some(
                 SKP_Silk_resampler_private_down_FIR
@@ -261,7 +261,7 @@ pub unsafe extern "C" fn SKP_Silk_resampler_init(
             );
         } else if Fs_Hz_out * 2 as libc::c_int == Fs_Hz_in {
             (*S).FIR_Fracs = 1 as libc::c_int;
-            (*S).Coefs = SKP_Silk_Resampler_1_2_COEFS.as_ptr();
+            (*S).Coefs = SKP_SILK_RESAMPLER_1_2_COEFS.as_ptr();
             (*S)
                 .resampler_function = Some(
                 SKP_Silk_resampler_private_down_FIR
@@ -274,7 +274,7 @@ pub unsafe extern "C" fn SKP_Silk_resampler_init(
             );
         } else if Fs_Hz_out * 8 as libc::c_int == Fs_Hz_in * 3 as libc::c_int {
             (*S).FIR_Fracs = 3 as libc::c_int;
-            (*S).Coefs = SKP_Silk_Resampler_3_8_COEFS.as_ptr();
+            (*S).Coefs = SKP_SILK_RESAMPLER_3_8_COEFS.as_ptr();
             (*S)
                 .resampler_function = Some(
                 SKP_Silk_resampler_private_down_FIR
@@ -287,7 +287,7 @@ pub unsafe extern "C" fn SKP_Silk_resampler_init(
             );
         } else if Fs_Hz_out * 3 as libc::c_int == Fs_Hz_in {
             (*S).FIR_Fracs = 1 as libc::c_int;
-            (*S).Coefs = SKP_Silk_Resampler_1_3_COEFS.as_ptr();
+            (*S).Coefs = SKP_SILK_RESAMPLER_1_3_COEFS.as_ptr();
             (*S)
                 .resampler_function = Some(
                 SKP_Silk_resampler_private_down_FIR
@@ -301,7 +301,7 @@ pub unsafe extern "C" fn SKP_Silk_resampler_init(
         } else if Fs_Hz_out * 4 as libc::c_int == Fs_Hz_in {
             (*S).FIR_Fracs = 1 as libc::c_int;
             down2 = 1 as libc::c_int;
-            (*S).Coefs = SKP_Silk_Resampler_1_2_COEFS.as_ptr();
+            (*S).Coefs = SKP_SILK_RESAMPLER_1_2_COEFS.as_ptr();
             (*S)
                 .resampler_function = Some(
                 SKP_Silk_resampler_private_down_FIR
@@ -315,7 +315,7 @@ pub unsafe extern "C" fn SKP_Silk_resampler_init(
         } else if Fs_Hz_out * 6 as libc::c_int == Fs_Hz_in {
             (*S).FIR_Fracs = 1 as libc::c_int;
             down2 = 1 as libc::c_int;
-            (*S).Coefs = SKP_Silk_Resampler_1_3_COEFS.as_ptr();
+            (*S).Coefs = SKP_SILK_RESAMPLER_1_3_COEFS.as_ptr();
             (*S)
                 .resampler_function = Some(
                 SKP_Silk_resampler_private_down_FIR
@@ -327,7 +327,7 @@ pub unsafe extern "C" fn SKP_Silk_resampler_init(
                     ) -> (),
             );
         } else if Fs_Hz_out * 441 as libc::c_int == Fs_Hz_in * 80 as libc::c_int {
-            (*S).Coefs = SKP_Silk_Resampler_80_441_ARMA4_COEFS.as_ptr();
+            (*S).Coefs = SKP_SILK_RESAMPLER_80_441_ARMA4_COEFS.as_ptr();
             (*S)
                 .resampler_function = Some(
                 SKP_Silk_resampler_private_IIR_FIR
@@ -339,7 +339,7 @@ pub unsafe extern "C" fn SKP_Silk_resampler_init(
                     ) -> (),
             );
         } else if Fs_Hz_out * 441 as libc::c_int == Fs_Hz_in * 120 as libc::c_int {
-            (*S).Coefs = SKP_Silk_Resampler_120_441_ARMA4_COEFS.as_ptr();
+            (*S).Coefs = SKP_SILK_RESAMPLER_120_441_ARMA4_COEFS.as_ptr();
             (*S)
                 .resampler_function = Some(
                 SKP_Silk_resampler_private_IIR_FIR
@@ -351,7 +351,7 @@ pub unsafe extern "C" fn SKP_Silk_resampler_init(
                     ) -> (),
             );
         } else if Fs_Hz_out * 441 as libc::c_int == Fs_Hz_in * 160 as libc::c_int {
-            (*S).Coefs = SKP_Silk_Resampler_160_441_ARMA4_COEFS.as_ptr();
+            (*S).Coefs = SKP_SILK_RESAMPLER_160_441_ARMA4_COEFS.as_ptr();
             (*S)
                 .resampler_function = Some(
                 SKP_Silk_resampler_private_IIR_FIR
@@ -363,7 +363,7 @@ pub unsafe extern "C" fn SKP_Silk_resampler_init(
                     ) -> (),
             );
         } else if Fs_Hz_out * 441 as libc::c_int == Fs_Hz_in * 240 as libc::c_int {
-            (*S).Coefs = SKP_Silk_Resampler_240_441_ARMA4_COEFS.as_ptr();
+            (*S).Coefs = SKP_SILK_RESAMPLER_240_441_ARMA4_COEFS.as_ptr();
             (*S)
                 .resampler_function = Some(
                 SKP_Silk_resampler_private_IIR_FIR
@@ -375,7 +375,7 @@ pub unsafe extern "C" fn SKP_Silk_resampler_init(
                     ) -> (),
             );
         } else if Fs_Hz_out * 441 as libc::c_int == Fs_Hz_in * 320 as libc::c_int {
-            (*S).Coefs = SKP_Silk_Resampler_320_441_ARMA4_COEFS.as_ptr();
+            (*S).Coefs = SKP_SILK_RESAMPLER_320_441_ARMA4_COEFS.as_ptr();
             (*S)
                 .resampler_function = Some(
                 SKP_Silk_resampler_private_IIR_FIR
