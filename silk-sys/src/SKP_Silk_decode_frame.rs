@@ -104,7 +104,7 @@ pub struct SKP_Silk_CNG_struct {
 }
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_decode_frame(
-    mut psDec: *mut SKP_Silk_decoder_state,
+    mut psDec: &mut SKP_Silk_decoder_state,
     mut pOut: *mut libc::c_short,
     mut pN: *mut libc::c_short,
     mut pCode: *const libc::c_uchar,
@@ -183,8 +183,8 @@ pub unsafe extern "C" fn SKP_Silk_decode_frame(
     SKP_Silk_CNG(psDec, &mut sDecCtrl, pOut, L);
     SKP_Silk_biquad(
         pOut as *const libc::c_short,
-        (*psDec).HP_B,
-        (*psDec).HP_A,
+        psDec.HP_B.unwrap(),
+        psDec.HP_A.unwrap(),
         ((*psDec).HPState).as_mut_ptr(),
         pOut,
         L,

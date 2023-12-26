@@ -107,6 +107,13 @@ pub struct SKP_Silk_PLC_struct {
     pub prevGain_Q16: [libc::c_int; 4],
     pub fs_kHz: libc::c_int,
 }
+
+impl Default for SKP_Silk_PLC_struct {
+    fn default() -> Self {
+        Self { pitchL_Q8: Default::default(), LTPCoef_Q14: Default::default(), prevLPC_Q12: Default::default(), last_frame_lost: Default::default(), rand_seed: Default::default(), randScale_Q14: Default::default(), conc_energy: Default::default(), conc_energy_shift: Default::default(), prevLTP_scale_Q14: Default::default(), prevGain_Q16: Default::default(), fs_kHz: Default::default() }
+    }
+}
+
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct SKP_Silk_CNG_struct {

@@ -1,7 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
 #[derive(Copy, Clone)]
-#[repr(C)]
 pub struct SKP_Silk_range_coder_state {
     pub bufferLength: libc::c_int,
     pub bufferIx: libc::c_int,
@@ -10,6 +9,13 @@ pub struct SKP_Silk_range_coder_state {
     pub error: libc::c_int,
     pub buffer: [libc::c_uchar; 1024],
 }
+
+impl Default for SKP_Silk_range_coder_state {
+    fn default() -> Self {
+        Self { bufferLength: Default::default(), bufferIx: Default::default(), base_Q32: Default::default(), range_Q16: Default::default(), error: Default::default(), buffer: [0;1024] }
+    }
+}
+
 extern "C" {
     fn memcpy(
         _: *mut libc::c_void,

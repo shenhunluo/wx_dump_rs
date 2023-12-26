@@ -98,7 +98,7 @@ pub struct SKP_Silk_CNG_struct {
 }
 #[no_mangle]
 pub unsafe fn SKP_Silk_decode_parameters(
-    mut psDec: *mut SKP_Silk_decoder_state,
+    psDec: &mut SKP_Silk_decoder_state,
     psDecCtrl: &mut SKP_Silk_decoder_control,
     mut q: &mut [i32],
     fullDecoding: libc::c_int,
@@ -114,20 +114,21 @@ pub unsafe fn SKP_Silk_decode_parameters(
     let mut pNLSF_Q15: [libc::c_int; 16] = [0; 16];
     let mut pNLSF0_Q15: [libc::c_int; 16] = [0; 16];
     let mut cbk_ptr_Q14: *const libc::c_short = 0 as *const libc::c_short;
-    let mut psRC = &mut (*psDec).sRC;
-    if (*psDec).nFramesDecoded == 0 as libc::c_int {
+    let psRC = &mut psDec.sRC;
+    if psDec.nFramesDecoded == 0 as libc::c_int {
         Ix = SKP_Silk_range_decoder(
             psRC,
             &SKP_SILK_SAMPLING_RATES_CDF,
             SKP_SILK_SAMPLING_RATES_OFFSET,
         );
         if Ix < 0 as libc::c_int || Ix > 3 as libc::c_int {
-            (*psRC).error = -(7 as libc::c_int);
+            psRC.error = -(7 as libc::c_int);
             return;
         }
         fs_kHz_dec = SKP_SILK_SAMPLING_RATES_TABLE[Ix as usize];
         SKP_Silk_decoder_set_fs(psDec, fs_kHz_dec);
     }
+    let psRC = &mut psDec.sRC;
     if (*psDec).nFramesDecoded == 0 as libc::c_int {
         Ix = SKP_Silk_range_decoder(
             psRC,

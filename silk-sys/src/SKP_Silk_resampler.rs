@@ -68,6 +68,13 @@ pub struct SKP_Silk_resampler_state_struct {
     pub nPostUpsamplers: libc::c_int,
     pub magic_number: libc::c_int,
 }
+
+impl Default for SKP_Silk_resampler_state_struct {
+    fn default() -> Self {
+        Self { sIIR: Default::default(), sFIR: Default::default(), sDown2: Default::default(), resampler_function: Default::default(), up2_function: Default::default(), batchSize: Default::default(), invRatio_Q16: Default::default(), FIR_Fracs: Default::default(), input2x: Default::default(), Coefs: 0 as *const i16, sDownPre: Default::default(), sUpPost: Default::default(), down_pre_function: Default::default(), up_post_function: Default::default(), batchSizePrePost: Default::default(), ratio_Q16: Default::default(), nPreDownsamplers: Default::default(), nPostUpsamplers: Default::default(), magic_number: Default::default() }
+    }
+}
+
 unsafe extern "C" fn gcd(mut a: libc::c_int, mut b: libc::c_int) -> libc::c_int {
     let mut tmp: libc::c_int = 0;
     while b > 0 as libc::c_int {

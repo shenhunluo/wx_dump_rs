@@ -29,11 +29,10 @@ use super::SKP_Silk_range_coder::{
 };
 
 #[derive(Copy, Clone)]
-#[repr(C)]
 pub struct SKP_Silk_decoder_state {
     pub sRC: SKP_Silk_range_coder_state,
     pub prev_inv_gain_Q16: libc::c_int,
-    pub sLTP_Q16: [libc::c_int; 960],
+    pub sLTP_Q16: [i32; 960],
     pub sLPC_Q14: [libc::c_int; 136],
     pub exc_Q10: [libc::c_int; 480],
     pub res_Q10: [libc::c_int; 480],
@@ -43,8 +42,8 @@ pub struct SKP_Silk_decoder_state {
     pub LastGainIndex_EnhLayer: libc::c_int,
     pub typeOffsetPrev: libc::c_int,
     pub HPState: [libc::c_int; 2],
-    pub HP_A: *const libc::c_short,
-    pub HP_B: *const libc::c_short,
+    pub HP_A: Option<&'static [i16]>,
+    pub HP_B: Option<&'static [i16]>,
     pub fs_kHz: libc::c_int,
     pub prev_API_sampleRate: libc::c_int,
     pub frame_length: libc::c_int,
@@ -66,6 +65,12 @@ pub struct SKP_Silk_decoder_state {
     pub lossCnt: libc::c_int,
     pub prev_sigtype: libc::c_int,
     pub sPLC: SKP_Silk_PLC_struct,
+}
+
+impl Default for SKP_Silk_decoder_state {
+    fn default() -> Self {
+        Self { sRC: Default::default(), prev_inv_gain_Q16: Default::default(), sLTP_Q16: [0;960], sLPC_Q14: [0;136], exc_Q10: [0;480], res_Q10: [0;480], outBuf: [0;960], lagPrev: Default::default(), LastGainIndex: Default::default(), LastGainIndex_EnhLayer: Default::default(), typeOffsetPrev: Default::default(), HPState: Default::default(), HP_A: Default::default(), HP_B: None, fs_kHz: Default::default(), prev_API_sampleRate: Default::default(), frame_length: Default::default(), subfr_length: Default::default(), LPC_order: Default::default(), prevNLSF_Q15: Default::default(), first_frame_after_reset: Default::default(), nBytesLeft: Default::default(), nFramesDecoded: Default::default(), nFramesInPacket: Default::default(), moreInternalDecoderFrames: Default::default(), FrameTermination: Default::default(), resampler_state: Default::default(), psNLSF_CB: Default::default(), vadFlag: Default::default(), no_FEC_counter: Default::default(), inband_FEC_offset: Default::default(), sCNG: Default::default(), lossCnt: Default::default(), prev_sigtype: Default::default(), sPLC: Default::default() }
+    }
 }
 
 #[derive(Copy, Clone,Debug)]
@@ -109,28 +114,18 @@ pub struct SKP_Silk_decoder_control {
     pub sig_type: libc::c_int,
     pub NLSFInterpCoef_Q2: libc::c_int,
 }
-#[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_SDK_Get_Decoder_Size(
-    mut decSizeBytes: *mut libc::c_int,
-) -> libc::c_int {
-    let mut ret: libc::c_int = 0 as libc::c_int;
-    *decSizeBytes = ::core::mem::size_of::<SKP_Silk_decoder_state>() as libc::c_ulong
-        as libc::c_int;
-    return ret;
-}
+
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_SDK_InitDecoder(
-    mut decState: *mut libc::c_void,
+    decState: &mut SKP_Silk_decoder_state,
 ) -> libc::c_int {
     let mut ret: libc::c_int = 0 as libc::c_int;
-    let mut struc: *mut SKP_Silk_decoder_state = 0 as *mut SKP_Silk_decoder_state;
-    struc = decState as *mut SKP_Silk_decoder_state;
-    ret = SKP_Silk_init_decoder(struc);
+    ret = SKP_Silk_init_decoder(decState);
     return ret;
 }
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_SDK_Decode(
-    mut decState: *mut libc::c_void,
+    mut decState: &mut SKP_Silk_decoder_state,
     mut decControl: *mut SKP_SILK_SDK_DecControlStruct,
     mut lostFlag: libc::c_int,
     mut inData: *const libc::c_uchar,
@@ -141,10 +136,9 @@ pub unsafe extern "C" fn SKP_Silk_SDK_Decode(
     let mut ret: libc::c_int = 0 as libc::c_int;
     let mut used_bytes: libc::c_int = 0;
     let mut prev_fs_kHz: libc::c_int = 0;
-    let mut psDec: *mut SKP_Silk_decoder_state = 0 as *mut SKP_Silk_decoder_state;
     let mut samplesOutInternal: [libc::c_short; 960] = [0; 960];
     let mut pSamplesOutInternal: *mut libc::c_short = 0 as *mut libc::c_short;
-    psDec = decState as *mut SKP_Silk_decoder_state;
+    let psDec = decState;
     pSamplesOutInternal = samplesOut;
     if (*psDec).fs_kHz * 1000 as libc::c_int > (*decControl).API_sampleRate {
         pSamplesOutInternal = samplesOutInternal.as_mut_ptr();
@@ -273,8 +267,8 @@ pub unsafe extern "C" fn SKP_Silk_SDK_search_for_LBRR(
         LastGainIndex_EnhLayer: 0,
         typeOffsetPrev: 0,
         HPState: [0; 2],
-        HP_A: 0 as *const libc::c_short,
-        HP_B: 0 as *const libc::c_short,
+        HP_A: None,
+        HP_B: None,
         fs_kHz: 0,
         prev_API_sampleRate: 0,
         frame_length: 0,
@@ -427,8 +421,8 @@ pub unsafe extern "C" fn SKP_Silk_SDK_get_TOC(
         LastGainIndex_EnhLayer: 0,
         typeOffsetPrev: 0,
         HPState: [0; 2],
-        HP_A: 0 as *const libc::c_short,
-        HP_B: 0 as *const libc::c_short,
+        HP_A: None,
+        HP_B: None,
         fs_kHz: 0,
         prev_API_sampleRate: 0,
         frame_length: 0,

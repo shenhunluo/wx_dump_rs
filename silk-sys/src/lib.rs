@@ -61,9 +61,8 @@ pub mod skp_silk_macro;
 pub mod error;
 
 use bytes::Buf;
-use libc::c_void;
 
-use crate::{error::SilkError, SKP_Silk_dec_API::{SKP_Silk_SDK_Get_Decoder_Size, SKP_SILK_SDK_DecControlStruct, SKP_Silk_SDK_InitDecoder, SKP_Silk_SDK_Decode}};
+use crate::{error::SilkError, SKP_Silk_dec_API::{SKP_SILK_SDK_DecControlStruct, SKP_Silk_SDK_InitDecoder, SKP_Silk_SDK_Decode, SKP_Silk_decoder_state}};
 
 pub fn decode_silk(src: impl AsRef<[u8]>, sample_rate: i32) -> Result<Vec<u8>, SilkError> {
     unsafe { _decode_silk(src.as_ref(), sample_rate) }
@@ -90,14 +89,9 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<u8>, Silk
         inBandFECOffset: 0,
     };
 
-    let mut decoder_size = 0;
-    let r = SKP_Silk_SDK_Get_Decoder_Size(&mut decoder_size);
-    if r != 0 {
-        return Err(r.into());
-    }
-    let mut decoder = vec![0u8; decoder_size as usize];
+    let mut decoder = SKP_Silk_decoder_state::default();
     let r = SKP_Silk_SDK_InitDecoder(
-        decoder.as_mut_ptr() as *mut c_void
+        &mut decoder
     );
     if r != 0 {
         return Err(r.into());
@@ -122,7 +116,7 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<u8>, Silk
 
         let mut output_size = 0i16;
         let r = SKP_Silk_SDK_Decode(
-            decoder.as_mut_ptr() as *mut c_void,
+            &mut decoder,
             &mut dec_control,
             0,
             input.as_ptr(),

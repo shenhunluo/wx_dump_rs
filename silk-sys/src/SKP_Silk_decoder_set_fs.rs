@@ -1,6 +1,7 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
 use crate::SKP_Silk_dec_API::SKP_Silk_decoder_state;
+use crate::skp_s_mul_b_b;
 use crate::skp_silk_tables_nlsf_cb0_10::SKP_SILK_NLSF_CB0_10;
 use crate::skp_silk_tables_nlsf_cb0_16::SKP_SILK_NLSF_CB0_16;
 use crate::skp_silk_tables_nlsf_cb1_10::SKP_SILK_NLSF_CB1_10;
@@ -107,62 +108,49 @@ pub struct SKP_Silk_CNG_struct {
     pub rand_seed: libc::c_int,
     pub fs_kHz: libc::c_int,
 }
-#[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_decoder_set_fs(
-    mut psDec: *mut SKP_Silk_decoder_state,
+
+pub fn SKP_Silk_decoder_set_fs(
+    mut psDec: &mut SKP_Silk_decoder_state,
     mut fs_kHz: libc::c_int,
 ) {
-    if (*psDec).fs_kHz != fs_kHz {
-        (*psDec).fs_kHz = fs_kHz;
-        (*psDec)
-            .frame_length = 20 as libc::c_int as libc::c_short as libc::c_int
-            * fs_kHz as libc::c_short as libc::c_int;
-        (*psDec)
-            .subfr_length = (20 as libc::c_int / 4 as libc::c_int) as libc::c_short
-            as libc::c_int * fs_kHz as libc::c_short as libc::c_int;
-        if (*psDec).fs_kHz == 8 as libc::c_int {
-            (*psDec).LPC_order = 10 as libc::c_int;
-            (*psDec).psNLSF_CB[0 as libc::c_int as usize] = Some(&SKP_SILK_NLSF_CB0_10);
-            (*psDec).psNLSF_CB[1 as libc::c_int as usize] = Some(&SKP_SILK_NLSF_CB1_10);
+    if psDec.fs_kHz != fs_kHz {
+        psDec.fs_kHz = fs_kHz;
+        psDec.frame_length = skp_s_mul_b_b!(20, fs_kHz);
+        psDec.subfr_length = skp_s_mul_b_b!(20 / 4, fs_kHz);
+        if psDec.fs_kHz == 8 {
+            psDec.LPC_order = 10;
+            psDec.psNLSF_CB[0] = Some(&SKP_SILK_NLSF_CB0_10);
+            psDec.psNLSF_CB[1] = Some(&SKP_SILK_NLSF_CB1_10);
         } else {
-            (*psDec).LPC_order = 16 as libc::c_int;
-            (*psDec).psNLSF_CB[0 as libc::c_int as usize] = Some(&SKP_SILK_NLSF_CB0_16);
-            (*psDec).psNLSF_CB[1 as libc::c_int as usize] = Some(&SKP_SILK_NLSF_CB1_16);
+            psDec.LPC_order = 16;
+            psDec.psNLSF_CB[0] = Some(&SKP_SILK_NLSF_CB0_16);
+            psDec.psNLSF_CB[1] = Some(&SKP_SILK_NLSF_CB1_16);
         }
-        memset(
-            ((*psDec).sLPC_Q14).as_mut_ptr() as *mut libc::c_void,
-            0 as libc::c_int,
-            (16 as libc::c_int as libc::c_ulong)
-                .wrapping_mul(::core::mem::size_of::<libc::c_int>() as libc::c_ulong),
-        );
-        memset(
-            ((*psDec).outBuf).as_mut_ptr() as *mut libc::c_void,
-            0 as libc::c_int,
-            ((20 as libc::c_int * 24 as libc::c_int) as libc::c_ulong)
-                .wrapping_mul(::core::mem::size_of::<libc::c_short>() as libc::c_ulong),
-        );
-        memset(
-            ((*psDec).prevNLSF_Q15).as_mut_ptr() as *mut libc::c_void,
-            0 as libc::c_int,
-            (16 as libc::c_int as libc::c_ulong)
-                .wrapping_mul(::core::mem::size_of::<libc::c_int>() as libc::c_ulong),
-        );
-        (*psDec).lagPrev = 100 as libc::c_int;
-        (*psDec).LastGainIndex = 1 as libc::c_int;
-        (*psDec).prev_sigtype = 0 as libc::c_int;
-        (*psDec).first_frame_after_reset = 1 as libc::c_int;
-        if fs_kHz == 24 as libc::c_int {
-            (*psDec).HP_A = SKP_SILK_DEC_A_HP_24.as_ptr();
-            (*psDec).HP_B = SKP_SILK_DEC_B_HP_24.as_ptr();
-        } else if fs_kHz == 16 as libc::c_int {
-            (*psDec).HP_A = SKP_SILK_DEC_A_HP_16.as_ptr();
-            (*psDec).HP_B = SKP_SILK_DEC_B_HP_16.as_ptr();
-        } else if fs_kHz == 12 as libc::c_int {
-            (*psDec).HP_A = SKP_SILK_DEC_A_HP_12.as_ptr();
-            (*psDec).HP_B = SKP_SILK_DEC_B_HP_12.as_ptr();
-        } else if fs_kHz == 8 as libc::c_int {
-            (*psDec).HP_A = SKP_SILK_DEC_A_HP_8.as_ptr();
-            (*psDec).HP_B = SKP_SILK_DEC_B_HP_8.as_ptr();
+        for i in &mut psDec.sLPC_Q14[0..16] {
+            *i = 0;
+        }
+        for i in &mut psDec.outBuf[0..20*24] {
+            *i = 0;
+        }
+        for i in &mut psDec.prevNLSF_Q15[0..16] {
+            *i = 0;
+        }
+        psDec.lagPrev = 100;
+        psDec.LastGainIndex = 1;
+        psDec.prev_sigtype = 0;
+        psDec.first_frame_after_reset = 1;
+        if fs_kHz == 24 {
+            psDec.HP_A = Some(&SKP_SILK_DEC_A_HP_24);
+            psDec.HP_B = Some(&SKP_SILK_DEC_B_HP_24);
+        } else if fs_kHz == 16 {
+            psDec.HP_A = Some(&SKP_SILK_DEC_A_HP_16);
+            psDec.HP_B = Some(&SKP_SILK_DEC_B_HP_16);
+        } else if fs_kHz == 12 {
+            psDec.HP_A = Some(&SKP_SILK_DEC_A_HP_12);
+            psDec.HP_B = Some(&SKP_SILK_DEC_B_HP_12);
+        } else if fs_kHz == 8 {
+            psDec.HP_A = Some(&SKP_SILK_DEC_A_HP_8);
+            psDec.HP_B = Some(&SKP_SILK_DEC_B_HP_8);
         }
     }
 }

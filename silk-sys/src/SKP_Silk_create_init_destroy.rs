@@ -20,13 +20,8 @@ pub struct SKP_Silk_NLSF_CBS {
 }
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_init_decoder(
-    mut psDec: *mut SKP_Silk_decoder_state,
+    psDec: &mut SKP_Silk_decoder_state,
 ) -> libc::c_int {
-    memset(
-        psDec as *mut libc::c_void,
-        0 as libc::c_int,
-        ::core::mem::size_of::<SKP_Silk_decoder_state>() as libc::c_ulong,
-    );
     SKP_Silk_decoder_set_fs(psDec, 24 as libc::c_int);
     (*psDec).first_frame_after_reset = 1 as libc::c_int;
     (*psDec).prev_inv_gain_Q16 = 65536 as libc::c_int;

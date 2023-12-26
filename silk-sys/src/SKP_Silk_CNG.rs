@@ -122,6 +122,13 @@ pub struct SKP_Silk_CNG_struct {
     pub rand_seed: libc::c_int,
     pub fs_kHz: libc::c_int,
 }
+
+impl Default for SKP_Silk_CNG_struct {
+    fn default() -> Self {
+        Self { CNG_exc_buf_Q10: [0;480], CNG_smth_NLSF_Q15: Default::default(), CNG_synth_state: Default::default(), CNG_smth_Gain_Q16: Default::default(), rand_seed: Default::default(), fs_kHz: Default::default() }
+    }
+}
+
 #[inline]
 unsafe extern "C" fn SKP_Silk_CNG_exc(
     mut residual: *mut libc::c_short,
