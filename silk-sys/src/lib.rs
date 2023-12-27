@@ -32,7 +32,7 @@ pub mod SKP_Silk_LPC_inv_pred_gain;
 pub mod SKP_Silk_MA;
 pub mod skp_silk_nlsf_stabilize;
 pub mod SKP_Silk_lin2log;
-pub mod SKP_Silk_log2lin;
+pub mod skp_silk_log2lin;
 pub mod SKP_Silk_NLSF2A;
 pub mod SKP_Silk_shell_coder;
 pub mod SKP_Silk_code_signs;

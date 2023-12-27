@@ -1,5 +1,5 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
-use crate::{skp_silk_tables_other::SKP_SILK_QUANTIZATION_OFFSETS_Q10, skp_s_mul_w_w};
+use crate::{skp_silk_tables_other::SKP_SILK_QUANTIZATION_OFFSETS_Q10, skp_s_mul_w_w, skp_s_mla_w_b};
 #[deny(arithmetic_overflow)]
 
 use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, SKP_Silk_MA::SKP_Silk_MA_Prediction};
@@ -494,14 +494,11 @@ pub unsafe extern "C" fn SKP_Silk_decode_core(
                         & 0xffff as libc::c_int)
                         * *B_Q14.offset(0 as libc::c_int as isize) as libc::c_int
                         >> 16 as libc::c_int);
-                LTP_pred_Q14 = LTP_pred_Q14
-                    + ((*pred_lag_ptr.offset(-(1 as libc::c_int) as isize)
-                        >> 16 as libc::c_int)
-                        * *B_Q14.offset(1 as libc::c_int as isize) as libc::c_int
-                        + ((*pred_lag_ptr.offset(-(1 as libc::c_int) as isize)
-                            & 0xffff as libc::c_int)
-                            * *B_Q14.offset(1 as libc::c_int as isize) as libc::c_int
-                            >> 16 as libc::c_int));
+                LTP_pred_Q14 = skp_s_mla_w_b!(
+                    LTP_pred_Q14,
+                    *pred_lag_ptr.offset(-(1 as libc::c_int) as isize),
+                    *B_Q14.offset(1 as libc::c_int as isize)
+                );
                 LTP_pred_Q14 = LTP_pred_Q14
                     + ((*pred_lag_ptr.offset(-(2 as libc::c_int) as isize)
                         >> 16 as libc::c_int)

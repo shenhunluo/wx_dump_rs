@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{SKP_Silk_lin2log::SKP_Silk_lin2log, SKP_Silk_log2lin::SKP_Silk_log2lin};
+use crate::{SKP_Silk_lin2log::SKP_Silk_lin2log, skp_silk_log2lin::skp_silk_log2lin};
 #[inline]
 unsafe extern "C" fn SKP_min_32(mut a: libc::c_int, mut b: libc::c_int) -> libc::c_int {
     return if a < b { a } else { b };
@@ -93,7 +93,7 @@ pub unsafe extern "C" fn SKP_Silk_gains_quant(
         *gain_Q16
             .offset(
                 k as isize,
-            ) = SKP_Silk_log2lin(
+            ) = skp_silk_log2lin(
             SKP_min_32(
                 (65536 as libc::c_int
                     * ((86 as libc::c_int - 6 as libc::c_int) * 128 as libc::c_int
@@ -130,7 +130,7 @@ pub unsafe extern "C" fn SKP_Silk_gains_dequant(
         *gain_Q16
             .offset(
                 k as isize,
-            ) = SKP_Silk_log2lin(
+            ) = skp_silk_log2lin(
             SKP_min_32(
                 (65536 as libc::c_int
                     * ((86 as libc::c_int - 6 as libc::c_int) * 128 as libc::c_int
