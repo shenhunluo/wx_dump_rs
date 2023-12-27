@@ -260,7 +260,7 @@ pub fn SKP_Silk_range_dec_init(
     bufferLength: i32,
 ) {
     if bufferLength > 1024 || bufferLength < 0 {
-        (*psRC).error = -8;
+        psRC.error = -8;
         return;
     }
     for i in 0..bufferLength as usize {
