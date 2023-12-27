@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, skp_silk_bwexpander::skp_silk_bwexpander, SKP_Silk_sum_sqr_shift::SKP_Silk_sum_sqr_shift, SKP_Silk_LPC_inv_pred_gain::SKP_Silk_LPC_inverse_pred_gain};
+use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, skp_silk_bwexpander::skp_silk_bwexpander, SKP_Silk_sum_sqr_shift::SKP_Silk_sum_sqr_shift, skp_silk_lpc_inv_pred_gain::skp_silk_lpc_inverse_pred_gain};
 extern "C" {
     fn memcpy(
         _: *mut libc::c_void,
@@ -563,7 +563,7 @@ pub unsafe extern "C" fn SKP_Silk_PLC_conceal(
         if (*psDec).prev_sigtype == 1 as libc::c_int {
             let mut invGain_Q30: libc::c_int = 0;
             let mut down_scale_Q30: libc::c_int = 0;
-            SKP_Silk_LPC_inverse_pred_gain(
+            skp_silk_lpc_inverse_pred_gain(
                 &mut invGain_Q30,
                 &mut ((*psPLC).prevLPC_Q12),
                 (*psDec).LPC_order as usize,

@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{SKP_Silk_LPC_inv_pred_gain::SKP_Silk_LPC_inverse_pred_gain, skp_silk_bwexpander::skp_silk_bwexpander, skp_silk_nlsf2a::skp_silk_nlsf2a};
+use crate::{skp_silk_lpc_inv_pred_gain::skp_silk_lpc_inverse_pred_gain, skp_silk_bwexpander::skp_silk_bwexpander, skp_silk_nlsf2a::skp_silk_nlsf2a};
 #[no_mangle]
 pub unsafe fn SKP_Silk_NLSF2A_stable(
     pAR_Q12: &mut [i16],
@@ -12,7 +12,7 @@ pub unsafe fn SKP_Silk_NLSF2A_stable(
     skp_silk_nlsf2a(pAR_Q12, pNLSF, LPC_order);
     i = 0 as libc::c_int;
     while i < 20 as libc::c_int {
-        if !(SKP_Silk_LPC_inverse_pred_gain(
+        if !(skp_silk_lpc_inverse_pred_gain(
             &mut invGain_Q30,
             pAR_Q12,
             LPC_order,

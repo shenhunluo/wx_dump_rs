@@ -24,7 +24,6 @@ pub mod SKP_Silk_NLSF2A_stable;
 pub mod SKP_Silk_LPC_synthesis_order16;
 pub mod SKP_Silk_LPC_synthesis_filter;
 pub mod SKP_Silk_sum_sqr_shift;
-pub mod SKP_Silk_LPC_inv_pred_gain;
 pub mod SKP_Silk_MA;
 pub mod SKP_Silk_lin2log;
 pub mod SKP_Silk_shell_coder;
@@ -32,6 +31,7 @@ pub mod SKP_Silk_code_signs;
 
 pub mod SKP_Silk_tables_LTP;
 
+pub mod skp_silk_lpc_inv_pred_gain;
 pub mod skp_silk_log2lin;
 pub mod skp_silk_nlsf2a;
 pub mod skp_silk_decode_pulses;
