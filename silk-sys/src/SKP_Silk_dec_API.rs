@@ -22,7 +22,7 @@ use super::SKP_Silk_resampler::{
     SKP_Silk_resampler_state_struct,
 };
 use super::SKP_Silk_decode_frame::SKP_Silk_decode_frame;
-use super::SKP_Silk_decode_parameters::SKP_Silk_decode_parameters;
+use super::skp_silk_decode_parameters::skp_silk_decode_parameters;
 use super::SKP_Silk_range_coder::{
     SKP_Silk_range_dec_init,
     SKP_Silk_range_coder_state,
@@ -501,7 +501,7 @@ pub unsafe fn SKP_Silk_SDK_get_TOC(
     SKP_Silk_range_dec_init(&mut sDec.sRC, inData, nBytesIn);
     (*Silk_TOC).corrupt = 0 as libc::c_int;
     loop {
-        SKP_Silk_decode_parameters(
+        skp_silk_decode_parameters(
             &mut sDec,
             &mut sDecCtrl,
             &mut TempQ,

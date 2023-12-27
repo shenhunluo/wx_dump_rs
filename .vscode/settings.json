@@ -25,6 +25,7 @@
         "PICKFOLDERS",
         "PROCESSENTRY",
         "PSTR",
+        "ptrs",
         "repr",
         "resampler",
         "SIGDN",
