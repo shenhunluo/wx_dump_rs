@@ -1,4 +1,3 @@
-pub mod SKP_Silk_create_init_destroy;
 pub mod SKP_Silk_dec_API;
 pub mod SKP_Silk_resampler;
 pub mod SKP_Silk_resampler_private_up2_HQ;
