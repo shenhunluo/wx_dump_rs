@@ -1,5 +1,5 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
-use crate::{skp_silk_tables_other::SKP_SILK_QUANTIZATION_OFFSETS_Q10, skp_s_mul_w_w, skp_s_mla_w_b, skp_utils::{skp_inverse32_var_q, skp_silk_clz32, skp_div32_var_q}, skp_s_mul_w_b, skp_s_mla_w_t, skp_l_shift, i16_to_i32};
+use crate::{skp_silk_tables_other::SKP_SILK_QUANTIZATION_OFFSETS_Q10, skp_s_mul_w_w, skp_s_mla_w_b, skp_utils::{skp_inverse32_var_q, skp_silk_clz32, skp_div32_var_q}, skp_s_mul_w_b, skp_s_mla_w_t, skp_l_shift};
 #[deny(arithmetic_overflow)]
 
 use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, SKP_Silk_MA::SKP_Silk_MA_Prediction};
@@ -126,7 +126,7 @@ pub struct SKP_Silk_CNG_struct {
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_decode_core(
     mut psDec: &mut SKP_Silk_decoder_state,
-    mut psDecCtrl: &mut SKP_Silk_decoder_control,
+    mut psDecCtrl: *mut SKP_Silk_decoder_control,
     mut xq: *mut libc::c_short,
     mut q: *const libc::c_int,
 ) {
@@ -151,8 +151,6 @@ pub unsafe extern "C" fn SKP_Silk_decode_core(
     let mut offset_Q10: libc::c_int = 0;
     let mut dither: libc::c_int = 0;
     let mut pred_lag_ptr: *mut libc::c_int = 0 as *mut libc::c_int;
-    let mut pexc_Q10;
-    let mut pres_Q10;
     let mut vec_Q10: [libc::c_int; 120] = [0; 120];
     let mut FiltState: [libc::c_int; 16] = [0; 16];
     offset_Q10 = SKP_SILK_QUANTIZATION_OFFSETS_Q10[(*psDecCtrl).sig_type
@@ -178,8 +176,8 @@ pub unsafe extern "C" fn SKP_Silk_decode_core(
         rand_seed += *q.offset(i as isize);
         i += 1;
     }
-    pexc_Q10 = &mut psDec.exc_Q10[..];
-    pres_Q10 = &mut psDec.res_Q10[..];
+    let mut pexc_Q10 = &mut psDec.exc_Q10[..];
+    let mut pres_Q10 = &mut psDec.res_Q10[..];
     pxq = &mut *((*psDec).outBuf).as_mut_ptr().offset((*psDec).frame_length as isize)
         as *mut libc::c_short;
     sLTP_buf_idx = (*psDec).frame_length;
@@ -382,13 +380,13 @@ pub unsafe extern "C" fn SKP_Silk_decode_core(
                 pres_Q10[i] = pexc_Q10[i];
             }
         }
-        skp_silk_decode_short_term_prediction(
+        SKP_Silk_decode_short_term_prediction(
             &mut vec_Q10,
-            &pres_Q10,
+            pres_Q10,
             &mut psDec.sLPC_Q14,
             &mut A_Q12_tmp,
-            psDec.LPC_order,
-            psDec.subfr_length as usize,
+            (*psDec).LPC_order,
+            (*psDec).subfr_length as usize,
         );
         i = 0 as libc::c_int;
         while i < (*psDec).subfr_length {
@@ -547,74 +545,75 @@ pub unsafe extern "C" fn SKP_Silk_decode_core(
 
 const MAX_LPC_ORDER: usize = 16;
 
-pub fn skp_silk_decode_short_term_prediction(
-    vec_q10: &mut [i32],
-    p_res_q10: &[i32],
-    s_lpc_q14: &mut [i32],
-    a_q12_tmp: &mut [i16],
-    lpc_order: i32,
-    subfr_length: usize,
+#[no_mangle]
+pub unsafe extern "C" fn SKP_Silk_decode_short_term_prediction(
+    mut vec_Q10: &mut [i32],
+    mut pres_Q10: &mut [i32],
+    mut sLPC_Q14: &mut [i32],
+    mut A_Q12_tmp: &mut [i16],
+    mut LPC_order: libc::c_int,
+    mut subfr_length: usize,
 ) {
-    let mut lpc_pred_q10= 0;
-    let mut a_tmp = 0;
-    if lpc_order == 16 {
+    let mut LPC_pred_Q10: libc::c_int = 0;
+    let mut Atmp: libc::c_int = 0;
+    if LPC_order == 16 as libc::c_int {
         for i in 0..subfr_length {
             /* unrolled */
-            a_tmp = i16_to_i32!(a_q12_tmp[ 0 ], a_q12_tmp[ 1 ]);
-            lpc_pred_q10 = skp_s_mul_w_b!( s_lpc_q14[ MAX_LPC_ORDER + i -  1 ], a_tmp );
-            lpc_pred_q10 = skp_s_mla_w_t!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  2 ], a_tmp );
-            a_tmp = i16_to_i32!(a_q12_tmp[ 2 ], a_q12_tmp[ 3 ]);
-            lpc_pred_q10 = skp_s_mla_w_b!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  3 ], a_tmp );
-            lpc_pred_q10 = skp_s_mla_w_t!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  4 ], a_tmp );
-            a_tmp = i16_to_i32!(a_q12_tmp[ 4 ], a_q12_tmp[ 5 ]);
-            lpc_pred_q10 = skp_s_mla_w_b!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  5 ], a_tmp );
-            lpc_pred_q10 = skp_s_mla_w_t!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  6 ], a_tmp );
-            a_tmp = i16_to_i32!(a_q12_tmp[ 6 ], a_q12_tmp[ 7 ]);
-            lpc_pred_q10 = skp_s_mla_w_b!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  7 ], a_tmp );
-            lpc_pred_q10 = skp_s_mla_w_t!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  8 ], a_tmp );
-            a_tmp = i16_to_i32!(a_q12_tmp[ 8 ], a_q12_tmp[ 9 ]);
-            lpc_pred_q10 = skp_s_mla_w_b!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  9 ], a_tmp );
-            lpc_pred_q10 = skp_s_mla_w_t!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i - 10 ], a_tmp );
-            a_tmp = i16_to_i32!(a_q12_tmp[ 10 ], a_q12_tmp[ 11 ]);
-            lpc_pred_q10 = skp_s_mla_w_b!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i - 11 ], a_tmp );
-            lpc_pred_q10 = skp_s_mla_w_t!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i - 12 ], a_tmp );
-            a_tmp = i16_to_i32!(a_q12_tmp[ 12 ], a_q12_tmp[ 13 ]);
-            lpc_pred_q10 = skp_s_mla_w_b!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i - 13 ], a_tmp );
-            lpc_pred_q10 = skp_s_mla_w_t!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i - 14 ], a_tmp );
-            a_tmp = i16_to_i32!(a_q12_tmp[ 14 ], a_q12_tmp[ 15 ]);
-            lpc_pred_q10 = skp_s_mla_w_b!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i - 15 ], a_tmp );
-            lpc_pred_q10 = skp_s_mla_w_t!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i - 16 ], a_tmp );
+            Atmp = A_Q12_tmp[ 0 ] as i32;
+            LPC_pred_Q10 = skp_s_mul_w_b!( sLPC_Q14[ MAX_LPC_ORDER + i -  1 ], Atmp );
+            LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  2 ], Atmp );
+            Atmp = A_Q12_tmp[ 2 ] as i32;
+            LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  3 ], Atmp );
+            LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  4 ], Atmp );
+            Atmp = A_Q12_tmp[ 4 ] as i32;
+            LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  5 ], Atmp );
+            LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  6 ], Atmp );
+            Atmp = A_Q12_tmp[ 6 ] as i32;
+            LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  7 ], Atmp );
+            LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  8 ], Atmp );
+            Atmp = A_Q12_tmp[ 8 ] as i32;
+            LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  9 ], Atmp );
+            LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i - 10 ], Atmp );
+            Atmp = A_Q12_tmp[ 10 ] as i32;
+            LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i - 11 ], Atmp );
+            LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i - 12 ], Atmp );
+            Atmp = A_Q12_tmp[ 12 ] as i32;
+            LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i - 13 ], Atmp );
+            LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i - 14 ], Atmp );
+            Atmp = A_Q12_tmp[ 14 ] as i32;
+            LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i - 15 ], Atmp );
+            LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i - 16 ], Atmp );
             
             /* Add prediction to LPC residual */
-            vec_q10[ i ] = p_res_q10[ i ] + lpc_pred_q10 ;
+            vec_Q10[ i ] = pres_Q10[ i ] + LPC_pred_Q10 ;
             
             /* Update states */
-            s_lpc_q14[ MAX_LPC_ORDER + i ] = skp_l_shift!( vec_q10[ i ], 4 );
+            sLPC_Q14[ MAX_LPC_ORDER + i ] = skp_l_shift!( vec_Q10[ i ], 4 );
         }
     } else {
         for i in 0..subfr_length {
             /* unrolled */
-            a_tmp = i16_to_i32!(a_q12_tmp[ 0 ], a_q12_tmp[ 1 ]);
-            lpc_pred_q10 = skp_s_mul_w_b!(               s_lpc_q14[ MAX_LPC_ORDER + i -  1 ], a_tmp );
-            lpc_pred_q10 = skp_s_mla_w_t!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  2 ], a_tmp );
-            a_tmp = i16_to_i32!(a_q12_tmp[ 2 ], a_q12_tmp[ 3 ]);
-            lpc_pred_q10 = skp_s_mla_w_b!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  3 ], a_tmp );
-            lpc_pred_q10 = skp_s_mla_w_t!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  4 ], a_tmp );
-            a_tmp = i16_to_i32!(a_q12_tmp[ 4 ], a_q12_tmp[ 5 ]);
-            lpc_pred_q10 = skp_s_mla_w_b!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  5 ], a_tmp );
-            lpc_pred_q10 = skp_s_mla_w_t!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  6 ], a_tmp );
-            a_tmp = i16_to_i32!(a_q12_tmp[ 6 ], a_q12_tmp[ 7 ]);
-            lpc_pred_q10 = skp_s_mla_w_b!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  7 ], a_tmp );
-            lpc_pred_q10 = skp_s_mla_w_t!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  8 ], a_tmp );
-            a_tmp = i16_to_i32!(a_q12_tmp[ 8 ], a_q12_tmp[ 9 ]);
-            lpc_pred_q10 = skp_s_mla_w_b!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i -  9 ], a_tmp );
-            lpc_pred_q10 = skp_s_mla_w_t!( lpc_pred_q10, s_lpc_q14[ MAX_LPC_ORDER + i - 10 ], a_tmp );
+            Atmp = A_Q12_tmp[ 0 ] as i32;    /* read two coefficients at once */
+            LPC_pred_Q10 = skp_s_mul_w_b!(               sLPC_Q14[ MAX_LPC_ORDER + i -  1 ], Atmp );
+            LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  2 ], Atmp );
+            Atmp = A_Q12_tmp[ 2 ] as i32;
+            LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  3 ], Atmp );
+            LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  4 ], Atmp );
+            Atmp = A_Q12_tmp[ 4 ] as i32;
+            LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  5 ], Atmp );
+            LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  6 ], Atmp );
+            Atmp = A_Q12_tmp[ 6 ] as i32;
+            LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  7 ], Atmp );
+            LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  8 ], Atmp );
+            Atmp = A_Q12_tmp[ 8 ] as i32;
+            LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i -  9 ], Atmp );
+            LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, sLPC_Q14[ MAX_LPC_ORDER + i - 10 ], Atmp );
             
             /* Add prediction to LPC residual */
-            vec_q10[ i ] = p_res_q10[ i ] + lpc_pred_q10;
+            vec_Q10[ i ] = pres_Q10[ i ] + LPC_pred_Q10;
             
             /* Update states */
-            s_lpc_q14[ MAX_LPC_ORDER + i ] = skp_l_shift!( vec_q10[ i ], 4 );
+            sLPC_Q14[ MAX_LPC_ORDER + i ] = skp_l_shift!( vec_Q10[ i ], 4 );
         }
     };
 }
