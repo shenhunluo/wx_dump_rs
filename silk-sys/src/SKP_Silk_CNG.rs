@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, SKP_Silk_NLSF2A_stable::SKP_Silk_NLSF2A_stable, SKP_Silk_LPC_synthesis_order16::SKP_Silk_LPC_synthesis_order16, SKP_Silk_LPC_synthesis_filter::SKP_Silk_LPC_synthesis_filter};
+use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, skp_silk_nlsf2a_stable::skp_silk_nlsf2a_stable, SKP_Silk_LPC_synthesis_order16::SKP_Silk_LPC_synthesis_order16, SKP_Silk_LPC_synthesis_filter::SKP_Silk_LPC_synthesis_filter};
 extern "C" {
     fn memcpy(
         _: *mut libc::c_void,
@@ -373,7 +373,7 @@ pub unsafe extern "C" fn SKP_Silk_CNG(
             length,
             &mut (*psCNG).rand_seed,
         );
-        SKP_Silk_NLSF2A_stable(
+        skp_silk_nlsf2a_stable(
             &mut LPC_buf,
             &psCNG.CNG_smth_NLSF_Q15,
             (*psDec).LPC_order as usize,
