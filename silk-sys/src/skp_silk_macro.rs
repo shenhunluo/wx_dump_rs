@@ -125,6 +125,13 @@ macro_rules! skp_s_mla_w_b {
 }
 
 #[macro_export]
+macro_rules! skp_s_mla_w_w {
+    ($a32:expr,$b32:expr,$c32:expr) => {{
+        crate::skp_mla!(crate::skp_s_mla_w_b!($a32,$b32,$c32), $b32, crate::skp_r_shift_round!($c32, 16))
+    }}
+}
+
+#[macro_export]
 macro_rules! skp_dec_map {
     ($a:expr) => {{
         crate::skp_l_shift!($a,1)-1
@@ -143,5 +150,12 @@ macro_rules! skp_sat_16 {
                 $a as $ty
             }
         }
+    }}
+}
+
+#[macro_export]
+macro_rules! skp_r_shift_sat_32 {
+    ($a:expr,$shift:expr) => {{
+        crate::skp_l_shift!(crate::skp_limit_32!($a, crate::skp_r_shift!(i32::MIN,$shift), crate::skp_r_shift!(i32::MAX,$shift)),$shift)
     }}
 }
