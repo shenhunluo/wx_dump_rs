@@ -12,10 +12,10 @@ extern "C" {
     ) -> *mut libc::c_void;
 }
 
-use crate::SKP_Silk_CNG::SKP_Silk_CNG_struct;
-use crate::SKP_Silk_PLC::SKP_Silk_PLC_struct;
+use crate::SKP_Silk_CNG::{SKP_Silk_CNG_struct, SKP_Silk_CNG_Reset};
+use crate::SKP_Silk_PLC::{SKP_Silk_PLC_struct, SKP_Silk_PLC_Reset};
 use crate::SKP_Silk_NLSF_MSVQ_decode::SKP_Silk_NLSF_CB_struct;
-use super::SKP_Silk_create_init_destroy::SKP_Silk_init_decoder;
+use crate::SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs;
 use super::SKP_Silk_resampler::{
     SKP_Silk_resampler,
     SKP_Silk_resampler_init,
@@ -69,7 +69,13 @@ pub struct SKP_Silk_decoder_state {
 
 impl Default for SKP_Silk_decoder_state {
     fn default() -> Self {
-        Self { sRC: Default::default(), prev_inv_gain_Q16: Default::default(), sLTP_Q16: [0;960], sLPC_Q14: [0;136], exc_Q10: [0;480], res_Q10: [0;480], outBuf: [0;960], lagPrev: Default::default(), LastGainIndex: Default::default(), LastGainIndex_EnhLayer: Default::default(), typeOffsetPrev: Default::default(), HPState: Default::default(), HP_A: Default::default(), HP_B: None, fs_kHz: Default::default(), prev_API_sampleRate: Default::default(), frame_length: Default::default(), subfr_length: Default::default(), LPC_order: Default::default(), prevNLSF_Q15: Default::default(), first_frame_after_reset: Default::default(), nBytesLeft: Default::default(), nFramesDecoded: Default::default(), nFramesInPacket: Default::default(), moreInternalDecoderFrames: Default::default(), FrameTermination: Default::default(), resampler_state: Default::default(), psNLSF_CB: Default::default(), vadFlag: Default::default(), no_FEC_counter: Default::default(), inband_FEC_offset: Default::default(), sCNG: Default::default(), lossCnt: Default::default(), prev_sigtype: Default::default(), sPLC: Default::default() }
+        let mut ps_dec = Self { sRC: Default::default(), prev_inv_gain_Q16: Default::default(), sLTP_Q16: [0;960], sLPC_Q14: [0;136], exc_Q10: [0;480], res_Q10: [0;480], outBuf: [0;960], lagPrev: Default::default(), LastGainIndex: Default::default(), LastGainIndex_EnhLayer: Default::default(), typeOffsetPrev: Default::default(), HPState: Default::default(), HP_A: Default::default(), HP_B: None, fs_kHz: Default::default(), prev_API_sampleRate: Default::default(), frame_length: Default::default(), subfr_length: Default::default(), LPC_order: Default::default(), prevNLSF_Q15: Default::default(), first_frame_after_reset: Default::default(), nBytesLeft: Default::default(), nFramesDecoded: Default::default(), nFramesInPacket: Default::default(), moreInternalDecoderFrames: Default::default(), FrameTermination: Default::default(), resampler_state: Default::default(), psNLSF_CB: Default::default(), vadFlag: Default::default(), no_FEC_counter: Default::default(), inband_FEC_offset: Default::default(), sCNG: Default::default(), lossCnt: Default::default(), prev_sigtype: Default::default(), sPLC: Default::default() };
+        SKP_Silk_decoder_set_fs(&mut ps_dec, 24);
+        ps_dec.first_frame_after_reset = 1;
+        ps_dec.prev_inv_gain_Q16 = 65536;
+        SKP_Silk_CNG_Reset(&mut ps_dec);
+        SKP_Silk_PLC_Reset(&mut ps_dec);
+        ps_dec
     }
 }
 
@@ -116,19 +122,11 @@ pub struct SKP_Silk_decoder_control {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_SDK_InitDecoder(
+pub unsafe fn SKP_Silk_SDK_Decode(
     decState: &mut SKP_Silk_decoder_state,
-) -> libc::c_int {
-    let mut ret: libc::c_int = 0 as libc::c_int;
-    ret = SKP_Silk_init_decoder(decState);
-    return ret;
-}
-#[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_SDK_Decode(
-    mut decState: &mut SKP_Silk_decoder_state,
-    mut decControl: *mut SKP_SILK_SDK_DecControlStruct,
-    mut lostFlag: libc::c_int,
-    mut inData: *const libc::c_uchar,
+    decControl: &mut SKP_SILK_SDK_DecControlStruct,
+    mut lostFlag: i32,
+    inData: &[u8],
     nBytesIn: libc::c_int,
     mut samplesOut: *mut libc::c_short,
     mut nSamplesOut: *mut libc::c_short,
@@ -239,165 +237,165 @@ pub unsafe extern "C" fn SKP_Silk_SDK_Decode(
     (*decControl).moreInternalDecoderFrames = (*psDec).moreInternalDecoderFrames;
     return ret;
 }
+// #[no_mangle]
+// pub unsafe extern "C" fn SKP_Silk_SDK_search_for_LBRR(
+//     mut inData: &[u8],
+//     nBytesIn: libc::c_int,
+//     mut lost_offset: libc::c_int,
+//     mut LBRRData: *mut libc::c_uchar,
+//     mut nLBRRBytes: *mut libc::c_short,
+// ) {
+//     let mut sDec: SKP_Silk_decoder_state = SKP_Silk_decoder_state {
+//         sRC: SKP_Silk_range_coder_state {
+//             bufferLength: 0,
+//             bufferIx: 0,
+//             base_Q32: 0,
+//             range_Q16: 0,
+//             error: 0,
+//             buffer: [0; 1024],
+//         },
+//         prev_inv_gain_Q16: 0,
+//         sLTP_Q16: [0; 960],
+//         sLPC_Q14: [0; 136],
+//         exc_Q10: [0; 480],
+//         res_Q10: [0; 480],
+//         outBuf: [0; 960],
+//         lagPrev: 0,
+//         LastGainIndex: 0,
+//         LastGainIndex_EnhLayer: 0,
+//         typeOffsetPrev: 0,
+//         HPState: [0; 2],
+//         HP_A: None,
+//         HP_B: None,
+//         fs_kHz: 0,
+//         prev_API_sampleRate: 0,
+//         frame_length: 0,
+//         subfr_length: 0,
+//         LPC_order: 0,
+//         prevNLSF_Q15: [0; 16],
+//         first_frame_after_reset: 0,
+//         nBytesLeft: 0,
+//         nFramesDecoded: 0,
+//         nFramesInPacket: 0,
+//         moreInternalDecoderFrames: 0,
+//         FrameTermination: 0,
+//         resampler_state: SKP_Silk_resampler_state_struct {
+//             sIIR: [0; 6],
+//             sFIR: [0; 16],
+//             sDown2: [0; 2],
+//             resampler_function: None,
+//             up2_function: None,
+//             batchSize: 0,
+//             invRatio_Q16: 0,
+//             FIR_Fracs: 0,
+//             input2x: 0,
+//             Coefs: 0 as *const libc::c_short,
+//             sDownPre: [0; 2],
+//             sUpPost: [0; 2],
+//             down_pre_function: None,
+//             up_post_function: None,
+//             batchSizePrePost: 0,
+//             ratio_Q16: 0,
+//             nPreDownsamplers: 0,
+//             nPostUpsamplers: 0,
+//             magic_number: 0,
+//         },
+//         psNLSF_CB: [None; 2],
+//         vadFlag: 0,
+//         no_FEC_counter: 0,
+//         inband_FEC_offset: 0,
+//         sCNG: SKP_Silk_CNG_struct {
+//             CNG_exc_buf_Q10: [0; 480],
+//             CNG_smth_NLSF_Q15: [0; 16],
+//             CNG_synth_state: [0; 16],
+//             CNG_smth_Gain_Q16: 0,
+//             rand_seed: 0,
+//             fs_kHz: 0,
+//         },
+//         lossCnt: 0,
+//         prev_sigtype: 0,
+//         sPLC: SKP_Silk_PLC_struct {
+//             pitchL_Q8: 0,
+//             LTPCoef_Q14: [0; 5],
+//             prevLPC_Q12: [0; 16],
+//             last_frame_lost: 0,
+//             rand_seed: 0,
+//             randScale_Q14: 0,
+//             conc_energy: 0,
+//             conc_energy_shift: 0,
+//             prevLTP_scale_Q14: 0,
+//             prevGain_Q16: [0; 4],
+//             fs_kHz: 0,
+//         },
+//     };
+//     let mut sDecCtrl: SKP_Silk_decoder_control = SKP_Silk_decoder_control {
+//         pitchL: [0; 4],
+//         Gains_Q16: [0; 4],
+//         Seed: 0,
+//         PredCoef_Q12: [[0; 16]; 2],
+//         LTPCoef_Q14: [0; 20],
+//         LTP_scale_Q14: 0,
+//         PERIndex: 0,
+//         RateLevelIndex: 0,
+//         QuantOffsetType: 0,
+//         sig_type: 0,
+//         NLSFInterpCoef_Q2: 0,
+//     };
+//     let mut TempQ: [libc::c_int; 480] = [0; 480];
+//     if lost_offset < 1 as libc::c_int || lost_offset > 2 as libc::c_int {
+//         *nLBRRBytes = 0 as libc::c_int as libc::c_short;
+//         return;
+//     }
+//     sDec.nFramesDecoded = 0 as libc::c_int;
+//     sDec.fs_kHz = 0 as libc::c_int;
+//     sDec.lossCnt = 0 as libc::c_int;
+//     memset(
+//         (sDec.prevNLSF_Q15).as_mut_ptr() as *mut libc::c_void,
+//         0 as libc::c_int,
+//         (16 as libc::c_int as libc::c_ulong)
+//             .wrapping_mul(::core::mem::size_of::<libc::c_int>() as libc::c_ulong),
+//     );
+//     SKP_Silk_range_dec_init(&mut sDec.sRC, inData, nBytesIn);
+//     loop {
+//         SKP_Silk_decode_parameters(
+//             &mut sDec,
+//             &mut sDecCtrl,
+//             &mut TempQ,
+//             0 as libc::c_int,
+//         );
+//         if sDec.sRC.error != 0 {
+//             *nLBRRBytes = 0 as libc::c_int as libc::c_short;
+//             return;
+//         }
+//         if sDec.FrameTermination - 1 as libc::c_int & lost_offset != 0
+//             && sDec.FrameTermination > 0 as libc::c_int
+//             && sDec.nBytesLeft >= 0 as libc::c_int
+//         {
+//             *nLBRRBytes = sDec.nBytesLeft as libc::c_short;
+//             memcpy(
+//                 LBRRData as *mut libc::c_void,
+//                 &*inData.offset((nBytesIn - sDec.nBytesLeft) as isize)
+//                     as *const libc::c_uchar as *const libc::c_void,
+//                 (sDec.nBytesLeft as libc::c_ulong)
+//                     .wrapping_mul(
+//                         ::core::mem::size_of::<libc::c_uchar>() as libc::c_ulong,
+//                     ),
+//             );
+//             break;
+//         } else if sDec.nBytesLeft > 0 as libc::c_int
+//             && sDec.FrameTermination == 1 as libc::c_int
+//         {
+//             sDec.nFramesDecoded += 1;
+//             sDec.nFramesDecoded;
+//         } else {
+//             *nLBRRBytes = 0 as libc::c_int as libc::c_short;
+//             break;
+//         }
+//     };
+// }
 #[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_SDK_search_for_LBRR(
-    mut inData: *const libc::c_uchar,
-    nBytesIn: libc::c_int,
-    mut lost_offset: libc::c_int,
-    mut LBRRData: *mut libc::c_uchar,
-    mut nLBRRBytes: *mut libc::c_short,
-) {
-    let mut sDec: SKP_Silk_decoder_state = SKP_Silk_decoder_state {
-        sRC: SKP_Silk_range_coder_state {
-            bufferLength: 0,
-            bufferIx: 0,
-            base_Q32: 0,
-            range_Q16: 0,
-            error: 0,
-            buffer: [0; 1024],
-        },
-        prev_inv_gain_Q16: 0,
-        sLTP_Q16: [0; 960],
-        sLPC_Q14: [0; 136],
-        exc_Q10: [0; 480],
-        res_Q10: [0; 480],
-        outBuf: [0; 960],
-        lagPrev: 0,
-        LastGainIndex: 0,
-        LastGainIndex_EnhLayer: 0,
-        typeOffsetPrev: 0,
-        HPState: [0; 2],
-        HP_A: None,
-        HP_B: None,
-        fs_kHz: 0,
-        prev_API_sampleRate: 0,
-        frame_length: 0,
-        subfr_length: 0,
-        LPC_order: 0,
-        prevNLSF_Q15: [0; 16],
-        first_frame_after_reset: 0,
-        nBytesLeft: 0,
-        nFramesDecoded: 0,
-        nFramesInPacket: 0,
-        moreInternalDecoderFrames: 0,
-        FrameTermination: 0,
-        resampler_state: SKP_Silk_resampler_state_struct {
-            sIIR: [0; 6],
-            sFIR: [0; 16],
-            sDown2: [0; 2],
-            resampler_function: None,
-            up2_function: None,
-            batchSize: 0,
-            invRatio_Q16: 0,
-            FIR_Fracs: 0,
-            input2x: 0,
-            Coefs: 0 as *const libc::c_short,
-            sDownPre: [0; 2],
-            sUpPost: [0; 2],
-            down_pre_function: None,
-            up_post_function: None,
-            batchSizePrePost: 0,
-            ratio_Q16: 0,
-            nPreDownsamplers: 0,
-            nPostUpsamplers: 0,
-            magic_number: 0,
-        },
-        psNLSF_CB: [None; 2],
-        vadFlag: 0,
-        no_FEC_counter: 0,
-        inband_FEC_offset: 0,
-        sCNG: SKP_Silk_CNG_struct {
-            CNG_exc_buf_Q10: [0; 480],
-            CNG_smth_NLSF_Q15: [0; 16],
-            CNG_synth_state: [0; 16],
-            CNG_smth_Gain_Q16: 0,
-            rand_seed: 0,
-            fs_kHz: 0,
-        },
-        lossCnt: 0,
-        prev_sigtype: 0,
-        sPLC: SKP_Silk_PLC_struct {
-            pitchL_Q8: 0,
-            LTPCoef_Q14: [0; 5],
-            prevLPC_Q12: [0; 16],
-            last_frame_lost: 0,
-            rand_seed: 0,
-            randScale_Q14: 0,
-            conc_energy: 0,
-            conc_energy_shift: 0,
-            prevLTP_scale_Q14: 0,
-            prevGain_Q16: [0; 4],
-            fs_kHz: 0,
-        },
-    };
-    let mut sDecCtrl: SKP_Silk_decoder_control = SKP_Silk_decoder_control {
-        pitchL: [0; 4],
-        Gains_Q16: [0; 4],
-        Seed: 0,
-        PredCoef_Q12: [[0; 16]; 2],
-        LTPCoef_Q14: [0; 20],
-        LTP_scale_Q14: 0,
-        PERIndex: 0,
-        RateLevelIndex: 0,
-        QuantOffsetType: 0,
-        sig_type: 0,
-        NLSFInterpCoef_Q2: 0,
-    };
-    let mut TempQ: [libc::c_int; 480] = [0; 480];
-    if lost_offset < 1 as libc::c_int || lost_offset > 2 as libc::c_int {
-        *nLBRRBytes = 0 as libc::c_int as libc::c_short;
-        return;
-    }
-    sDec.nFramesDecoded = 0 as libc::c_int;
-    sDec.fs_kHz = 0 as libc::c_int;
-    sDec.lossCnt = 0 as libc::c_int;
-    memset(
-        (sDec.prevNLSF_Q15).as_mut_ptr() as *mut libc::c_void,
-        0 as libc::c_int,
-        (16 as libc::c_int as libc::c_ulong)
-            .wrapping_mul(::core::mem::size_of::<libc::c_int>() as libc::c_ulong),
-    );
-    SKP_Silk_range_dec_init(&mut sDec.sRC, inData, nBytesIn);
-    loop {
-        SKP_Silk_decode_parameters(
-            &mut sDec,
-            &mut sDecCtrl,
-            &mut TempQ,
-            0 as libc::c_int,
-        );
-        if sDec.sRC.error != 0 {
-            *nLBRRBytes = 0 as libc::c_int as libc::c_short;
-            return;
-        }
-        if sDec.FrameTermination - 1 as libc::c_int & lost_offset != 0
-            && sDec.FrameTermination > 0 as libc::c_int
-            && sDec.nBytesLeft >= 0 as libc::c_int
-        {
-            *nLBRRBytes = sDec.nBytesLeft as libc::c_short;
-            memcpy(
-                LBRRData as *mut libc::c_void,
-                &*inData.offset((nBytesIn - sDec.nBytesLeft) as isize)
-                    as *const libc::c_uchar as *const libc::c_void,
-                (sDec.nBytesLeft as libc::c_ulong)
-                    .wrapping_mul(
-                        ::core::mem::size_of::<libc::c_uchar>() as libc::c_ulong,
-                    ),
-            );
-            break;
-        } else if sDec.nBytesLeft > 0 as libc::c_int
-            && sDec.FrameTermination == 1 as libc::c_int
-        {
-            sDec.nFramesDecoded += 1;
-            sDec.nFramesDecoded;
-        } else {
-            *nLBRRBytes = 0 as libc::c_int as libc::c_short;
-            break;
-        }
-    };
-}
-#[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_SDK_get_TOC(
-    mut inData: *const libc::c_uchar,
+pub unsafe fn SKP_Silk_SDK_get_TOC(
+    mut inData: &[u8],
     nBytesIn: libc::c_int,
     mut Silk_TOC: *mut SKP_Silk_TOC_struct,
 ) {

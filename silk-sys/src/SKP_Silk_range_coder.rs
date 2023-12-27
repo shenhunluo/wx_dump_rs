@@ -255,31 +255,28 @@ pub unsafe extern "C" fn SKP_Silk_range_enc_init(
 }
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_range_dec_init(
-    mut psRC: *mut SKP_Silk_range_coder_state,
-    mut buffer: *const libc::c_uchar,
+    mut psRC: &mut SKP_Silk_range_coder_state,
+    mut buffer: &[u8],
     bufferLength: libc::c_int,
 ) {
     if bufferLength > 1024 as libc::c_int || bufferLength < 0 as libc::c_int {
         (*psRC).error = -(8 as libc::c_int);
         return;
     }
-    memcpy(
-        ((*psRC).buffer).as_mut_ptr() as *mut libc::c_void,
-        buffer as *const libc::c_void,
-        (bufferLength as libc::c_ulong)
-            .wrapping_mul(::core::mem::size_of::<libc::c_uchar>() as libc::c_ulong),
-    );
-    (*psRC).bufferLength = bufferLength;
-    (*psRC).bufferIx = 0 as libc::c_int;
-    (*psRC)
-        .base_Q32 = (*buffer.offset(0 as libc::c_int as isize) as libc::c_uint)
-        << 24 as libc::c_int
-        | (*buffer.offset(1 as libc::c_int as isize) as libc::c_uint)
-            << 16 as libc::c_int
-        | (*buffer.offset(2 as libc::c_int as isize) as libc::c_uint) << 8 as libc::c_int
-        | *buffer.offset(3 as libc::c_int as isize) as libc::c_uint;
-    (*psRC).range_Q16 = 0xffff as libc::c_int as libc::c_uint;
-    (*psRC).error = 0 as libc::c_int;
+    for i in 0..bufferLength as usize {
+        psRC.buffer[i] = buffer[i];
+    }
+    psRC.bufferLength = bufferLength;
+    psRC.bufferIx = 0 as libc::c_int;
+    psRC
+        .base_Q32 = (buffer[0] as u32)
+        << 24
+        | (buffer[1] as u32)
+            << 16
+        | (buffer[2] as u32) << 8
+        | buffer[3] as u32;
+    psRC.range_Q16 = 0xffff as libc::c_int as libc::c_uint;
+    psRC.error = 0 as libc::c_int;
 }
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_range_coder_get_length(

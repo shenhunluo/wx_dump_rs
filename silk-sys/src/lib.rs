@@ -62,7 +62,7 @@ pub mod error;
 
 use bytes::Buf;
 
-use crate::{error::SilkError, SKP_Silk_dec_API::{SKP_SILK_SDK_DecControlStruct, SKP_Silk_SDK_InitDecoder, SKP_Silk_SDK_Decode, SKP_Silk_decoder_state}};
+use crate::{error::SilkError, SKP_Silk_dec_API::{SKP_SILK_SDK_DecControlStruct, SKP_Silk_SDK_Decode, SKP_Silk_decoder_state}};
 
 pub fn decode_silk(src: impl AsRef<[u8]>, sample_rate: i32) -> Result<Vec<u8>, SilkError> {
     unsafe { _decode_silk(src.as_ref(), sample_rate) }
@@ -90,12 +90,6 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<u8>, Silk
     };
 
     let mut decoder = SKP_Silk_decoder_state::default();
-    let r = SKP_Silk_SDK_InitDecoder(
-        &mut decoder
-    );
-    if r != 0 {
-        return Err(r.into());
-    }
     let mut result = vec![];
     let frame_size = sample_rate as usize / 1000 * 40;
     let mut buf = vec![0u8; frame_size];
@@ -119,7 +113,7 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<u8>, Silk
             &mut decoder,
             &mut dec_control,
             0,
-            input.as_ptr(),
+            input,
             input_size as i32,
             buf.as_mut_ptr() as *mut i16,
             &mut output_size,

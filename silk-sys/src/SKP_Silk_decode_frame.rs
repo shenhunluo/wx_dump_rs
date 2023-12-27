@@ -107,7 +107,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_frame(
     mut psDec: &mut SKP_Silk_decoder_state,
     mut pOut: *mut libc::c_short,
     mut pN: *mut libc::c_short,
-    mut pCode: *const libc::c_uchar,
+    mut pCode: &[u8],
     nBytes: libc::c_int,
     mut action: libc::c_int,
     mut decBytes: *mut libc::c_int,
