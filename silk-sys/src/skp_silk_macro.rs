@@ -130,3 +130,18 @@ macro_rules! skp_dec_map {
         crate::skp_l_shift!($a,1)-1
     }}
 }
+
+#[macro_export]
+macro_rules! skp_sat_16 {
+    ($a:expr,$ty:ty) => {{
+        if $a > i16::MAX as $ty {
+            i16::MAX as $ty
+        } else {
+            if $a < i16::MIN as $ty {
+                i16::MIN as $ty
+            } else {
+                $a as $ty
+            }
+        }
+    }}
+}

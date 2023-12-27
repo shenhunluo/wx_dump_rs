@@ -18,27 +18,26 @@ pub mod SKP_Silk_CNG;
 pub mod SKP_Silk_PLC;
 pub mod SKP_Silk_biquad;
 pub mod SKP_Silk_decode_core;
-pub mod skp_silk_nlsf_msvq_decode;
-pub mod skp_silk_bwexpander;
 pub mod SKP_Silk_decode_pitch;
 pub mod SKP_Silk_gain_quant;
 pub mod SKP_Silk_NLSF2A_stable;
-pub mod skp_silk_decode_pulses;
 pub mod SKP_Silk_LPC_synthesis_order16;
 pub mod SKP_Silk_LPC_synthesis_filter;
 pub mod SKP_Silk_sum_sqr_shift;
 pub mod SKP_Silk_LPC_inv_pred_gain;
 pub mod SKP_Silk_MA;
-pub mod skp_silk_nlsf_stabilize;
 pub mod SKP_Silk_lin2log;
-pub mod skp_silk_log2lin;
-pub mod SKP_Silk_NLSF2A;
 pub mod SKP_Silk_shell_coder;
 pub mod SKP_Silk_code_signs;
 
 pub mod SKP_Silk_tables_LTP;
 
-
+pub mod skp_silk_log2lin;
+pub mod skp_silk_nlsf2a;
+pub mod skp_silk_decode_pulses;
+pub mod skp_silk_nlsf_stabilize;
+pub mod skp_silk_bwexpander;
+pub mod skp_silk_nlsf_msvq_decode;
 pub mod SKP_Silk_sort;
 pub mod skp_silk_bwexpander_32;
 pub mod skp_silk_resampler_rom;
