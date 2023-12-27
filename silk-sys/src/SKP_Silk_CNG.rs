@@ -279,25 +279,21 @@ unsafe extern "C" fn SKP_Silk_CNG_exc(
     }
     *rand_seed = seed;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_CNG_Reset(mut psDec: *mut SKP_Silk_decoder_state) {
-    let mut i: libc::c_int = 0;
-    let mut NLSF_step_Q15: libc::c_int = 0;
-    let mut NLSF_acc_Q15: libc::c_int = 0;
-    NLSF_step_Q15 = 0x7fff as libc::c_int / ((*psDec).LPC_order + 1 as libc::c_int);
-    NLSF_acc_Q15 = 0 as libc::c_int;
-    i = 0 as libc::c_int;
-    while i < (*psDec).LPC_order {
+
+pub fn SKP_Silk_CNG_Reset(psDec: &mut SKP_Silk_decoder_state) {
+    let NLSF_step_Q15 = 0x7fff / (psDec.LPC_order + 1);
+    let mut NLSF_acc_Q15 = 0;
+    for i in 0..psDec.LPC_order as usize {
         NLSF_acc_Q15 += NLSF_step_Q15;
-        (*psDec).sCNG.CNG_smth_NLSF_Q15[i as usize] = NLSF_acc_Q15;
-        i += 1;
+        psDec.sCNG.CNG_smth_NLSF_Q15[i] = NLSF_acc_Q15;
     }
-    (*psDec).sCNG.CNG_smth_Gain_Q16 = 0 as libc::c_int;
-    (*psDec).sCNG.rand_seed = 3176576 as libc::c_int;
+    psDec.sCNG.CNG_smth_Gain_Q16 = 0;
+    psDec.sCNG.rand_seed = 3176576;
 }
+
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_CNG(
-    mut psDec: *mut SKP_Silk_decoder_state,
+    mut psDec: &mut SKP_Silk_decoder_state,
     mut psDecCtrl: *mut SKP_Silk_decoder_control,
     mut signal: *mut libc::c_short,
     mut length: libc::c_int,
