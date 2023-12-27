@@ -1,37 +1,38 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 pub type __int64_t = libc::c_longlong;
 pub type int64_t = __int64_t;
-#[inline]
-unsafe extern "C" fn SKP_Silk_CLZ16(mut in16: libc::c_short) -> libc::c_int {
-    let mut out32: libc::c_int = 0 as libc::c_int;
-    if in16 as libc::c_int == 0 as libc::c_int {
-        return 16 as libc::c_int;
+
+fn SKP_Silk_CLZ16(mut in16: i16) -> i32 {
+    let mut out32 = 0;
+    if in16 == 0 {
+        return 16;
     }
-    if in16 as libc::c_int & 0xff00 as libc::c_int != 0 {
-        if in16 as libc::c_int & 0xf000 as libc::c_int != 0 {
-            in16 = (in16 as libc::c_int >> 12 as libc::c_int) as libc::c_short;
+    if in16 as i32 & 0xff00 != 0 {
+        if in16 as i32 & 0xf000 != 0 {
+            in16 = in16 >> 12;
         } else {
-            out32 += 4 as libc::c_int;
-            in16 = (in16 as libc::c_int >> 8 as libc::c_int) as libc::c_short;
+            out32 += 4;
+            in16 = in16 >> 8;
         }
-    } else if in16 as libc::c_int & 0xfff0 as libc::c_int != 0 {
-        out32 += 8 as libc::c_int;
-        in16 = (in16 as libc::c_int >> 4 as libc::c_int) as libc::c_short;
+    } else if in16 as i32 & 0xfff0 != 0 {
+        out32 += 8;
+        in16 = in16 >> 4;
     } else {
-        out32 += 12 as libc::c_int;
+        out32 += 12;
     }
-    if in16 as libc::c_int & 0xc as libc::c_int != 0 {
-        if in16 as libc::c_int & 0x8 as libc::c_int != 0 {
-            return out32 + 0 as libc::c_int
+    if in16 & 0xc != 0 {
+        if in16 & 0x8 != 0 {
+            out32 + 0
         } else {
-            return out32 + 1 as libc::c_int
+            out32 + 1
         }
-    } else if in16 as libc::c_int & 0xe as libc::c_int != 0 {
-        return out32 + 2 as libc::c_int
+    } else if in16 & 0xe != 0 {
+        out32 + 2
     } else {
-        return out32 + 3 as libc::c_int
-    };
+        out32 + 3
+    }
 }
+
 #[inline]
 unsafe extern "C" fn SKP_Silk_CLZ32(mut in32: libc::c_int) -> libc::c_int {
     if in32 as libc::c_uint & 0xffff0000 as libc::c_uint != 0 {
@@ -177,7 +178,7 @@ unsafe extern "C" fn LPC_inverse_pred_gain_QA(
 }
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_LPC_inverse_pred_gain(
-    mut invGain_Q30: *mut libc::c_int,
+    invGain_Q30: &mut i32,
     A_Q12: &[i16],
     order: libc::c_int,
 ) -> libc::c_int {
