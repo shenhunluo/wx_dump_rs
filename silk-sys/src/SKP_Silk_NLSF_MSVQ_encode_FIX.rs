@@ -18,7 +18,7 @@ extern "C" {
     );
     fn SKP_Silk_NLSF_MSVQ_decode(
         pNLSF_Q15: *mut libc::c_int,
-        psNLSF_CB: *const SKP_Silk_NLSF_CB_struct,
+        psNLSF_CB: *const SkpSilkNlsfCbStruct,
         NLSFIndices: *const libc::c_int,
         LPC_order: libc::c_int,
     );
@@ -44,7 +44,7 @@ pub struct SKP_Silk_NLSF_CBS {
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct SKP_Silk_NLSF_CB_struct {
+pub struct SkpSilkNlsfCbStruct {
     pub nStages: libc::c_int,
     pub CBStages: *const SKP_Silk_NLSF_CBS,
     pub NDeltaMin_Q15: *const libc::c_int,
@@ -60,7 +60,7 @@ unsafe extern "C" fn SKP_min_32(mut a: libc::c_int, mut b: libc::c_int) -> libc:
 pub unsafe extern "C" fn SKP_Silk_NLSF_MSVQ_encode_FIX(
     mut NLSFIndices: *mut libc::c_int,
     mut pNLSF_Q15: *mut libc::c_int,
-    mut psNLSF_CB: *const SKP_Silk_NLSF_CB_struct,
+    mut psNLSF_CB: *const SkpSilkNlsfCbStruct,
     mut pNLSF_q_Q15_prev: *const libc::c_int,
     mut pW_Q6: *const libc::c_int,
     NLSF_mu_Q15: libc::c_int,

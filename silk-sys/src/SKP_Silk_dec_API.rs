@@ -14,7 +14,7 @@ extern "C" {
 
 use crate::SKP_Silk_CNG::{SKP_Silk_CNG_struct, SKP_Silk_CNG_Reset};
 use crate::SKP_Silk_PLC::{SKP_Silk_PLC_struct, SKP_Silk_PLC_Reset};
-use crate::SKP_Silk_NLSF_MSVQ_decode::SKP_Silk_NLSF_CB_struct;
+use crate::skp_silk_nlsf_msvq_decode::SkpSilkNlsfCbStruct;
 use crate::SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs;
 use super::SKP_Silk_resampler::{
     SKP_Silk_resampler,
@@ -57,7 +57,7 @@ pub struct SKP_Silk_decoder_state {
     pub moreInternalDecoderFrames: libc::c_int,
     pub FrameTermination: libc::c_int,
     pub resampler_state: SKP_Silk_resampler_state_struct,
-    pub psNLSF_CB: [Option<&'static SKP_Silk_NLSF_CB_struct>; 2],
+    pub psNLSF_CB: [Option<&'static SkpSilkNlsfCbStruct>; 2],
     pub vadFlag: libc::c_int,
     pub no_FEC_counter: libc::c_int,
     pub inband_FEC_offset: libc::c_int,

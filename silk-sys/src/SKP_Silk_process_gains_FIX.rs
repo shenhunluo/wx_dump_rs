@@ -135,7 +135,7 @@ pub struct SKP_Silk_NLSF_CBS {
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct SKP_Silk_NLSF_CB_struct {
+pub struct SkpSilkNlsfCbStruct {
     pub nStages: libc::c_int,
     pub CBStages: *const SKP_Silk_NLSF_CBS,
     pub NDeltaMin_Q15: *const libc::c_int,
@@ -190,7 +190,7 @@ pub struct SKP_Silk_encoder_state {
     pub nFramesInPayloadBuf: libc::c_int,
     pub nBytesInPayloadBuf: libc::c_int,
     pub frames_since_onset: libc::c_int,
-    pub psNLSF_CB: [*const SKP_Silk_NLSF_CB_struct; 2],
+    pub psNLSF_CB: [*const SkpSilkNlsfCbStruct; 2],
     pub LBRR_buffer: [SKP_SILK_LBRR_struct; 2],
     pub oldest_LBRR_idx: libc::c_int,
     pub useInBandFEC: libc::c_int,

@@ -25,7 +25,7 @@ extern "C" {
     fn SKP_Silk_NLSF_MSVQ_encode_FIX(
         NLSFIndices: *mut libc::c_int,
         pNLSF_Q15: *mut libc::c_int,
-        psNLSF_CB: *const SKP_Silk_NLSF_CB_struct,
+        psNLSF_CB: *const SkpSilkNlsfCbStruct,
         pNLSF_q_Q15_prev: *const libc::c_int,
         pW_Q6: *const libc::c_int,
         NLSF_mu_Q15: libc::c_int,
@@ -158,7 +158,7 @@ pub struct SKP_Silk_NLSF_CBS {
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct SKP_Silk_NLSF_CB_struct {
+pub struct SkpSilkNlsfCbStruct {
     pub nStages: libc::c_int,
     pub CBStages: *const SKP_Silk_NLSF_CBS,
     pub NDeltaMin_Q15: *const libc::c_int,
@@ -213,7 +213,7 @@ pub struct SKP_Silk_encoder_state {
     pub nFramesInPayloadBuf: libc::c_int,
     pub nBytesInPayloadBuf: libc::c_int,
     pub frames_since_onset: libc::c_int,
-    pub psNLSF_CB: [*const SKP_Silk_NLSF_CB_struct; 2],
+    pub psNLSF_CB: [*const SkpSilkNlsfCbStruct; 2],
     pub LBRR_buffer: [SKP_SILK_LBRR_struct; 2],
     pub oldest_LBRR_idx: libc::c_int,
     pub useInBandFEC: libc::c_int,
@@ -337,8 +337,8 @@ pub unsafe extern "C" fn SKP_Silk_process_NLSFs_FIX(
     let mut NLSF_mu_Q15: libc::c_int = 0;
     let mut NLSF_mu_fluc_red_Q16: libc::c_int = 0;
     let mut i_sqr_Q15: libc::c_int = 0;
-    let mut psNLSF_CB: *const SKP_Silk_NLSF_CB_struct = 0
-        as *const SKP_Silk_NLSF_CB_struct;
+    let mut psNLSF_CB: *const SkpSilkNlsfCbStruct = 0
+        as *const SkpSilkNlsfCbStruct;
     let mut pNLSF0_temp_Q15: [libc::c_int; 16] = [0; 16];
     let mut pNLSFW0_temp_Q6: [libc::c_int; 16] = [0; 16];
     let mut i: libc::c_int = 0;

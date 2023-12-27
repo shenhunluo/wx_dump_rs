@@ -89,7 +89,7 @@ pub struct SKP_Silk_NLSF_CBS {
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct SKP_Silk_NLSF_CB_struct {
+pub struct SkpSilkNlsfCbStruct {
     pub nStages: libc::c_int,
     pub CBStages: *const SKP_Silk_NLSF_CBS,
     pub NDeltaMin_Q15: *const libc::c_int,

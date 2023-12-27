@@ -1,4 +1,4 @@
-use crate::SKP_Silk_NLSF_MSVQ_decode::{SKP_Silk_NLSF_CBS, SKP_Silk_NLSF_CB_struct};
+use crate::skp_silk_nlsf_msvq_decode::{SkpSilkNlsfCbs, SkpSilkNlsfCbStruct};
 use once_cell::sync::Lazy;
 
 pub static SKP_SILK_NLSF_MSVQ_CB1_10_CDF: [u16; 78] = [
@@ -111,46 +111,46 @@ pub static SKP_SILK_NLSF_MSVQ_CB1_10_Q15: [i16; 720] = [
     198i16, -99i16, -21i16,
 ];
 
-pub static SKP_SILK_NLSF_CB1_10_STAGE_INFO: Lazy<Vec<SKP_Silk_NLSF_CBS>> = Lazy::new(|| {
+pub static SKP_SILK_NLSF_CB1_10_STAGE_INFO: Lazy<Vec<SkpSilkNlsfCbs>> = Lazy::new(|| {
     vec![
-        SKP_Silk_NLSF_CBS {
-            nVectors: 32,
-            CB_NLSF_Q15: &SKP_SILK_NLSF_MSVQ_CB1_10_Q15[10 * 0..],
-            Rates_Q5: &SKP_SILK_NLSF_MSVQ_CB1_10_RATES_Q5[0..],
+        SkpSilkNlsfCbs {
+            n_vectors: 32,
+            cb_nlsf_q15: &SKP_SILK_NLSF_MSVQ_CB1_10_Q15[10 * 0..],
+            rates_q5: &SKP_SILK_NLSF_MSVQ_CB1_10_RATES_Q5[0..],
         },
-        SKP_Silk_NLSF_CBS {
-            nVectors: 8,
-            CB_NLSF_Q15: &SKP_SILK_NLSF_MSVQ_CB1_10_Q15[10 * 32..],
-            Rates_Q5: &SKP_SILK_NLSF_MSVQ_CB1_10_RATES_Q5[32..],
+        SkpSilkNlsfCbs {
+            n_vectors: 8,
+            cb_nlsf_q15: &SKP_SILK_NLSF_MSVQ_CB1_10_Q15[10 * 32..],
+            rates_q5: &SKP_SILK_NLSF_MSVQ_CB1_10_RATES_Q5[32..],
         },
-        SKP_Silk_NLSF_CBS {
-            nVectors: 8,
-            CB_NLSF_Q15: &SKP_SILK_NLSF_MSVQ_CB1_10_Q15[10 * 40..],
-            Rates_Q5: &SKP_SILK_NLSF_MSVQ_CB1_10_RATES_Q5[40..],
+        SkpSilkNlsfCbs {
+            n_vectors: 8,
+            cb_nlsf_q15: &SKP_SILK_NLSF_MSVQ_CB1_10_Q15[10 * 40..],
+            rates_q5: &SKP_SILK_NLSF_MSVQ_CB1_10_RATES_Q5[40..],
         },
-        SKP_Silk_NLSF_CBS {
-            nVectors: 8,
-            CB_NLSF_Q15: &SKP_SILK_NLSF_MSVQ_CB1_10_Q15[10 * 48..],
-            Rates_Q5: &SKP_SILK_NLSF_MSVQ_CB1_10_RATES_Q5[48..],
+        SkpSilkNlsfCbs {
+            n_vectors: 8,
+            cb_nlsf_q15: &SKP_SILK_NLSF_MSVQ_CB1_10_Q15[10 * 48..],
+            rates_q5: &SKP_SILK_NLSF_MSVQ_CB1_10_RATES_Q5[48..],
         },
-        SKP_Silk_NLSF_CBS {
-            nVectors: 8,
-            CB_NLSF_Q15: &SKP_SILK_NLSF_MSVQ_CB1_10_Q15[10 * 56..],
-            Rates_Q5: &SKP_SILK_NLSF_MSVQ_CB1_10_RATES_Q5[56..],
+        SkpSilkNlsfCbs {
+            n_vectors: 8,
+            cb_nlsf_q15: &SKP_SILK_NLSF_MSVQ_CB1_10_Q15[10 * 56..],
+            rates_q5: &SKP_SILK_NLSF_MSVQ_CB1_10_RATES_Q5[56..],
         },
-        SKP_Silk_NLSF_CBS {
-            nVectors: 8,
-            CB_NLSF_Q15: &SKP_SILK_NLSF_MSVQ_CB1_10_Q15[10 * 64..],
-            Rates_Q5: &SKP_SILK_NLSF_MSVQ_CB1_10_RATES_Q5[64..],
+        SkpSilkNlsfCbs {
+            n_vectors: 8,
+            cb_nlsf_q15: &SKP_SILK_NLSF_MSVQ_CB1_10_Q15[10 * 64..],
+            rates_q5: &SKP_SILK_NLSF_MSVQ_CB1_10_RATES_Q5[64..],
         },
     ]
 });
 
-pub static SKP_SILK_NLSF_CB1_10: SKP_Silk_NLSF_CB_struct = SKP_Silk_NLSF_CB_struct {
-    nStages: 6,
-    CBStages: &SKP_SILK_NLSF_CB1_10_STAGE_INFO,
-    NDeltaMin_Q15: &SKP_SILK_NLSF_MSVQ_CB1_10_N_DELTA_MIN_Q15,
-    CDF: &SKP_SILK_NLSF_MSVQ_CB1_10_CDF,
-    StartPtr: &SKP_SILK_NLSF_MSVQ_CB1_10_CDF_START_PTR,
-    MiddleIx: &SKP_SILK_NLSF_MSVQ_CB1_10_CDF_MIDDLE_IDX,
+pub static SKP_SILK_NLSF_CB1_10: SkpSilkNlsfCbStruct = SkpSilkNlsfCbStruct {
+    n_stages: 6,
+    cb_stages: &SKP_SILK_NLSF_CB1_10_STAGE_INFO,
+    n_delta_min_q15: &SKP_SILK_NLSF_MSVQ_CB1_10_N_DELTA_MIN_Q15,
+    cdf: &SKP_SILK_NLSF_MSVQ_CB1_10_CDF,
+    start_ptr: &SKP_SILK_NLSF_MSVQ_CB1_10_CDF_START_PTR,
+    middle_ix: &SKP_SILK_NLSF_MSVQ_CB1_10_CDF_MIDDLE_IDX,
 };

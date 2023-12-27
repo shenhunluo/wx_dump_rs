@@ -18,7 +18,7 @@ pub mod SKP_Silk_CNG;
 pub mod SKP_Silk_PLC;
 pub mod SKP_Silk_biquad;
 pub mod SKP_Silk_decode_core;
-pub mod SKP_Silk_NLSF_MSVQ_decode;
+pub mod skp_silk_nlsf_msvq_decode;
 pub mod SKP_Silk_bwexpander;
 pub mod SKP_Silk_decode_pitch;
 pub mod SKP_Silk_gain_quant;
