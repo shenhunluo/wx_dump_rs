@@ -103,7 +103,7 @@ pub struct SKP_Silk_CNG_struct {
     pub fs_kHz: libc::c_int,
 }
 #[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_decode_frame(
+pub unsafe fn SKP_Silk_decode_frame(
     mut psDec: &mut SKP_Silk_decoder_state,
     mut pOut: *mut libc::c_short,
     mut pN: *mut libc::c_short,

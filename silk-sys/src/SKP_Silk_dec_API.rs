@@ -131,10 +131,10 @@ pub unsafe fn SKP_Silk_SDK_Decode(
     mut samplesOut: *mut libc::c_short,
     mut nSamplesOut: *mut libc::c_short,
 ) -> libc::c_int {
-    let mut ret: libc::c_int = 0 as libc::c_int;
-    let mut used_bytes: libc::c_int = 0;
-    let mut prev_fs_kHz: libc::c_int = 0;
-    let mut samplesOutInternal: [libc::c_short; 960] = [0; 960];
+    let mut ret = 0;
+    let mut used_bytes = 0;
+    let mut prev_fs_kHz = 0;
+    let mut samplesOutInternal = [0; 960];
     let mut pSamplesOutInternal: *mut libc::c_short = 0 as *mut libc::c_short;
     let psDec = decState;
     pSamplesOutInternal = samplesOut;
@@ -147,7 +147,7 @@ pub unsafe fn SKP_Silk_SDK_Decode(
     if (*psDec).moreInternalDecoderFrames == 0 as libc::c_int
         && lostFlag == 0 as libc::c_int && nBytesIn > 1024 as libc::c_int
     {
-        lostFlag = 1 as libc::c_int;
+        lostFlag = 1;
         ret = -(11 as libc::c_int);
     }
     prev_fs_kHz = (*psDec).fs_kHz;

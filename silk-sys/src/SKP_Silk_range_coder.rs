@@ -253,21 +253,21 @@ pub unsafe extern "C" fn SKP_Silk_range_enc_init(
     (*psRC).base_Q32 = 0 as libc::c_int as libc::c_uint;
     (*psRC).error = 0 as libc::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_range_dec_init(
+
+pub fn SKP_Silk_range_dec_init(
     mut psRC: &mut SKP_Silk_range_coder_state,
     mut buffer: &[u8],
-    bufferLength: libc::c_int,
+    bufferLength: i32,
 ) {
-    if bufferLength > 1024 as libc::c_int || bufferLength < 0 as libc::c_int {
-        (*psRC).error = -(8 as libc::c_int);
+    if bufferLength > 1024 || bufferLength < 0 {
+        (*psRC).error = -8;
         return;
     }
     for i in 0..bufferLength as usize {
         psRC.buffer[i] = buffer[i];
     }
     psRC.bufferLength = bufferLength;
-    psRC.bufferIx = 0 as libc::c_int;
+    psRC.bufferIx = 0;
     psRC
         .base_Q32 = (buffer[0] as u32)
         << 24
@@ -275,9 +275,10 @@ pub unsafe extern "C" fn SKP_Silk_range_dec_init(
             << 16
         | (buffer[2] as u32) << 8
         | buffer[3] as u32;
-    psRC.range_Q16 = 0xffff as libc::c_int as libc::c_uint;
-    psRC.error = 0 as libc::c_int;
+    psRC.range_Q16 = 0xffff;
+    psRC.error = 0;
 }
+
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_range_coder_get_length(
     mut psRC: *const SKP_Silk_range_coder_state,
