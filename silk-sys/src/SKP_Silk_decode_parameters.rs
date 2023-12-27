@@ -199,7 +199,7 @@ pub unsafe fn SKP_Silk_decode_parameters(
         SKP_Silk_NLSF2A_stable(
             &mut ((*psDecCtrl).PredCoef_Q12[1 as libc::c_int as usize]),
             &pNLSF_Q15,
-            (*psDec).LPC_order,
+            (*psDec).LPC_order as usize,
         );
         if (*psDecCtrl).NLSFInterpCoef_Q2 < 4 as libc::c_int {
             i = 0 as libc::c_int;
@@ -214,7 +214,7 @@ pub unsafe fn SKP_Silk_decode_parameters(
             SKP_Silk_NLSF2A_stable(
                 &mut ((*psDecCtrl).PredCoef_Q12[0 as libc::c_int as usize]),
                 &pNLSF0_Q15,
-                (*psDec).LPC_order,
+                (*psDec).LPC_order as usize,
             );
         } else {
             memcpy(

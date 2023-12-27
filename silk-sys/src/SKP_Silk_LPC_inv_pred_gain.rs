@@ -101,23 +101,17 @@ fn LPC_inverse_pred_gain_QA(
     return 0;
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_LPC_inverse_pred_gain(
-    invGain_Q30: &mut i32,
-    A_Q12: &[i16],
-    order: libc::c_int,
-) -> libc::c_int {
-    let mut k: libc::c_int = 0;
-    let mut Atmp_QA: [[libc::c_int; 16]; 2] = [[0; 16]; 2];
-    let mut Anew_QA: *mut libc::c_int = 0 as *mut libc::c_int;
-    let Anew_QA = &mut Atmp_QA[(order & 1 as libc::c_int) as usize];
-    k = 0 as libc::c_int;
-    while k < order {
-        Anew_QA[k as usize] = (A_Q12[k as usize] as libc::c_int)
-            << 16 as libc::c_int - 12 as libc::c_int;
-        k += 1;
+pub fn SKP_Silk_LPC_inverse_pred_gain(
+    inv_gain_q30: &mut i32,
+    a_q12: &[i16],
+    order: usize,
+) -> i32 {
+    let mut a_tmp_qa = [[0; 16]; 2];
+    let a_new_qa = &mut a_tmp_qa[order & 1];
+    for k in 0..order {
+        a_new_qa[k] = (a_q12[k] as i32) << 16 - 12;
     }
-    return LPC_inverse_pred_gain_QA(invGain_Q30, &mut Atmp_QA, order as usize);
+    return LPC_inverse_pred_gain_QA(inv_gain_q30, &mut a_tmp_qa, order);
 }
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_LPC_inverse_pred_gain_Q24(

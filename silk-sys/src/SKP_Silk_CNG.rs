@@ -376,7 +376,7 @@ pub unsafe extern "C" fn SKP_Silk_CNG(
         SKP_Silk_NLSF2A_stable(
             &mut LPC_buf,
             &psCNG.CNG_smth_NLSF_Q15,
-            (*psDec).LPC_order,
+            (*psDec).LPC_order as usize,
         );
         Gain_Q26 = (1 as libc::c_int) << 26 as libc::c_int;
         if (*psDec).LPC_order == 16 as libc::c_int {

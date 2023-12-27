@@ -566,7 +566,7 @@ pub unsafe extern "C" fn SKP_Silk_PLC_conceal(
             SKP_Silk_LPC_inverse_pred_gain(
                 &mut invGain_Q30,
                 &mut ((*psPLC).prevLPC_Q12),
-                (*psDec).LPC_order,
+                (*psDec).LPC_order as usize,
             );
             down_scale_Q30 = SKP_min_32(
                 (1 as libc::c_int) << 30 as libc::c_int >> 3 as libc::c_int,

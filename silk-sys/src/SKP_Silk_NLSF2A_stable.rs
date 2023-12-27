@@ -5,11 +5,11 @@ use crate::{SKP_Silk_LPC_inv_pred_gain::SKP_Silk_LPC_inverse_pred_gain, skp_silk
 pub unsafe fn SKP_Silk_NLSF2A_stable(
     pAR_Q12: &mut [i16],
     pNLSF: &[i32],
-    LPC_order: libc::c_int,
+    LPC_order: usize,
 ) {
     let mut i: libc::c_int = 0;
     let mut invGain_Q30: libc::c_int = 0;
-    skp_silk_nlsf2a(pAR_Q12, pNLSF, LPC_order as usize);
+    skp_silk_nlsf2a(pAR_Q12, pNLSF, LPC_order);
     i = 0 as libc::c_int;
     while i < 20 as libc::c_int {
         if !(SKP_Silk_LPC_inverse_pred_gain(
@@ -22,7 +22,7 @@ pub unsafe fn SKP_Silk_NLSF2A_stable(
         }
         skp_silk_bwexpander(
             pAR_Q12,
-            LPC_order as usize,
+            LPC_order,
             65536 as libc::c_int
                 - (10 as libc::c_int + i) as libc::c_short as libc::c_int
                     * i as libc::c_short as libc::c_int,
@@ -30,10 +30,8 @@ pub unsafe fn SKP_Silk_NLSF2A_stable(
         i += 1;
     }
     if i == 20 as libc::c_int {
-        i = 0 as libc::c_int;
-        while i < LPC_order {
-            pAR_Q12[i as usize] = 0 as libc::c_int as libc::c_short;
-            i += 1;
+        for i in 0..LPC_order {
+            pAR_Q12[i] = 0 as libc::c_int as libc::c_short;
         }
     }
 }
