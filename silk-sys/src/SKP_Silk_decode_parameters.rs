@@ -1,17 +1,5 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
-use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, skp_silk_nlsf_msvq_decode::{skp_silk_nlsf_msvq_decode, SkpSilkNlsfCbStruct}, skp_silk_bwexpander::skp_silk_bwexpander, skp_silk_decode_pitch::skp_silk_decode_pitch, SKP_Silk_range_coder::{SKP_Silk_range_decoder, skp_silk_range_decoder_multi, skp_silk_range_coder_get_length, SKP_Silk_range_coder_check_after_decoding}, SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs, SKP_Silk_gain_quant::skp_silk_gains_dequant, skp_silk_nlsf2a_stable::skp_silk_nlsf2a_stable, skp_silk_decode_pulses::skp_silk_decode_pulses, skp_silk_tables_other::{SKP_SILK_SAMPLING_RATES_CDF, SKP_SILK_SAMPLING_RATES_OFFSET, SKP_SILK_SAMPLING_RATES_TABLE, SKP_SILK_NLSF_INTERPOLATION_FACTOR_CDF, SKP_SILK_NLSF_INTERPOLATION_FACTOR_OFFSET, SKP_SILK_LTP_SCALE_CDF, SKP_SILK_LTP_SCALE_OFFSET, SKP_SILK_LTP_SCALES_TABLE_Q14, SKP_SILK_SEED_CDF, SKP_SILK_SEED_OFFSET, SKP_SILK_VAD_FLAG_CDF, SKP_SILK_VAD_FLAG_OFFSET, SKP_SILK_FRAME_TERMINATION_CDF, SKP_SILK_FRAME_TERMINATION_OFFSET}, skp_silk_tables_type_offset::{SKP_SILK_TYPE_OFFSET_CDF, SKP_SILK_TYPE_OFFSET_CDF_OFFSET, SKP_SILK_TYPE_OFFSET_JOINT_CDF}, skp_silk_tables_gain::{SKP_SILK_GAIN_CDF, SKP_SILK_GAIN_CDF_OFFSET, SKP_SILK_DELTA_GAIN_CDF, SKP_SILK_DELTA_GAIN_CDF_OFFSET}, skp_silk_tables_pitch_lag::{SKP_SILK_PITCH_LAG_NB_CDF, SKP_SILK_PITCH_LAG_NB_CDF_OFFSET, SKP_SILK_PITCH_LAG_MB_CDF, SKP_SILK_PITCH_LAG_MB_CDF_OFFSET, SKP_SILK_PITCH_LAG_WB_CDF, SKP_SILK_PITCH_LAG_WB_CDF_OFFSET, SKP_SILK_PITCH_LAG_SWB_CDF, SKP_SILK_PITCH_LAG_SWB_CDF_OFFSET, SKP_SILK_PITCH_CONTOUR_NB_CDF, SKP_SILK_PITCH_CONTOUR_NB_CDF_OFFSET, SKP_SILK_PITCH_CONTOUR_CDF, SKP_SILK_PITCH_CONTOUR_CDF_OFFSET}, SKP_Silk_tables_LTP::{SKP_Silk_LTP_per_index_CDF, SKP_Silk_LTP_per_index_CDF_offset, SKP_Silk_LTP_vq_ptrs_Q14, SKP_Silk_LTP_gain_CDF_ptrs, SKP_Silk_LTP_gain_CDF_offsets}};
-extern "C" {
-    fn memset(
-        _: *mut libc::c_void,
-        _: libc::c_int,
-        _: libc::c_ulong,
-    ) -> *mut libc::c_void;
-    fn memcpy(
-        _: *mut libc::c_void,
-        _: *const libc::c_void,
-        _: libc::c_ulong,
-    ) -> *mut libc::c_void;
-}
+use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, skp_silk_nlsf_msvq_decode::{skp_silk_nlsf_msvq_decode, SkpSilkNlsfCbStruct}, skp_silk_bwexpander::skp_silk_bwexpander, skp_silk_decode_pitch::skp_silk_decode_pitch, SKP_Silk_range_coder::{SKP_Silk_range_decoder, skp_silk_range_decoder_multi, skp_silk_range_coder_get_length, skp_silk_range_coder_check_after_decoding}, SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs, SKP_Silk_gain_quant::skp_silk_gains_dequant, skp_silk_nlsf2a_stable::skp_silk_nlsf2a_stable, skp_silk_decode_pulses::skp_silk_decode_pulses, skp_silk_tables_other::{SKP_SILK_SAMPLING_RATES_CDF, SKP_SILK_SAMPLING_RATES_OFFSET, SKP_SILK_SAMPLING_RATES_TABLE, SKP_SILK_NLSF_INTERPOLATION_FACTOR_CDF, SKP_SILK_NLSF_INTERPOLATION_FACTOR_OFFSET, SKP_SILK_LTP_SCALE_CDF, SKP_SILK_LTP_SCALE_OFFSET, SKP_SILK_LTP_SCALES_TABLE_Q14, SKP_SILK_SEED_CDF, SKP_SILK_SEED_OFFSET, SKP_SILK_VAD_FLAG_CDF, SKP_SILK_VAD_FLAG_OFFSET, SKP_SILK_FRAME_TERMINATION_CDF, SKP_SILK_FRAME_TERMINATION_OFFSET}, skp_silk_tables_type_offset::{SKP_SILK_TYPE_OFFSET_CDF, SKP_SILK_TYPE_OFFSET_CDF_OFFSET, SKP_SILK_TYPE_OFFSET_JOINT_CDF}, skp_silk_tables_gain::{SKP_SILK_GAIN_CDF, SKP_SILK_GAIN_CDF_OFFSET, SKP_SILK_DELTA_GAIN_CDF, SKP_SILK_DELTA_GAIN_CDF_OFFSET}, skp_silk_tables_pitch_lag::{SKP_SILK_PITCH_LAG_NB_CDF, SKP_SILK_PITCH_LAG_NB_CDF_OFFSET, SKP_SILK_PITCH_LAG_MB_CDF, SKP_SILK_PITCH_LAG_MB_CDF_OFFSET, SKP_SILK_PITCH_LAG_WB_CDF, SKP_SILK_PITCH_LAG_WB_CDF_OFFSET, SKP_SILK_PITCH_LAG_SWB_CDF, SKP_SILK_PITCH_LAG_SWB_CDF_OFFSET, SKP_SILK_PITCH_CONTOUR_NB_CDF, SKP_SILK_PITCH_CONTOUR_NB_CDF_OFFSET, SKP_SILK_PITCH_CONTOUR_CDF, SKP_SILK_PITCH_CONTOUR_CDF_OFFSET}, SKP_Silk_tables_LTP::{SKP_Silk_LTP_per_index_CDF, SKP_Silk_LTP_per_index_CDF_offset, SKP_Silk_LTP_vq_ptrs_Q14, SKP_Silk_LTP_gain_CDF_ptrs, SKP_Silk_LTP_gain_CDF_offsets}};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct _SKP_Silk_resampler_state_struct {
@@ -97,39 +85,30 @@ pub struct SKP_Silk_CNG_struct {
     pub fs_kHz: libc::c_int,
 }
 #[no_mangle]
-pub unsafe fn SKP_Silk_decode_parameters(
+pub fn SKP_Silk_decode_parameters(
     psDec: &mut SKP_Silk_decoder_state,
     psDecCtrl: &mut SKP_Silk_decoder_control,
     mut q: &mut [i32],
-    fullDecoding: libc::c_int,
+    fullDecoding: i32,
 ) {
-    let mut i: libc::c_int = 0;
-    let mut k: libc::c_int = 0;
-    let mut Ix: libc::c_int = 0;
-    let mut fs_kHz_dec: libc::c_int = 0;
-    let mut nBytesUsed: libc::c_int = 0;
-    let mut Ixs: [libc::c_int; 4] = [0; 4];
-    let mut GainsIndices: [libc::c_int; 4] = [0; 4];
-    let mut NLSFIndices: [libc::c_int; 10] = [0; 10];
-    let mut pNLSF_Q15: [libc::c_int; 16] = [0; 16];
-    let mut pNLSF0_Q15: [libc::c_int; 16] = [0; 16];
-    let mut cbk_ptr_Q14: *const libc::c_short = 0 as *const libc::c_short;
+    let mut Ix = 0;
+    let mut pNLSF0_Q15 = [0; 16];
     let psRC = &mut psDec.sRC;
-    if psDec.nFramesDecoded == 0 as libc::c_int {
+    if psDec.nFramesDecoded == 0 {
         Ix = SKP_Silk_range_decoder(
             psRC,
             &SKP_SILK_SAMPLING_RATES_CDF,
             SKP_SILK_SAMPLING_RATES_OFFSET,
         );
-        if Ix < 0 as libc::c_int || Ix > 3 as libc::c_int {
-            psRC.error = -(7 as libc::c_int);
+        if Ix < 0 || Ix > 3 {
+            psRC.error = -7;
             return;
         }
-        fs_kHz_dec = SKP_SILK_SAMPLING_RATES_TABLE[Ix as usize];
+        let fs_kHz_dec = SKP_SILK_SAMPLING_RATES_TABLE[Ix as usize];
         SKP_Silk_decoder_set_fs(psDec, fs_kHz_dec);
     }
     let psRC = &mut psDec.sRC;
-    if (*psDec).nFramesDecoded == 0 as libc::c_int {
+    if psDec.nFramesDecoded == 0 {
         Ix = SKP_Silk_range_decoder(
             psRC,
             &SKP_SILK_TYPE_OFFSET_CDF,
@@ -138,14 +117,15 @@ pub unsafe fn SKP_Silk_decode_parameters(
     } else {
         Ix = SKP_Silk_range_decoder(
             psRC,
-            &SKP_SILK_TYPE_OFFSET_JOINT_CDF[(*psDec).typeOffsetPrev as usize],
+            &SKP_SILK_TYPE_OFFSET_JOINT_CDF[psDec.typeOffsetPrev as usize],
             SKP_SILK_TYPE_OFFSET_CDF_OFFSET,
         );
     }
-    (*psDecCtrl).sig_type = Ix >> 1 as libc::c_int;
-    (*psDecCtrl).QuantOffsetType = Ix & 1 as libc::c_int;
-    (*psDec).typeOffsetPrev = Ix;
-    if (*psDec).nFramesDecoded == 0 as libc::c_int {
+    psDecCtrl.sig_type = Ix >> 1;
+    psDecCtrl.QuantOffsetType = Ix & 1;
+    psDec.typeOffsetPrev = Ix;
+    let mut GainsIndices = [0; 4];
+    if (*psDec).nFramesDecoded == 0 {
         GainsIndices[0] = SKP_Silk_range_decoder(
             psRC,
             &SKP_SILK_GAIN_CDF[(*psDecCtrl).sig_type as usize],
@@ -158,14 +138,13 @@ pub unsafe fn SKP_Silk_decode_parameters(
             SKP_SILK_DELTA_GAIN_CDF_OFFSET,
         );
     }
-    i = 1 as libc::c_int;
-    while i < 4 as libc::c_int {
-        GainsIndices[i as usize] = SKP_Silk_range_decoder(
+
+    for i in 1..4 {
+        GainsIndices[i] = SKP_Silk_range_decoder(
             psRC,
             &SKP_SILK_DELTA_GAIN_CDF,
             SKP_SILK_DELTA_GAIN_CDF_OFFSET,
         );
-        i += 1;
     }
     skp_silk_gains_dequant(
         &mut psDecCtrl.Gains_Q16,
@@ -174,6 +153,7 @@ pub unsafe fn SKP_Silk_decode_parameters(
         psDec.nFramesDecoded,
     );
     let psNLSF_CB:&SkpSilkNlsfCbStruct  = (*psDec).psNLSF_CB[(*psDecCtrl).sig_type as usize].unwrap();
+    let mut NLSFIndices = [0; 10];
     skp_silk_range_decoder_multi(
         &mut NLSFIndices,
         psRC,
@@ -181,6 +161,7 @@ pub unsafe fn SKP_Silk_decode_parameters(
         psNLSF_CB.middle_ix,
         psNLSF_CB.n_stages as usize,
     );
+    let mut pNLSF_Q15 = [0; 16];
     skp_silk_nlsf_msvq_decode(
         &mut pNLSF_Q15,
         psNLSF_CB,
@@ -192,75 +173,63 @@ pub unsafe fn SKP_Silk_decode_parameters(
         &SKP_SILK_NLSF_INTERPOLATION_FACTOR_CDF,
         SKP_SILK_NLSF_INTERPOLATION_FACTOR_OFFSET,
     );
-    if (*psDec).first_frame_after_reset == 1 as libc::c_int {
-        (*psDecCtrl).NLSFInterpCoef_Q2 = 4 as libc::c_int;
+    if (*psDec).first_frame_after_reset == 1 {
+        (*psDecCtrl).NLSFInterpCoef_Q2 = 4;
     }
     if fullDecoding != 0 {
         skp_silk_nlsf2a_stable(
-            &mut ((*psDecCtrl).PredCoef_Q12[1 as libc::c_int as usize]),
+            &mut ((*psDecCtrl).PredCoef_Q12[1]),
             &pNLSF_Q15,
             (*psDec).LPC_order as usize,
         );
-        if (*psDecCtrl).NLSFInterpCoef_Q2 < 4 as libc::c_int {
-            i = 0 as libc::c_int;
-            while i < (*psDec).LPC_order {
-                pNLSF0_Q15[i
-                    as usize] = (*psDec).prevNLSF_Q15[i as usize]
-                    + ((*psDecCtrl).NLSFInterpCoef_Q2
-                        * (pNLSF_Q15[i as usize] - (*psDec).prevNLSF_Q15[i as usize])
-                        >> 2 as libc::c_int);
-                i += 1;
+        if (*psDecCtrl).NLSFInterpCoef_Q2 < 4 {
+            for i in 0..psDec.LPC_order as usize {
+                pNLSF0_Q15[i] = psDec.prevNLSF_Q15[i]
+                    + (psDecCtrl.NLSFInterpCoef_Q2
+                        * (pNLSF_Q15[i] - psDec.prevNLSF_Q15[i])
+                        >> 2);
             }
             skp_silk_nlsf2a_stable(
-                &mut ((*psDecCtrl).PredCoef_Q12[0 as libc::c_int as usize]),
+                &mut ((*psDecCtrl).PredCoef_Q12[0]),
                 &pNLSF0_Q15,
                 (*psDec).LPC_order as usize,
             );
         } else {
-            memcpy(
-                ((*psDecCtrl).PredCoef_Q12[0 as libc::c_int as usize]).as_mut_ptr()
-                    as *mut libc::c_void,
-                ((*psDecCtrl).PredCoef_Q12[1 as libc::c_int as usize]).as_mut_ptr()
-                    as *const libc::c_void,
-                ((*psDec).LPC_order as libc::c_ulong)
-                    .wrapping_mul(
-                        ::core::mem::size_of::<libc::c_short>() as libc::c_ulong,
-                    ),
-            );
+            for i in 0..psDec.LPC_order as usize {
+                psDecCtrl.PredCoef_Q12[0][i] = psDecCtrl.PredCoef_Q12[1][i];
+            }
         }
     }
-    memcpy(
-        ((*psDec).prevNLSF_Q15).as_mut_ptr() as *mut libc::c_void,
-        pNLSF_Q15.as_mut_ptr() as *const libc::c_void,
-        ((*psDec).LPC_order as libc::c_ulong)
-            .wrapping_mul(::core::mem::size_of::<libc::c_int>() as libc::c_ulong),
-    );
+    for i in 0..psDec.LPC_order as usize {
+        psDec.prevNLSF_Q15[i] = pNLSF_Q15[i];
+    }
     if (*psDec).lossCnt != 0 {
         skp_silk_bwexpander(
-            &mut ((*psDecCtrl).PredCoef_Q12[0 as libc::c_int as usize]),
+            &mut ((*psDecCtrl).PredCoef_Q12[0]),
             (*psDec).LPC_order as usize,
-            63570 as libc::c_int,
+            63570,
         );
         skp_silk_bwexpander(
-            &mut ((*psDecCtrl).PredCoef_Q12[1 as libc::c_int as usize]),
+            &mut ((*psDecCtrl).PredCoef_Q12[1]),
             (*psDec).LPC_order as usize,
-            63570 as libc::c_int,
+            63570,
         );
     }
-    if (*psDecCtrl).sig_type == 0 as libc::c_int {
-        if (*psDec).fs_kHz == 8 as libc::c_int {
+    let mut Ixs = [0; 4];
+    if (*psDecCtrl).sig_type == 0 {
+        if (*psDec).fs_kHz == 8 {
             Ixs[0] = SKP_Silk_range_decoder(
                 psRC,
                 &SKP_SILK_PITCH_LAG_NB_CDF,
                 SKP_SILK_PITCH_LAG_NB_CDF_OFFSET,
             );
-        } else if (*psDec).fs_kHz == 12 as libc::c_int {
+        } else if (*psDec).fs_kHz == 12 {
             Ixs[0] = SKP_Silk_range_decoder(
                 psRC,
                 &SKP_SILK_PITCH_LAG_MB_CDF,
                 SKP_SILK_PITCH_LAG_MB_CDF_OFFSET,
             );
-        } else if (*psDec).fs_kHz == 16 as libc::c_int {
+        } else if (*psDec).fs_kHz == 16 {
             Ixs[0] = SKP_Silk_range_decoder(
                 psRC,
                 &SKP_SILK_PITCH_LAG_WB_CDF,
@@ -273,7 +242,7 @@ pub unsafe fn SKP_Silk_decode_parameters(
                 SKP_SILK_PITCH_LAG_SWB_CDF_OFFSET,
             );
         }
-        if (*psDec).fs_kHz == 8 as libc::c_int {
+        if (*psDec).fs_kHz == 8 {
             Ixs[1] = SKP_Silk_range_decoder(
                 psRC,
                 &SKP_SILK_PITCH_CONTOUR_NB_CDF,
@@ -297,23 +266,16 @@ pub unsafe fn SKP_Silk_decode_parameters(
             &SKP_Silk_LTP_per_index_CDF,
             SKP_Silk_LTP_per_index_CDF_offset,
         );
-        cbk_ptr_Q14 = SKP_Silk_LTP_vq_ptrs_Q14[(*psDecCtrl).PERIndex as usize];
-        k = 0 as libc::c_int;
-        while k < 4 as libc::c_int {
+        let cbk_ptr_Q14 = SKP_Silk_LTP_vq_ptrs_Q14[(*psDecCtrl).PERIndex as usize];
+        for k in 0..4 {
             Ix = SKP_Silk_range_decoder(
                 psRC,
                 SKP_Silk_LTP_gain_CDF_ptrs[(*psDecCtrl).PERIndex as usize],
                 SKP_Silk_LTP_gain_CDF_offsets[(*psDecCtrl).PERIndex as usize],
             );
-            i = 0 as libc::c_int;
-            while i < 5 as libc::c_int {
-                (*psDecCtrl)
-                    .LTPCoef_Q14[(k * 5 as libc::c_int + i)
-                    as usize] = *cbk_ptr_Q14
-                    .offset((Ix * 5 as libc::c_int + i) as isize);
-                i += 1;
+            for i in 0..5 {
+                psDecCtrl.LTPCoef_Q14[k * 5 + i] = cbk_ptr_Q14[Ix as usize][i];
             }
-            k += 1;
         }
         Ix = SKP_Silk_range_decoder(
             psRC,
@@ -321,22 +283,16 @@ pub unsafe fn SKP_Silk_decode_parameters(
             SKP_SILK_LTP_SCALE_OFFSET,
         );
         (*psDecCtrl)
-            .LTP_scale_Q14 = SKP_SILK_LTP_SCALES_TABLE_Q14[Ix as usize] as libc::c_int;
+            .LTP_scale_Q14 = SKP_SILK_LTP_SCALES_TABLE_Q14[Ix as usize] as i32;
     } else {
-        memset(
-            ((*psDecCtrl).pitchL).as_mut_ptr() as *mut libc::c_void,
-            0 as libc::c_int,
-            (4 as libc::c_int as libc::c_ulong)
-                .wrapping_mul(::core::mem::size_of::<libc::c_int>() as libc::c_ulong),
-        );
-        memset(
-            ((*psDecCtrl).LTPCoef_Q14).as_mut_ptr() as *mut libc::c_void,
-            0 as libc::c_int,
-            ((5 as libc::c_int * 4 as libc::c_int) as libc::c_ulong)
-                .wrapping_mul(::core::mem::size_of::<libc::c_short>() as libc::c_ulong),
-        );
-        (*psDecCtrl).PERIndex = 0 as libc::c_int;
-        (*psDecCtrl).LTP_scale_Q14 = 0 as libc::c_int;
+        for i in 0..4 {
+            psDecCtrl.pitchL[i] = 0;
+        }
+        for i in 0..5 * 4 {
+            psDecCtrl.LTPCoef_Q14[i] = 0;
+        }
+        (*psDecCtrl).PERIndex = 0;
+        (*psDecCtrl).LTP_scale_Q14 = 0;
     }
     Ix = SKP_Silk_range_decoder(
         psRC,
@@ -355,12 +311,13 @@ pub unsafe fn SKP_Silk_decode_parameters(
         &SKP_SILK_FRAME_TERMINATION_CDF,
         SKP_SILK_FRAME_TERMINATION_OFFSET,
     );
+    let mut nBytesUsed = 0;
     skp_silk_range_coder_get_length(psRC, &mut nBytesUsed);
     (*psDec).nBytesLeft = (*psRC).bufferLength - nBytesUsed;
-    if (*psDec).nBytesLeft < 0 as libc::c_int {
-        (*psRC).error = -(6 as libc::c_int);
+    if (*psDec).nBytesLeft < 0 {
+        (*psRC).error = -6;
     }
-    if (*psDec).nBytesLeft == 0 as libc::c_int {
-        SKP_Silk_range_coder_check_after_decoding(psRC);
+    if (*psDec).nBytesLeft == 0 {
+        skp_silk_range_coder_check_after_decoding(psRC);
     }
 }

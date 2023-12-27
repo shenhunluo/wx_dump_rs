@@ -23,7 +23,7 @@ fn encode_split(
         let cdf = &shell_table[
                 SKP_SILK_SHELL_CODE_TABLE_OFFSETS[p as usize] as usize..
             ];
-        SKP_Silk_range_encoder(sRC, p_child1, cdf);
+        SKP_Silk_range_encoder(sRC, p_child1 as usize, cdf);
     }
 }
 

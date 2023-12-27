@@ -1,17 +1,16 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use std::{time::Duration, thread::sleep};
 #[no_mangle]
-pub static mut SKP_Silk_LTP_per_index_CDF: [libc::c_ushort; 4] = [
+pub static SKP_Silk_LTP_per_index_CDF: [libc::c_ushort; 4] = [
     0 as libc::c_int as libc::c_ushort,
     20992 as libc::c_int as libc::c_ushort,
     40788 as libc::c_int as libc::c_ushort,
     65535 as libc::c_int as libc::c_ushort,
 ];
 #[no_mangle]
-pub static mut SKP_Silk_LTP_per_index_CDF_offset: libc::c_int = 1 as libc::c_int;
+pub static SKP_Silk_LTP_per_index_CDF_offset: libc::c_int = 1 as libc::c_int;
 #[no_mangle]
-pub static mut SKP_Silk_LTP_gain_CDF_0: [libc::c_ushort; 11] = [
+pub static SKP_Silk_LTP_gain_CDF_0: [libc::c_ushort; 11] = [
     0 as libc::c_int as libc::c_ushort,
     49380 as libc::c_int as libc::c_ushort,
     54463 as libc::c_int as libc::c_ushort,
@@ -93,7 +92,7 @@ pub static mut SKP_Silk_LTP_gain_CDF_2: [libc::c_ushort; 41] = [
     65535 as libc::c_int as libc::c_ushort,
 ];
 #[no_mangle]
-pub static mut SKP_Silk_LTP_gain_CDF_offsets: [libc::c_int; 3] = [
+pub static SKP_Silk_LTP_gain_CDF_offsets: [libc::c_int; 3] = [
     1 as libc::c_int,
     3 as libc::c_int,
     10 as libc::c_int,
@@ -180,7 +179,7 @@ pub static mut SKP_Silk_LTP_gain_BITS_Q6_2: [libc::c_short; 40] = [
     455 as libc::c_int as libc::c_short,
 ];
 #[no_mangle]
-pub static mut SKP_Silk_LTP_gain_CDF_ptrs: [&'static [u16]; 3] = unsafe {
+pub static SKP_Silk_LTP_gain_CDF_ptrs: [&'static [u16]; 3] = unsafe {
     [
         &SKP_Silk_LTP_gain_CDF_0,
         &SKP_Silk_LTP_gain_CDF_1,
@@ -196,7 +195,7 @@ pub static mut SKP_Silk_LTP_gain_BITS_Q6_ptrs: [*const libc::c_short; 3] = unsaf
     ]
 };
 #[no_mangle]
-pub static mut SKP_Silk_LTP_gain_vq_0_Q14: [[libc::c_short; 5]; 10] = [
+pub static SKP_Silk_LTP_gain_vq_0_Q14: [[libc::c_short; 5]; 10] = [
     [
         594 as libc::c_int as libc::c_short,
         984 as libc::c_int as libc::c_short,
@@ -269,7 +268,7 @@ pub static mut SKP_Silk_LTP_gain_vq_0_Q14: [[libc::c_short; 5]; 10] = [
     ],
 ];
 #[no_mangle]
-pub static mut SKP_Silk_LTP_gain_vq_1_Q14: [[libc::c_short; 5]; 20] = [
+pub static SKP_Silk_LTP_gain_vq_1_Q14: [[libc::c_short; 5]; 20] = [
     [
         1655 as libc::c_int as libc::c_short,
         2918 as libc::c_int as libc::c_short,
@@ -412,7 +411,7 @@ pub static mut SKP_Silk_LTP_gain_vq_1_Q14: [[libc::c_short; 5]; 20] = [
     ],
 ];
 #[no_mangle]
-pub static mut SKP_Silk_LTP_gain_vq_2_Q14: [[libc::c_short; 5]; 40] = [
+pub static SKP_Silk_LTP_gain_vq_2_Q14: [[libc::c_short; 5]; 40] = [
     [
         -(278 as libc::c_int) as libc::c_short,
         415 as libc::c_int as libc::c_short,
@@ -695,30 +694,33 @@ pub static mut SKP_Silk_LTP_gain_vq_2_Q14: [[libc::c_short; 5]; 40] = [
     ],
 ];
 #[no_mangle]
-pub static mut SKP_Silk_LTP_vq_ptrs_Q14: [*const libc::c_short; 3] = [0
-    as *const libc::c_short; 3];
+pub static SKP_Silk_LTP_vq_ptrs_Q14: [&[[i16;5]]; 3] = [
+    &SKP_Silk_LTP_gain_vq_0_Q14,
+    &SKP_Silk_LTP_gain_vq_1_Q14,
+    &SKP_Silk_LTP_gain_vq_2_Q14
+];
 #[no_mangle]
 pub static mut SKP_Silk_LTP_vq_sizes: [libc::c_int; 3] = [
     10 as libc::c_int,
     20 as libc::c_int,
     40 as libc::c_int,
 ];
-unsafe extern "C" fn run_static_initializers() {
-    SKP_Silk_LTP_vq_ptrs_Q14 = [
-        &*(*SKP_Silk_LTP_gain_vq_0_Q14.as_ptr().offset(0 as libc::c_int as isize))
-            .as_ptr()
-            .offset(0 as libc::c_int as isize) as *const libc::c_short,
-        &*(*SKP_Silk_LTP_gain_vq_1_Q14.as_ptr().offset(0 as libc::c_int as isize))
-            .as_ptr()
-            .offset(0 as libc::c_int as isize) as *const libc::c_short,
-        &*(*SKP_Silk_LTP_gain_vq_2_Q14.as_ptr().offset(0 as libc::c_int as isize))
-            .as_ptr()
-            .offset(0 as libc::c_int as isize) as *const libc::c_short,
-    ];
-    sleep(Duration::from_nanos(1));
-}
-#[used]
-#[cfg_attr(target_os = "linux", link_section = ".init_array")]
-#[cfg_attr(target_os = "windows", link_section = ".CRT$XIB")]
-#[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
-static INIT_ARRAY: [unsafe extern "C" fn(); 1] = [run_static_initializers];
+// unsafe extern "C" fn run_static_initializers() {
+//     SKP_Silk_LTP_vq_ptrs_Q14 = [
+//         &*(*SKP_Silk_LTP_gain_vq_0_Q14.as_ptr().offset(0 as libc::c_int as isize))
+//             .as_ptr()
+//             .offset(0 as libc::c_int as isize) as *const libc::c_short,
+//         &*(*SKP_Silk_LTP_gain_vq_1_Q14.as_ptr().offset(0 as libc::c_int as isize))
+//             .as_ptr()
+//             .offset(0 as libc::c_int as isize) as *const libc::c_short,
+//         &*(*SKP_Silk_LTP_gain_vq_2_Q14.as_ptr().offset(0 as libc::c_int as isize))
+//             .as_ptr()
+//             .offset(0 as libc::c_int as isize) as *const libc::c_short,
+//     ];
+//     sleep(Duration::from_nanos(1));
+// }
+// #[used]
+// #[cfg_attr(target_os = "linux", link_section = ".init_array")]
+// #[cfg_attr(target_os = "windows", link_section = ".CRT$XIB")]
+// #[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
+// static INIT_ARRAY: [unsafe extern "C" fn(); 1] = [run_static_initializers];

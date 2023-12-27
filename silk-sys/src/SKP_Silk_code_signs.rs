@@ -26,7 +26,7 @@ pub unsafe extern "C" fn SKP_Silk_encode_signs(
                 + 1 as libc::c_int;
             SKP_Silk_range_encoder(
                 sRC,
-                inData,
+                inData as usize,
                 &cdf,
             );
         }

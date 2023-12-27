@@ -29,7 +29,7 @@ extern "C" {
 #[no_mangle]
 pub fn SKP_Silk_range_encoder(
     mut psRC: &mut SKP_Silk_range_coder_state,
-    data: libc::c_int,
+    data: usize,
     mut prob: &[u16],
 ) {
     let mut low_Q16: libc::c_uint = 0;
@@ -88,15 +88,15 @@ pub fn SKP_Silk_range_encoder(
     psRC.range_Q16 = range_Q16;
     psRC.bufferIx = bufferIx;
 }
-#[no_mangle]
-pub unsafe fn SKP_Silk_range_encoder_multi(
-    mut psRC: &mut SKP_Silk_range_coder_state,
-    mut data: *const libc::c_int,
+
+pub fn skp_silk_range_encoder_multi(
+    mut ps_r_c: &mut SKP_Silk_range_coder_state,
+    mut data: &[i32],
     prob: &[&[u16]],
-    nSymbols: libc::c_int,
+    n_symbols: usize,
 ) {
-    for k in 0..nSymbols as usize {
-        SKP_Silk_range_encoder(psRC, *data.offset(k as isize), &prob[k]);
+    for k in 0..n_symbols {
+        SKP_Silk_range_encoder(ps_r_c, data[k] as usize, &prob[k]);
     }
 }
 
@@ -306,24 +306,22 @@ pub unsafe extern "C" fn SKP_Silk_range_enc_wrap_up(
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_range_coder_check_after_decoding(
-    mut psRC: &mut SKP_Silk_range_coder_state,
+
+pub fn skp_silk_range_coder_check_after_decoding(
+    ps_r_c: &mut SKP_Silk_range_coder_state,
 ) {
-    let mut bits_in_stream: libc::c_int = 0;
-    let mut nBytes: libc::c_int = 0;
-    let mut mask: libc::c_int = 0;
-    bits_in_stream = skp_silk_range_coder_get_length(psRC, &mut nBytes);
-    if nBytes - 1 as libc::c_int >= (*psRC).bufferLength {
-        (*psRC).error = -(5 as libc::c_int);
+    let mut n_bytes = 0;
+    let bits_in_stream = skp_silk_range_coder_get_length(ps_r_c, &mut n_bytes);
+    if n_bytes - 1 >= ps_r_c.bufferLength {
+        ps_r_c.error = -5;
         return;
     }
-    if bits_in_stream & 7 as libc::c_int != 0 {
-        mask = 0xff as libc::c_int >> (bits_in_stream & 7 as libc::c_int);
-        if (*psRC).buffer[(nBytes - 1 as libc::c_int) as usize] as libc::c_int & mask
+    if bits_in_stream & 7 != 0 {
+        let mask = 0xff >> (bits_in_stream & 7);
+        if ps_r_c.buffer[(n_bytes - 1) as usize] as i32 & mask
             != mask
         {
-            (*psRC).error = -(5 as libc::c_int);
+            ps_r_c.error = -5;
             return;
         }
     }
