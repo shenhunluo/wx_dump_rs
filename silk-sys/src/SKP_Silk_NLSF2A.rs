@@ -22,11 +22,10 @@ fn skp_silk_nlsf2a_find_poly(
 }
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_NLSF2A(
-    mut a: *mut libc::c_short,
-    mut NLSF: *const libc::c_int,
+    mut a: &mut [i16],
+    mut NLSF: &[i32],
     d: libc::c_int,
 ) {
-    let mut k: libc::c_int = 0;
     let mut i: libc::c_int = 0;
     let mut dd: libc::c_int = 0;
     let mut cos_LSF_Q20: [libc::c_int; 16] = [0; 16];
@@ -43,16 +42,14 @@ pub unsafe extern "C" fn SKP_Silk_NLSF2A(
     let mut absval: libc::c_int = 0;
     let mut idx: libc::c_int = 0 as libc::c_int;
     let mut sc_Q16: libc::c_int = 0;
-    k = 0 as libc::c_int;
-    while k < d {
-        f_int = *NLSF.offset(k as isize) >> 15 as libc::c_int - 7 as libc::c_int;
-        f_frac = *NLSF.offset(k as isize)
+    for k in 0..d as usize {
+        f_int = NLSF[k] >> 15 as libc::c_int - 7 as libc::c_int;
+        f_frac = NLSF[k]
             - (f_int << 15 as libc::c_int - 7 as libc::c_int);
         cos_val = SKP_SILK_LSF_COS_TAB_FIX_Q12[f_int as usize];
         delta = SKP_SILK_LSF_COS_TAB_FIX_Q12[(f_int + 1 as libc::c_int) as usize]
             - cos_val;
         cos_LSF_Q20[k as usize] = (cos_val << 8 as libc::c_int) + delta * f_frac;
-        k += 1;
     }
     dd = d >> 1 as libc::c_int;
     skp_silk_nlsf2a_find_poly(
@@ -65,8 +62,8 @@ pub unsafe extern "C" fn SKP_Silk_NLSF2A(
         &cos_LSF_Q20[1..],
         dd as usize,
     );
-    k = 0 as libc::c_int;
-    while k < dd {
+
+    for k in 0..dd {
         Ptmp = P[(k + 1 as libc::c_int) as usize] + P[k as usize];
         Qtmp = Q[(k + 1 as libc::c_int) as usize] - Q[k as usize];
         a_int32[k
@@ -83,13 +80,11 @@ pub unsafe extern "C" fn SKP_Silk_NLSF2A(
             (Qtmp - Ptmp >> 9 as libc::c_int - 1 as libc::c_int) + 1 as libc::c_int
                 >> 1 as libc::c_int
         };
-        k += 1;
     }
     i = 0 as libc::c_int;
     while i < 10 as libc::c_int {
         maxabs = 0 as libc::c_int;
-        k = 0 as libc::c_int;
-        while k < d {
+        for k in 0..d {
             absval = if a_int32[k as usize] > 0 as libc::c_int {
                 a_int32[k as usize]
             } else {
@@ -99,7 +94,6 @@ pub unsafe extern "C" fn SKP_Silk_NLSF2A(
                 maxabs = absval;
                 idx = k;
             }
-            k += 1;
         }
         if !(maxabs > 0x7fff as libc::c_int) {
             break;
@@ -117,8 +111,7 @@ pub unsafe extern "C" fn SKP_Silk_NLSF2A(
         i += 1;
     }
     if i == 10 as libc::c_int {
-        k = 0 as libc::c_int;
-        while k < d {
+        for k in 0..d {
             a_int32[k
                 as usize] = if a_int32[k as usize] > 0x7fff as libc::c_int {
                 0x7fff as libc::c_int
@@ -129,12 +122,9 @@ pub unsafe extern "C" fn SKP_Silk_NLSF2A(
             } else {
                 a_int32[k as usize]
             };
-            k += 1;
         }
     }
-    k = 0 as libc::c_int;
-    while k < d {
-        *a.offset(k as isize) = a_int32[k as usize] as libc::c_short;
-        k += 1;
+    for k in 0..d {
+        a[k as usize] = a_int32[k as usize] as libc::c_short;
     }
 }

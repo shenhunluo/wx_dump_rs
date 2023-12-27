@@ -305,12 +305,11 @@ pub unsafe extern "C" fn SKP_Silk_CNG(
     let mut max_Gain_Q16: libc::c_int = 0;
     let mut LPC_buf: [libc::c_short; 16] = [0; 16];
     let mut CNG_sig: [libc::c_short; 480] = [0; 480];
-    let mut psCNG: *mut SKP_Silk_CNG_struct = 0 as *mut SKP_Silk_CNG_struct;
-    psCNG = &mut (*psDec).sCNG;
-    if (*psDec).fs_kHz != (*psCNG).fs_kHz {
+    if (*psDec).fs_kHz != psDec.sCNG.fs_kHz {
         SKP_Silk_CNG_Reset(psDec);
-        (*psCNG).fs_kHz = (*psDec).fs_kHz;
+        psDec.sCNG.fs_kHz = psDec.fs_kHz;
     }
+    let psCNG = &mut (*psDec).sCNG;
     if (*psDec).lossCnt == 0 as libc::c_int && (*psDec).vadFlag == 0 as libc::c_int {
         i = 0 as libc::c_int;
         while i < (*psDec).LPC_order {
@@ -375,8 +374,8 @@ pub unsafe extern "C" fn SKP_Silk_CNG(
             &mut (*psCNG).rand_seed,
         );
         SKP_Silk_NLSF2A_stable(
-            LPC_buf.as_mut_ptr(),
-            ((*psCNG).CNG_smth_NLSF_Q15).as_mut_ptr() as *const libc::c_int,
+            &mut LPC_buf,
+            &psCNG.CNG_smth_NLSF_Q15,
             (*psDec).LPC_order,
         );
         Gain_Q26 = (1 as libc::c_int) << 26 as libc::c_int;

@@ -178,7 +178,7 @@ unsafe extern "C" fn LPC_inverse_pred_gain_QA(
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_LPC_inverse_pred_gain(
     mut invGain_Q30: *mut libc::c_int,
-    mut A_Q12: *const libc::c_short,
+    A_Q12: &[i16],
     order: libc::c_int,
 ) -> libc::c_int {
     let mut k: libc::c_int = 0;
@@ -190,7 +190,7 @@ pub unsafe extern "C" fn SKP_Silk_LPC_inverse_pred_gain(
         *Anew_QA
             .offset(
                 k as isize,
-            ) = (*A_Q12.offset(k as isize) as libc::c_int)
+            ) = (A_Q12[k as usize] as libc::c_int)
             << 16 as libc::c_int - 12 as libc::c_int;
         k += 1;
     }
