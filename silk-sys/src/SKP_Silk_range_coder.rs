@@ -268,13 +268,11 @@ pub fn SKP_Silk_range_dec_init(
     }
     psRC.bufferLength = bufferLength;
     psRC.bufferIx = 0;
-    psRC
-        .base_Q32 = (buffer[0] as u32)
-        << 24
-        | (buffer[1] as u32)
-            << 16
-        | (buffer[2] as u32) << 8
-        | buffer[3] as u32;
+    psRC.base_Q32 = (buffer[0] as u32) << 24 | 
+                    (buffer[1] as u32) << 16 | 
+                    (buffer[2] as u32) << 8  | 
+                    buffer[3] as u32
+                    ;
     psRC.range_Q16 = 0xffff;
     psRC.error = 0;
 }
