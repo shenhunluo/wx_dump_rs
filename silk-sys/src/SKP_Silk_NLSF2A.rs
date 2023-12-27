@@ -1,58 +1,23 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{skp_silk_bwexpander_32::skp_silk_bwexpander_32, skp_silk_lsf_cos_table::SKP_SILK_LSF_COS_TAB_FIX_Q12};
+use crate::{skp_silk_bwexpander_32::skp_silk_bwexpander_32, skp_silk_lsf_cos_table::SKP_SILK_LSF_COS_TAB_FIX_Q12, skp_l_shift, skp_s_mul_l, skp_r_shift_round};
 pub type __int64_t = libc::c_longlong;
 pub type int64_t = __int64_t;
-#[inline]
-unsafe extern "C" fn SKP_Silk_NLSF2A_find_poly(
-    mut out: *mut libc::c_int,
-    mut cLSF: *const libc::c_int,
-    mut dd: libc::c_int,
-) {
-    let mut k: libc::c_int = 0;
-    let mut n: libc::c_int = 0;
-    let mut ftmp: libc::c_int = 0;
-    *out.offset(0 as libc::c_int as isize) = (1 as libc::c_int) << 20 as libc::c_int;
-    *out.offset(1 as libc::c_int as isize) = -*cLSF.offset(0 as libc::c_int as isize);
-    k = 1 as libc::c_int;
-    while k < dd {
-        ftmp = *cLSF.offset((2 as libc::c_int * k) as isize);
-        *out
-            .offset(
-                (k + 1 as libc::c_int) as isize,
-            ) = (*out.offset((k - 1 as libc::c_int) as isize) << 1 as libc::c_int)
-            - (if 20 as libc::c_int == 1 as libc::c_int {
-                ((ftmp as int64_t).wrapping_mul(*out.offset(k as isize) as int64_t)
-                    >> 1 as libc::c_int)
-                    + ((ftmp as int64_t).wrapping_mul(*out.offset(k as isize) as int64_t)
-                        & 1 as libc::c_int as int64_t)
-            } else {
-                ((ftmp as int64_t).wrapping_mul(*out.offset(k as isize) as int64_t)
-                    >> 20 as libc::c_int - 1 as libc::c_int)
-                    + 1 as libc::c_int as int64_t >> 1 as libc::c_int
-            }) as libc::c_int;
 
-        n = k;
-        while n > 1 as libc::c_int {
-            *out.offset(n as isize)
-                += *out.offset((n - 2 as libc::c_int) as isize)
-                    - (if 20 as libc::c_int == 1 as libc::c_int {
-                        (ftmp as int64_t
-                            * *out.offset((n - 1 as libc::c_int) as isize) as int64_t
-                            >> 1 as libc::c_int)
-                            + (ftmp as int64_t
-                                * *out.offset((n - 1 as libc::c_int) as isize) as int64_t
-                                & 1 as libc::c_int as int64_t)
-                    } else {
-                        (ftmp as int64_t
-                            * *out.offset((n - 1 as libc::c_int) as isize) as int64_t
-                            >> 20 as libc::c_int - 1 as libc::c_int)
-                            + 1 as libc::c_int as int64_t >> 1 as libc::c_int
-                    }) as libc::c_int;
-            n -= 1;
+fn skp_silk_nlsf2a_find_poly(
+    out: &mut [i32],
+    cLSF: &[i32],
+    dd: usize,
+) {
+    out[0] = skp_l_shift!(1,20);
+    out[1] = -cLSF[0];
+    for k in 1..dd {
+        let f_tmp = cLSF[2 * k];
+        out[k+1] = skp_l_shift!(out[k-1],1) - skp_r_shift_round!(skp_s_mul_l!(f_tmp,out[k]),20) as i32;
+        for n in (2..=k).rev() {
+            out[n] += out[n-2] -  skp_r_shift_round!(skp_s_mul_l!(f_tmp,out[n-1]),20) as i32;
         }
-        *out.offset(1 as libc::c_int as isize) -= ftmp;
-        k += 1;
+        out[1] -= f_tmp;
     }
 }
 #[no_mangle]
@@ -90,15 +55,15 @@ pub unsafe extern "C" fn SKP_Silk_NLSF2A(
         k += 1;
     }
     dd = d >> 1 as libc::c_int;
-    SKP_Silk_NLSF2A_find_poly(
-        P.as_mut_ptr(),
-        &mut *cos_LSF_Q20.as_mut_ptr().offset(0 as libc::c_int as isize),
-        dd,
+    skp_silk_nlsf2a_find_poly(
+        &mut P,
+        &cos_LSF_Q20[0..],
+        dd as usize,
     );
-    SKP_Silk_NLSF2A_find_poly(
-        Q.as_mut_ptr(),
-        &mut *cos_LSF_Q20.as_mut_ptr().offset(1 as libc::c_int as isize),
-        dd,
+    skp_silk_nlsf2a_find_poly(
+        &mut Q,
+        &cos_LSF_Q20[1..],
+        dd as usize,
     );
     k = 0 as libc::c_int;
     while k < dd {

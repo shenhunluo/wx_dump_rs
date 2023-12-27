@@ -79,6 +79,13 @@ macro_rules! skp_r_shift_round {
 }
 
 #[macro_export]
+macro_rules! skp_s_mul_l {
+    ($a32:expr,$b32:expr) => {{
+        ($a32 as i64) * ($b32 as i64)
+    }}
+}
+
+#[macro_export]
 macro_rules! skp_s_mul_b_b {
     ($a32:expr,$b32:expr) => {{
         ($a32 as i16 as i32) * ($b32 as i16 as i32)
