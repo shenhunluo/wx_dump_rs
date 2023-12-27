@@ -260,13 +260,14 @@ static mut PLC_RAND_ATTENUATE_UV_Q15: [libc::c_short; 2] = [
     32440 as libc::c_int as libc::c_short,
     29491 as libc::c_int as libc::c_short,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_PLC_Reset(mut psDec: *mut SKP_Silk_decoder_state) {
-    (*psDec).sPLC.pitchL_Q8 = (*psDec).frame_length >> 1 as libc::c_int;
+
+pub fn SKP_Silk_PLC_Reset(psDec: &mut SKP_Silk_decoder_state) {
+    psDec.sPLC.pitchL_Q8 = psDec.frame_length >> 1;
 }
+
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_PLC(
-    mut psDec: *mut SKP_Silk_decoder_state,
+    mut psDec: &mut SKP_Silk_decoder_state,
     mut psDecCtrl: *mut SKP_Silk_decoder_control,
     mut signal: *mut libc::c_short,
     mut length: libc::c_int,
