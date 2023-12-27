@@ -11,7 +11,6 @@ pub mod SKP_Silk_resampler_private_AR2;
 pub mod SKP_Silk_resampler_private_ARMA4;
 pub mod SKP_Silk_resampler_private_copy;
 pub mod SKP_Silk_decode_frame;
-pub mod skp_silk_decode_parameters;
 pub mod SKP_Silk_range_coder;
 pub mod SKP_Silk_decoder_set_fs;
 pub mod SKP_Silk_CNG;
@@ -30,6 +29,7 @@ pub mod SKP_Silk_code_signs;
 
 pub mod SKP_Silk_tables_LTP;
 
+pub mod skp_silk_decode_parameters;
 pub mod skp_silk_nlsf2a_stable;
 pub mod skp_silk_lpc_inv_pred_gain;
 pub mod skp_silk_log2lin;

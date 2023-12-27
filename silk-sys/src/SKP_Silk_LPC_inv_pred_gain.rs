@@ -1,23 +1,7 @@
 use crate::{
-    skp_l_shift, skp_r_shift_round, skp_r_shift_sat_32, skp_s_m_mul, skp_s_mla_w_w, skp_s_mul_w_b, skp_utils::skp_silk_clz32,
+    skp_l_shift, skp_r_shift_round, skp_s_m_mul, skp_utils::{skp_silk_clz32, skp_inverse32_var_q},
 };
 
-fn skp_inverse32_var_q(b32: i32, q_res: i32) -> i32 {
-    let b_head_rm = skp_silk_clz32(b32.abs()) - 1;
-    let b32_nrm = b32 << b_head_rm;
-    let b32_inv = (i32::MAX >> 2) / (b32_nrm >> 16);
-    let mut result = b32_inv << 16;
-    let err_q32 = -skp_s_mul_w_b!(b32_nrm, b32_inv) >> 3;
-    result = skp_s_mla_w_w!(result, err_q32, b32_inv);
-    let l_shift = 61 - b_head_rm - q_res;
-    if l_shift <= 0 {
-        skp_r_shift_sat_32!(result, -l_shift)
-    } else if l_shift < 32 {
-        result >> l_shift
-    } else {
-        0
-    }
-}
 fn lpc_inverse_pred_gain_qa(inv_gain_q30: &mut i32, a_qa: &mut [[i32; 16]], order: usize) -> i32 {
     let mut a_new_qa_index = order & 1;
     *inv_gain_q30 = 1 << 30;

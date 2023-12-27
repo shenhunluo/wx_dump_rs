@@ -161,7 +161,7 @@ macro_rules! skp_sat_16 {
 }
 
 #[macro_export]
-macro_rules! skp_r_shift_sat_32 {
+macro_rules! skp_l_shift_sat_32 {
     ($a:expr,$shift:expr) => {{
         crate::skp_l_shift!(crate::skp_limit_32!($a, crate::skp_r_shift!(i32::MIN,$shift), crate::skp_r_shift!(i32::MAX,$shift)),$shift)
     }}

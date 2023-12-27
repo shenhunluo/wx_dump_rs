@@ -1,5 +1,5 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
-use crate::{skp_silk_tables_other::SKP_SILK_QUANTIZATION_OFFSETS_Q10, skp_s_mul_w_w, skp_s_mla_w_b};
+use crate::{skp_silk_tables_other::SKP_SILK_QUANTIZATION_OFFSETS_Q10, skp_s_mul_w_w, skp_s_mla_w_b, skp_utils::{skp_inverse32_var_q, skp_silk_clz32, skp_div32_var_q}};
 #[deny(arithmetic_overflow)]
 
 use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, SKP_Silk_MA::SKP_Silk_MA_Prediction};
@@ -121,169 +121,8 @@ pub struct SKP_Silk_CNG_struct {
     pub rand_seed: libc::c_int,
     pub fs_kHz: libc::c_int,
 }
-#[inline]
-unsafe extern "C" fn SKP_Silk_CLZ16(mut in16: libc::c_short) -> libc::c_int {
-    let mut out32: libc::c_int = 0 as libc::c_int;
-    if in16 as libc::c_int == 0 as libc::c_int {
-        return 16 as libc::c_int;
-    }
-    if in16 as libc::c_int & 0xff00 as libc::c_int != 0 {
-        if in16 as libc::c_int & 0xf000 as libc::c_int != 0 {
-            in16 = (in16 as libc::c_int >> 12 as libc::c_int) as libc::c_short;
-        } else {
-            out32 += 4 as libc::c_int;
-            in16 = (in16 as libc::c_int >> 8 as libc::c_int) as libc::c_short;
-        }
-    } else if in16 as libc::c_int & 0xfff0 as libc::c_int != 0 {
-        out32 += 8 as libc::c_int;
-        in16 = (in16 as libc::c_int >> 4 as libc::c_int) as libc::c_short;
-    } else {
-        out32 += 12 as libc::c_int;
-    }
-    if in16 as libc::c_int & 0xc as libc::c_int != 0 {
-        if in16 as libc::c_int & 0x8 as libc::c_int != 0 {
-            return out32 + 0 as libc::c_int
-        } else {
-            return out32 + 1 as libc::c_int
-        }
-    } else if in16 as libc::c_int & 0xe as libc::c_int != 0 {
-        return out32 + 2 as libc::c_int
-    } else {
-        return out32 + 3 as libc::c_int
-    };
-}
-#[inline]
-unsafe extern "C" fn SKP_Silk_CLZ32(mut in32: libc::c_int) -> libc::c_int {
-    if in32 as libc::c_uint & 0xffff0000 as libc::c_uint != 0 {
-        return SKP_Silk_CLZ16((in32 >> 16 as libc::c_int) as libc::c_short)
-    } else {
-        return SKP_Silk_CLZ16(in32 as libc::c_short) + 16 as libc::c_int
-    };
-}
-#[inline]
-unsafe extern "C" fn SKP_DIV32_varQ(
-    a32: libc::c_int,
-    b32: libc::c_int,
-    Qres: libc::c_int,
-) -> libc::c_int {
-    let mut a_headrm: libc::c_int = 0;
-    let mut b_headrm: libc::c_int = 0;
-    let mut lshift: libc::c_int = 0;
-    let mut b32_inv: libc::c_int = 0;
-    let mut a32_nrm: libc::c_int = 0;
-    let mut b32_nrm: libc::c_int = 0;
-    let mut result: libc::c_int = 0;
-    a_headrm = SKP_Silk_CLZ32(if a32 > 0 as libc::c_int { a32 } else { -a32 })
-        - 1 as libc::c_int;
-    a32_nrm = a32 << a_headrm;
-    b_headrm = SKP_Silk_CLZ32(if b32 > 0 as libc::c_int { b32 } else { -b32 })
-        - 1 as libc::c_int;
-    b32_nrm = b32 << b_headrm;
-    b32_inv = (0x7fffffff as libc::c_int >> 2 as libc::c_int)
-        / (b32_nrm >> 16 as libc::c_int);
-    result = (a32_nrm >> 16 as libc::c_int) * b32_inv as libc::c_short as libc::c_int
-        + ((a32_nrm & 0xffff as libc::c_int) * b32_inv as libc::c_short as libc::c_int
-            >> 16 as libc::c_int);
-    a32_nrm
-        -= (((b32_nrm as int64_t * result as int64_t).wrapping_shr(32) as libc::c_int) as libc::c_int)
-            << 3 as libc::c_int;
-    result = result
-        + ((a32_nrm >> 16 as libc::c_int) * b32_inv as libc::c_short as libc::c_int
-            + ((a32_nrm & 0xffff as libc::c_int)
-                * b32_inv as libc::c_short as libc::c_int >> 16 as libc::c_int));
-    lshift = 29 as libc::c_int + a_headrm - b_headrm - Qres;
-    if lshift <= 0 as libc::c_int {
-        return (if 0x80000000 as libc::c_uint as libc::c_int >> -lshift
-            > 0x7fffffff as libc::c_int >> -lshift
-        {
-            if result > 0x80000000 as libc::c_uint as libc::c_int >> -lshift {
-                0x80000000 as libc::c_uint as libc::c_int >> -lshift
-            } else {
-                if result < 0x7fffffff as libc::c_int >> -lshift {
-                    0x7fffffff as libc::c_int >> -lshift
-                } else {
-                    result
-                }
-            }
-        } else {
-            if result > 0x7fffffff as libc::c_int >> -lshift {
-                0x7fffffff as libc::c_int >> -lshift
-            } else {
-                if result < 0x80000000 as libc::c_uint as libc::c_int >> -lshift {
-                    0x80000000 as libc::c_uint as libc::c_int >> -lshift
-                } else {
-                    result
-                }
-            }
-        }) << -lshift
-    } else if lshift < 32 as libc::c_int {
-        return result >> lshift
-    } else {
-        return 0 as libc::c_int
-    };
-}
-#[inline]
-unsafe extern "C" fn SKP_INVERSE32_varQ(
-    b32: libc::c_int,
-    Qres: libc::c_int,
-) -> libc::c_int {
-    let mut b_headrm: libc::c_int = 0;
-    let mut lshift: libc::c_int = 0;
-    let mut b32_inv: libc::c_int = 0;
-    let mut b32_nrm: libc::c_int = 0;
-    let mut err_Q32: libc::c_int = 0;
-    let mut result: libc::c_int = 0;
-    b_headrm = SKP_Silk_CLZ32(if b32 > 0 as libc::c_int { b32 } else { -b32 })
-        - 1 as libc::c_int;
-    b32_nrm = b32 << b_headrm;
-    b32_inv = (0x7fffffff as libc::c_int >> 2 as libc::c_int)
-        / (b32_nrm >> 16 as libc::c_int);
-    result = b32_inv << 16 as libc::c_int;
-    err_Q32 = -((b32_nrm >> 16 as libc::c_int) * b32_inv as libc::c_short as libc::c_int
-        + ((b32_nrm & 0xffff as libc::c_int) * b32_inv as libc::c_short as libc::c_int
-            >> 16 as libc::c_int)) << 3 as libc::c_int;
-    result = result
-        + ((err_Q32 >> 16 as libc::c_int) * b32_inv as libc::c_short as libc::c_int
-            + ((err_Q32 & 0xffff as libc::c_int)
-                * b32_inv as libc::c_short as libc::c_int >> 16 as libc::c_int))
-        + err_Q32
-            * (if 16 as libc::c_int == 1 as libc::c_int {
-                (b32_inv >> 1 as libc::c_int) + (b32_inv & 1 as libc::c_int)
-            } else {
-                (b32_inv >> 16 as libc::c_int - 1 as libc::c_int) + 1 as libc::c_int
-                    >> 1 as libc::c_int
-            });
-    lshift = 61 as libc::c_int - b_headrm - Qres;
-    if lshift <= 0 as libc::c_int {
-        return (if 0x80000000 as libc::c_uint as libc::c_int >> -lshift
-            > 0x7fffffff as libc::c_int >> -lshift
-        {
-            if result > 0x80000000 as libc::c_uint as libc::c_int >> -lshift {
-                0x80000000 as libc::c_uint as libc::c_int >> -lshift
-            } else {
-                if result < 0x7fffffff as libc::c_int >> -lshift {
-                    0x7fffffff as libc::c_int >> -lshift
-                } else {
-                    result
-                }
-            }
-        } else {
-            if result > 0x7fffffff as libc::c_int >> -lshift {
-                0x7fffffff as libc::c_int >> -lshift
-            } else {
-                if result < 0x80000000 as libc::c_uint as libc::c_int >> -lshift {
-                    0x80000000 as libc::c_uint as libc::c_int >> -lshift
-                } else {
-                    result
-                }
-            }
-        }) << -lshift
-    } else if lshift < 32 as libc::c_int {
-        return result >> lshift
-    } else {
-        return 0 as libc::c_int
-    };
-}
+
+
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_decode_core(
     mut psDec: *mut SKP_Silk_decoder_state,
@@ -359,7 +198,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_core(
             .offset((k * 5 as libc::c_int) as isize) as *mut libc::c_short;
         Gain_Q16 = (*psDecCtrl).Gains_Q16[k as usize];
         sigtype = (*psDecCtrl).sig_type;
-        inv_gain_Q16 = SKP_INVERSE32_varQ(
+        inv_gain_Q16 = skp_inverse32_var_q(
             if Gain_Q16 > 1 as libc::c_int { Gain_Q16 } else { 1 as libc::c_int },
             32 as libc::c_int,
         );
@@ -370,7 +209,7 @@ pub unsafe extern "C" fn SKP_Silk_decode_core(
         };
         gain_adj_Q16 = (1 as libc::c_int) << 16 as libc::c_int;
         if inv_gain_Q16 != (*psDec).prev_inv_gain_Q16 {
-            gain_adj_Q16 = SKP_DIV32_varQ(
+            gain_adj_Q16 = skp_div32_var_q(
                 inv_gain_Q16,
                 (*psDec).prev_inv_gain_Q16,
                 16 as libc::c_int,
