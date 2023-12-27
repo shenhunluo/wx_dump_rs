@@ -86,6 +86,13 @@ macro_rules! skp_s_mul_l {
 }
 
 #[macro_export]
+macro_rules! skp_s_m_mul {
+    ($a32:expr,$b32:expr) => {{
+        crate::skp_r_shift!(crate::skp_s_mul_l!($a32, $b32),32) as i32
+    }}
+}
+
+#[macro_export]
 macro_rules! skp_s_mul_b_b {
     ($a32:expr,$b32:expr) => {{
         ($a32 as i16 as i32) * ($b32 as i16 as i32)

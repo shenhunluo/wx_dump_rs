@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{skp_s_mul_w_b, skp_s_mla_w_w, skp_r_shift_sat_32};
+use crate::{skp_s_mul_w_b, skp_s_mla_w_w, skp_r_shift_sat_32, skp_s_m_mul, skp_l_shift};
 pub type __int64_t = libc::c_longlong;
 pub type int64_t = __int64_t;
 
@@ -62,79 +62,45 @@ fn SKP_INVERSE32_varQ(
         0
     }
 }
-unsafe extern "C" fn LPC_inverse_pred_gain_QA(
-    mut invGain_Q30: *mut libc::c_int,
-    mut A_QA: *mut [libc::c_int; 16],
-    order: libc::c_int,
-) -> libc::c_int {
-    let mut k: libc::c_int = 0;
-    let mut n: libc::c_int = 0;
-    let mut headrm: libc::c_int = 0;
-    let mut rc_Q31: libc::c_int = 0;
-    let mut rc_mult1_Q30: libc::c_int = 0;
-    let mut rc_mult2_Q16: libc::c_int = 0;
-    let mut tmp_QA: libc::c_int = 0;
-    let mut Aold_QA: *mut libc::c_int = 0 as *mut libc::c_int;
-    let mut Anew_QA: *mut libc::c_int = 0 as *mut libc::c_int;
-    Anew_QA = (*A_QA.offset((order & 1 as libc::c_int) as isize)).as_mut_ptr();
-    *invGain_Q30 = (1 as libc::c_int) << 30 as libc::c_int;
-    k = order - 1 as libc::c_int;
-    while k > 0 as libc::c_int {
-        if *Anew_QA.offset(k as isize)
-            > (0.99975f64
-                * ((1 as libc::c_int as int64_t) << 16 as libc::c_int) as libc::c_double
-                + 0.5f64) as libc::c_int
-            || *Anew_QA.offset(k as isize)
-                < -((0.99975f64
-                    * ((1 as libc::c_int as int64_t) << 16 as libc::c_int)
-                        as libc::c_double + 0.5f64) as libc::c_int)
+fn LPC_inverse_pred_gain_QA(
+    mut inv_gain_q30: &mut i32,
+    mut a_qa: &mut [[i32; 16]],
+    order: usize,
+) -> i32 {
+    let mut a_new_qa_index = order & 1;
+    *inv_gain_q30 = 1 << 30;
+    let mut rc_q31 = 0;
+    let mut rc_mul_t1_q30 = 0;
+    for k in (1..order).rev() {
+        if  a_qa[a_new_qa_index][k] > (0.99975f64 * (1i64 << 16) as f64 + 0.5f64) as i32 ||
+            a_qa[a_new_qa_index][k] < -((0.99975f64 * (1i64 << 16) as f64 + 0.5f64) as i32)
         {
-            return 1 as libc::c_int;
+            return 1;
         }
-        rc_Q31 = -(*Anew_QA.offset(k as isize) << 31 as libc::c_int - 16 as libc::c_int);
-        rc_mult1_Q30 = (0x7fffffff as libc::c_int >> 1 as libc::c_int)
-            - ((rc_Q31 as int64_t * rc_Q31 as int64_t).wrapping_shr(32) as libc::c_int)
-                as libc::c_int;
-        rc_mult2_Q16 = SKP_INVERSE32_varQ(rc_mult1_Q30, 46 as libc::c_int);
-        *invGain_Q30 = (((*invGain_Q30 as int64_t * rc_mult1_Q30 as int64_t).wrapping_shr(32) as libc::c_int) as libc::c_int) << 2 as libc::c_int;
-        Aold_QA = Anew_QA;
-        Anew_QA = (*A_QA.offset((k & 1 as libc::c_int) as isize)).as_mut_ptr();
-        headrm = SKP_Silk_CLZ32(rc_mult2_Q16) - 1 as libc::c_int;
-        rc_mult2_Q16 = rc_mult2_Q16 << headrm;
-        n = 0 as libc::c_int;
-        while n < k {
-            tmp_QA = *Aold_QA.offset(n as isize)
-                - ((((*Aold_QA.offset((k - n - 1 as libc::c_int) as isize) as int64_t
-                    * rc_Q31 as int64_t).wrapping_shr(32) as libc::c_int) as libc::c_int)
-                    << 1 as libc::c_int);
-            *Anew_QA
-                .offset(
-                    n as isize,
-                ) = (((tmp_QA as int64_t * rc_mult2_Q16 as int64_t).wrapping_shr(32) as libc::c_int)
-                as libc::c_int) << 16 as libc::c_int - headrm;
-            n += 1;
+        rc_q31 = -(a_qa[a_new_qa_index][k] << 31 - 16);
+        rc_mul_t1_q30 = (i32::MAX >> 1) - skp_s_m_mul!(rc_q31,rc_q31);
+        let mut rc_mul_t2_q16 = SKP_INVERSE32_varQ(rc_mul_t1_q30, 46);
+        *inv_gain_q30 = skp_l_shift!( skp_s_m_mul!( *inv_gain_q30, rc_mul_t1_q30 ), 2 );
+        let a_old_qa_index = a_new_qa_index;
+        a_new_qa_index = k & 1;
+        let head_rm = SKP_Silk_CLZ32(rc_mul_t2_q16) - 1;
+        rc_mul_t2_q16 = rc_mul_t2_q16 << head_rm;
+        for n in 0..k {
+            let tmp_qa = a_qa[a_old_qa_index][n] - skp_l_shift!( skp_s_m_mul!( a_qa[a_old_qa_index][k - n - 1], rc_q31 ), 1 );
+            a_qa[a_new_qa_index][n] = skp_l_shift!( skp_s_m_mul!( tmp_qa, rc_mul_t2_q16 ), 16 - head_rm );
         }
-        k -= 1;
     }
-    if *Anew_QA.offset(0 as libc::c_int as isize)
-        > (0.99975f64
-            * ((1 as libc::c_int as int64_t) << 16 as libc::c_int) as libc::c_double
-            + 0.5f64) as libc::c_int
-        || *Anew_QA.offset(0 as libc::c_int as isize)
-            < -((0.99975f64
-                * ((1 as libc::c_int as int64_t) << 16 as libc::c_int) as libc::c_double
-                + 0.5f64) as libc::c_int)
+    if  a_qa[a_new_qa_index][0] > (0.99975f64 * (1i64 << 16) as f64 + 0.5f64) as i32 || 
+        a_qa[a_new_qa_index][0] < -((0.99975f64 * (1i64 << 16) as f64 + 0.5f64) as i32)
     {
-        return 1 as libc::c_int;
+        return 1;
     }
-    rc_Q31 = -(*Anew_QA.offset(0 as libc::c_int as isize)
-        << 31 as libc::c_int - 16 as libc::c_int);
-    rc_mult1_Q30 = (0x7fffffff as libc::c_int >> 1 as libc::c_int)
-        - ((rc_Q31 as int64_t * rc_Q31 as int64_t).wrapping_shr(32) as libc::c_int) as libc::c_int;
-    *invGain_Q30 = (((*invGain_Q30 as int64_t * rc_mult1_Q30 as int64_t).wrapping_shr(32)
-        as libc::c_int) as libc::c_int) << 2 as libc::c_int;
-    return 0 as libc::c_int;
+    rc_q31 = -(a_qa[a_new_qa_index][0] << 31 - 16);
+    rc_mul_t1_q30 = ( i32::MAX >> 1 ) - skp_s_m_mul!( rc_q31, rc_q31 );
+    *inv_gain_q30 = skp_l_shift!( skp_s_m_mul!( *inv_gain_q30, rc_mul_t1_q30 ), 2 );
+    return 0;
 }
+
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_LPC_inverse_pred_gain(
     invGain_Q30: &mut i32,
@@ -144,21 +110,18 @@ pub unsafe extern "C" fn SKP_Silk_LPC_inverse_pred_gain(
     let mut k: libc::c_int = 0;
     let mut Atmp_QA: [[libc::c_int; 16]; 2] = [[0; 16]; 2];
     let mut Anew_QA: *mut libc::c_int = 0 as *mut libc::c_int;
-    Anew_QA = (Atmp_QA[(order & 1 as libc::c_int) as usize]).as_mut_ptr();
+    let Anew_QA = &mut Atmp_QA[(order & 1 as libc::c_int) as usize];
     k = 0 as libc::c_int;
     while k < order {
-        *Anew_QA
-            .offset(
-                k as isize,
-            ) = (A_Q12[k as usize] as libc::c_int)
+        Anew_QA[k as usize] = (A_Q12[k as usize] as libc::c_int)
             << 16 as libc::c_int - 12 as libc::c_int;
         k += 1;
     }
-    return LPC_inverse_pred_gain_QA(invGain_Q30, Atmp_QA.as_mut_ptr(), order);
+    return LPC_inverse_pred_gain_QA(invGain_Q30, &mut Atmp_QA, order as usize);
 }
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_LPC_inverse_pred_gain_Q24(
-    mut invGain_Q30: *mut libc::c_int,
+    mut invGain_Q30: &mut libc::c_int,
     mut A_Q24: *const libc::c_int,
     order: libc::c_int,
 ) -> libc::c_int {
@@ -181,5 +144,5 @@ pub unsafe extern "C" fn SKP_Silk_LPC_inverse_pred_gain_Q24(
         };
         k += 1;
     }
-    return LPC_inverse_pred_gain_QA(invGain_Q30, Atmp_QA.as_mut_ptr(), order);
+    return LPC_inverse_pred_gain_QA(invGain_Q30, &mut Atmp_QA, order as usize);
 }
