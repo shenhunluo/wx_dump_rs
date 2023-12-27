@@ -33,14 +33,14 @@ fn SKP_Silk_CLZ16(mut in16: i16) -> i32 {
     }
 }
 
-#[inline]
-unsafe extern "C" fn SKP_Silk_CLZ32(mut in32: libc::c_int) -> libc::c_int {
-    if in32 as libc::c_uint & 0xffff0000 as libc::c_uint != 0 {
-        return SKP_Silk_CLZ16((in32 >> 16 as libc::c_int) as libc::c_short)
+fn SKP_Silk_CLZ32(mut in32: i32) -> i32 {
+    if in32 as u32 & 0xffff0000 != 0 {
+        SKP_Silk_CLZ16((in32 >> 16) as i16)
     } else {
-        return SKP_Silk_CLZ16(in32 as libc::c_short) + 16 as libc::c_int
-    };
+        SKP_Silk_CLZ16(in32 as i16) + 16 as i32
+    }
 }
+
 #[inline]
 unsafe extern "C" fn SKP_INVERSE32_varQ(
     b32: libc::c_int,
