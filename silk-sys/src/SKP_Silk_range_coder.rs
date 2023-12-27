@@ -135,7 +135,7 @@ pub unsafe fn SKP_Silk_range_encoder_multi(
         SKP_Silk_range_encoder(psRC, *data.offset(k as isize), &prob[k]);
     }
 }
-#[no_mangle]
+
 pub fn SKP_Silk_range_decoder(
     psRC: &mut SKP_Silk_range_coder_state,
     prob: &[u16],
