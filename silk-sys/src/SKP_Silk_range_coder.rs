@@ -224,23 +224,20 @@ pub fn SKP_Silk_range_decoder(
     psRC.bufferIx = bufferIx;
     probIx
 }
-#[no_mangle]
-pub unsafe fn SKP_Silk_range_decoder_multi(
-    mut data: *mut libc::c_int,
-    mut psRC: &mut SKP_Silk_range_coder_state,
-    mut prob: &[&[u16]],
-    mut probStartIx: &[i32],
-    nSymbols: libc::c_int,
+
+pub fn skp_silk_range_decoder_multi(
+    data: &mut [i32],
+    ps_r_c: &mut SKP_Silk_range_coder_state,
+    prob: &[&[u16]],
+    prob_start_ix: &[i32],
+    n_symbols: usize,
 ) {
-    let mut k: libc::c_int = 0;
-    k = 0 as libc::c_int;
-    while k < nSymbols {
-        *data.offset(k as isize) = SKP_Silk_range_decoder(
-            psRC,
-            &prob[k as usize],
-            probStartIx[k as usize],
+    for k in 0..n_symbols {
+        data[k] = SKP_Silk_range_decoder(
+            ps_r_c,
+            &prob[k],
+            prob_start_ix[k],
         );
-        k += 1;
     }
 }
 #[no_mangle]
