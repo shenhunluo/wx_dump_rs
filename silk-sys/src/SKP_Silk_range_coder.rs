@@ -1,5 +1,7 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
+use crate::skp_utils::skp_silk_clz32;
+
 #[derive(Copy, Clone)]
 pub struct SKP_Silk_range_coder_state {
     pub bufferLength: libc::c_int,
@@ -23,45 +25,7 @@ extern "C" {
         _: libc::c_ulong,
     ) -> *mut libc::c_void;
 }
-#[inline]
-unsafe extern "C" fn SKP_Silk_CLZ16(mut in16: libc::c_short) -> libc::c_int {
-    let mut out32: libc::c_int = 0 as libc::c_int;
-    if in16 as libc::c_int == 0 as libc::c_int {
-        return 16 as libc::c_int;
-    }
-    if in16 as libc::c_int & 0xff00 as libc::c_int != 0 {
-        if in16 as libc::c_int & 0xf000 as libc::c_int != 0 {
-            in16 = (in16 as libc::c_int >> 12 as libc::c_int) as libc::c_short;
-        } else {
-            out32 += 4 as libc::c_int;
-            in16 = (in16 as libc::c_int >> 8 as libc::c_int) as libc::c_short;
-        }
-    } else if in16 as libc::c_int & 0xfff0 as libc::c_int != 0 {
-        out32 += 8 as libc::c_int;
-        in16 = (in16 as libc::c_int >> 4 as libc::c_int) as libc::c_short;
-    } else {
-        out32 += 12 as libc::c_int;
-    }
-    if in16 as libc::c_int & 0xc as libc::c_int != 0 {
-        if in16 as libc::c_int & 0x8 as libc::c_int != 0 {
-            return out32 + 0 as libc::c_int
-        } else {
-            return out32 + 1 as libc::c_int
-        }
-    } else if in16 as libc::c_int & 0xe as libc::c_int != 0 {
-        return out32 + 2 as libc::c_int
-    } else {
-        return out32 + 3 as libc::c_int
-    };
-}
-#[inline]
-unsafe extern "C" fn SKP_Silk_CLZ32(mut in32: libc::c_int) -> libc::c_int {
-    if in32 as libc::c_uint & 0xffff0000 as libc::c_uint != 0 {
-        return SKP_Silk_CLZ16((in32 >> 16 as libc::c_int) as libc::c_short)
-    } else {
-        return SKP_Silk_CLZ16(in32 as libc::c_short) + 16 as libc::c_int
-    };
-}
+
 #[no_mangle]
 pub fn SKP_Silk_range_encoder(
     mut psRC: &mut SKP_Silk_range_coder_state,
@@ -274,23 +238,20 @@ pub fn SKP_Silk_range_dec_init(
     psRC.error = 0;
 }
 
-#[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_range_coder_get_length(
-    mut psRC: *const SKP_Silk_range_coder_state,
-    mut nBytes: *mut libc::c_int,
-) -> libc::c_int {
-    let mut nBits: libc::c_int = 0;
-    nBits = ((*psRC).bufferIx << 3 as libc::c_int)
-        + SKP_Silk_CLZ32(
-            ((*psRC).range_Q16).wrapping_sub(1 as libc::c_int as libc::c_uint)
-                as libc::c_int,
-        ) - 14 as libc::c_int;
-    *nBytes = nBits + 7 as libc::c_int >> 3 as libc::c_int;
-    return nBits;
+pub fn skp_silk_range_coder_get_length(
+    ps_r_c: &SKP_Silk_range_coder_state,
+    n_bytes: &mut i32,
+) -> i32 {
+    let mut n_bits = 0;
+    n_bits = (ps_r_c.bufferIx << 3) + skp_silk_clz32(
+        ps_r_c.range_Q16.wrapping_sub(1) as i32,
+        ) - 14;
+    *n_bytes = n_bits + 7 >> 3;
+    return n_bits;
 }
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_range_enc_wrap_up(
-    mut psRC: *mut SKP_Silk_range_coder_state,
+    mut psRC: &mut SKP_Silk_range_coder_state,
 ) {
     let mut bufferIx_tmp: libc::c_int = 0;
     let mut bits_to_store: libc::c_int = 0;
@@ -299,7 +260,7 @@ pub unsafe extern "C" fn SKP_Silk_range_enc_wrap_up(
     let mut mask: libc::c_int = 0;
     let mut base_Q24: libc::c_uint = 0;
     base_Q24 = (*psRC).base_Q32 >> 8 as libc::c_int;
-    bits_in_stream = SKP_Silk_range_coder_get_length(psRC, &mut nBytes);
+    bits_in_stream = skp_silk_range_coder_get_length(psRC, &mut nBytes);
     bits_to_store = bits_in_stream - ((*psRC).bufferIx << 3 as libc::c_int);
     base_Q24 = base_Q24
         .wrapping_add(
@@ -347,12 +308,12 @@ pub unsafe extern "C" fn SKP_Silk_range_enc_wrap_up(
 }
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_range_coder_check_after_decoding(
-    mut psRC: *mut SKP_Silk_range_coder_state,
+    mut psRC: &mut SKP_Silk_range_coder_state,
 ) {
     let mut bits_in_stream: libc::c_int = 0;
     let mut nBytes: libc::c_int = 0;
     let mut mask: libc::c_int = 0;
-    bits_in_stream = SKP_Silk_range_coder_get_length(psRC, &mut nBytes);
+    bits_in_stream = skp_silk_range_coder_get_length(psRC, &mut nBytes);
     if nBytes - 1 as libc::c_int >= (*psRC).bufferLength {
         (*psRC).error = -(5 as libc::c_int);
         return;

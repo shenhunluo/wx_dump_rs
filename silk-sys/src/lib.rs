@@ -55,8 +55,10 @@ pub mod skp_silk_tables_sign;
 pub mod skp_silk_lsf_cos_table;
 
 pub mod skp_silk_macro;
+pub mod skp_utils;
 
 pub mod error;
+mod SKP_Silk_LPC_inv_pred_gain;
 
 use bytes::Buf;
 

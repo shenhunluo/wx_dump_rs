@@ -1,5 +1,5 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
-use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, skp_silk_nlsf_msvq_decode::{skp_silk_nlsf_msvq_decode, SkpSilkNlsfCbStruct}, skp_silk_bwexpander::skp_silk_bwexpander, skp_silk_decode_pitch::skp_silk_decode_pitch, SKP_Silk_range_coder::{SKP_Silk_range_decoder, skp_silk_range_decoder_multi, SKP_Silk_range_coder_get_length, SKP_Silk_range_coder_check_after_decoding}, SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs, SKP_Silk_gain_quant::skp_silk_gains_dequant, skp_silk_nlsf2a_stable::skp_silk_nlsf2a_stable, skp_silk_decode_pulses::skp_silk_decode_pulses, skp_silk_tables_other::{SKP_SILK_SAMPLING_RATES_CDF, SKP_SILK_SAMPLING_RATES_OFFSET, SKP_SILK_SAMPLING_RATES_TABLE, SKP_SILK_NLSF_INTERPOLATION_FACTOR_CDF, SKP_SILK_NLSF_INTERPOLATION_FACTOR_OFFSET, SKP_SILK_LTP_SCALE_CDF, SKP_SILK_LTP_SCALE_OFFSET, SKP_SILK_LTP_SCALES_TABLE_Q14, SKP_SILK_SEED_CDF, SKP_SILK_SEED_OFFSET, SKP_SILK_VAD_FLAG_CDF, SKP_SILK_VAD_FLAG_OFFSET, SKP_SILK_FRAME_TERMINATION_CDF, SKP_SILK_FRAME_TERMINATION_OFFSET}, skp_silk_tables_type_offset::{SKP_SILK_TYPE_OFFSET_CDF, SKP_SILK_TYPE_OFFSET_CDF_OFFSET, SKP_SILK_TYPE_OFFSET_JOINT_CDF}, skp_silk_tables_gain::{SKP_SILK_GAIN_CDF, SKP_SILK_GAIN_CDF_OFFSET, SKP_SILK_DELTA_GAIN_CDF, SKP_SILK_DELTA_GAIN_CDF_OFFSET}, skp_silk_tables_pitch_lag::{SKP_SILK_PITCH_LAG_NB_CDF, SKP_SILK_PITCH_LAG_NB_CDF_OFFSET, SKP_SILK_PITCH_LAG_MB_CDF, SKP_SILK_PITCH_LAG_MB_CDF_OFFSET, SKP_SILK_PITCH_LAG_WB_CDF, SKP_SILK_PITCH_LAG_WB_CDF_OFFSET, SKP_SILK_PITCH_LAG_SWB_CDF, SKP_SILK_PITCH_LAG_SWB_CDF_OFFSET, SKP_SILK_PITCH_CONTOUR_NB_CDF, SKP_SILK_PITCH_CONTOUR_NB_CDF_OFFSET, SKP_SILK_PITCH_CONTOUR_CDF, SKP_SILK_PITCH_CONTOUR_CDF_OFFSET}, SKP_Silk_tables_LTP::{SKP_Silk_LTP_per_index_CDF, SKP_Silk_LTP_per_index_CDF_offset, SKP_Silk_LTP_vq_ptrs_Q14, SKP_Silk_LTP_gain_CDF_ptrs, SKP_Silk_LTP_gain_CDF_offsets}};
+use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, skp_silk_nlsf_msvq_decode::{skp_silk_nlsf_msvq_decode, SkpSilkNlsfCbStruct}, skp_silk_bwexpander::skp_silk_bwexpander, skp_silk_decode_pitch::skp_silk_decode_pitch, SKP_Silk_range_coder::{SKP_Silk_range_decoder, skp_silk_range_decoder_multi, skp_silk_range_coder_get_length, SKP_Silk_range_coder_check_after_decoding}, SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs, SKP_Silk_gain_quant::skp_silk_gains_dequant, skp_silk_nlsf2a_stable::skp_silk_nlsf2a_stable, skp_silk_decode_pulses::skp_silk_decode_pulses, skp_silk_tables_other::{SKP_SILK_SAMPLING_RATES_CDF, SKP_SILK_SAMPLING_RATES_OFFSET, SKP_SILK_SAMPLING_RATES_TABLE, SKP_SILK_NLSF_INTERPOLATION_FACTOR_CDF, SKP_SILK_NLSF_INTERPOLATION_FACTOR_OFFSET, SKP_SILK_LTP_SCALE_CDF, SKP_SILK_LTP_SCALE_OFFSET, SKP_SILK_LTP_SCALES_TABLE_Q14, SKP_SILK_SEED_CDF, SKP_SILK_SEED_OFFSET, SKP_SILK_VAD_FLAG_CDF, SKP_SILK_VAD_FLAG_OFFSET, SKP_SILK_FRAME_TERMINATION_CDF, SKP_SILK_FRAME_TERMINATION_OFFSET}, skp_silk_tables_type_offset::{SKP_SILK_TYPE_OFFSET_CDF, SKP_SILK_TYPE_OFFSET_CDF_OFFSET, SKP_SILK_TYPE_OFFSET_JOINT_CDF}, skp_silk_tables_gain::{SKP_SILK_GAIN_CDF, SKP_SILK_GAIN_CDF_OFFSET, SKP_SILK_DELTA_GAIN_CDF, SKP_SILK_DELTA_GAIN_CDF_OFFSET}, skp_silk_tables_pitch_lag::{SKP_SILK_PITCH_LAG_NB_CDF, SKP_SILK_PITCH_LAG_NB_CDF_OFFSET, SKP_SILK_PITCH_LAG_MB_CDF, SKP_SILK_PITCH_LAG_MB_CDF_OFFSET, SKP_SILK_PITCH_LAG_WB_CDF, SKP_SILK_PITCH_LAG_WB_CDF_OFFSET, SKP_SILK_PITCH_LAG_SWB_CDF, SKP_SILK_PITCH_LAG_SWB_CDF_OFFSET, SKP_SILK_PITCH_CONTOUR_NB_CDF, SKP_SILK_PITCH_CONTOUR_NB_CDF_OFFSET, SKP_SILK_PITCH_CONTOUR_CDF, SKP_SILK_PITCH_CONTOUR_CDF_OFFSET}, SKP_Silk_tables_LTP::{SKP_Silk_LTP_per_index_CDF, SKP_Silk_LTP_per_index_CDF_offset, SKP_Silk_LTP_vq_ptrs_Q14, SKP_Silk_LTP_gain_CDF_ptrs, SKP_Silk_LTP_gain_CDF_offsets}};
 extern "C" {
     fn memset(
         _: *mut libc::c_void,
@@ -287,8 +287,8 @@ pub unsafe fn SKP_Silk_decode_parameters(
             );
         }
         skp_silk_decode_pitch(
-            Ixs[0 as libc::c_int as usize] as usize,
-            Ixs[1 as libc::c_int as usize] as usize,
+            Ixs[0] as usize,
+            Ixs[1] as usize,
             &mut psDecCtrl.pitchL,
             psDec.fs_kHz,
         );
@@ -355,7 +355,7 @@ pub unsafe fn SKP_Silk_decode_parameters(
         &SKP_SILK_FRAME_TERMINATION_CDF,
         SKP_SILK_FRAME_TERMINATION_OFFSET,
     );
-    SKP_Silk_range_coder_get_length(psRC, &mut nBytesUsed);
+    skp_silk_range_coder_get_length(psRC, &mut nBytesUsed);
     (*psDec).nBytesLeft = (*psRC).bufferLength - nBytesUsed;
     if (*psDec).nBytesLeft < 0 as libc::c_int {
         (*psRC).error = -(6 as libc::c_int);

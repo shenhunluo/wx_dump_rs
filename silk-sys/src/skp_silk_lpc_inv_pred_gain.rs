@@ -1,45 +1,6 @@
 use crate::{
-    skp_l_shift, skp_r_shift_round, skp_r_shift_sat_32, skp_s_m_mul, skp_s_mla_w_w, skp_s_mul_w_b,
+    skp_l_shift, skp_r_shift_round, skp_r_shift_sat_32, skp_s_m_mul, skp_s_mla_w_w, skp_s_mul_w_b, skp_utils::skp_silk_clz32,
 };
-
-fn skp_silk_clz16(mut in16: i16) -> i32 {
-    let mut out32 = 0;
-    if in16 == 0 {
-        return 16;
-    }
-    if in16 as i32 & 0xff00 != 0 {
-        if in16 as i32 & 0xf000 != 0 {
-            in16 = in16 >> 12;
-        } else {
-            out32 += 4;
-            in16 = in16 >> 8;
-        }
-    } else if in16 as i32 & 0xfff0 != 0 {
-        out32 += 8;
-        in16 = in16 >> 4;
-    } else {
-        out32 += 12;
-    }
-    if in16 & 0xc != 0 {
-        if in16 & 0x8 != 0 {
-            out32 + 0
-        } else {
-            out32 + 1
-        }
-    } else if in16 & 0xe != 0 {
-        out32 + 2
-    } else {
-        out32 + 3
-    }
-}
-
-fn skp_silk_clz32(in32: i32) -> i32 {
-    if in32 as u32 & 0xffff0000 != 0 {
-        skp_silk_clz16((in32 >> 16) as i16)
-    } else {
-        skp_silk_clz16(in32 as i16) + 16 as i32
-    }
-}
 
 fn skp_inverse32_var_q(b32: i32, q_res: i32) -> i32 {
     let b_head_rm = skp_silk_clz32(b32.abs()) - 1;
