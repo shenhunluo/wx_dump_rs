@@ -27,6 +27,13 @@ macro_rules! skp_add_r_shift {
 }
 
 #[macro_export]
+macro_rules! skp_add32_ovflw {
+    ($a:expr,$b:expr) => {{
+        (($a as u32).wrapping_add($b as u32)) as i32
+    }}
+}
+
+#[macro_export]
 macro_rules! skp_r_shift_32 {
     ($a:expr,$shift:expr) => {{
         $a >> $shift
@@ -125,7 +132,19 @@ macro_rules! skp_mla {
 }
 
 #[macro_export]
+macro_rules! skp_mla_ovflw {
+    ($a32:expr,$b32:expr,$c32:expr) => {{
+        crate::skp_add32_ovflw!($a32,($b32 as u32).wrapping_mul($c32 as u32))
+    }}
+}
+
+
+
+#[macro_export]
 macro_rules! skp_s_mla_w_b {
+    ($a32:expr,$b32:expr) => {{
+        (($a32 >> 16) * ($b32 as i16 as i32)) + ((($a32 & 0x0000FFFF) * ($b32 as i16 as i32)) >> 16)
+    }};
     ($a32:expr,$b32:expr,$c32:expr) => {{
         ($a32 + ((($b32 >> 16) * ($c32 as i16 as i32)) + ((($b32 & 0x0000FFFF) * ($c32 as i16 as i32)) >> 16)))
     }}
@@ -179,5 +198,12 @@ macro_rules! skp_l_shift_sat_32 {
 macro_rules! i16_to_i32 {
     ($a:expr,$b:expr) => {{
         ($a as i32 & 0xffff) | (($b as i32) << 16)
+    }}
+}
+
+#[macro_export]
+macro_rules! skp_rand {
+    ($seed:expr) => {{
+        crate::skp_mla_ovflw!(907633515,$seed,196314165)
     }}
 }

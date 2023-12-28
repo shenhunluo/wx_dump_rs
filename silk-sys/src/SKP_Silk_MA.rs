@@ -1,55 +1,40 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 #[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_MA_Prediction(
-    mut in_0: *const libc::c_short,
-    mut B: *const libc::c_short,
-    mut S: *mut libc::c_int,
-    mut out: *mut libc::c_short,
-    len: libc::c_int,
-    order: libc::c_int,
+pub fn SKP_Silk_MA_Prediction(
+    in_0: &[i16],
+    mut B: &[i16],
+    mut S: &mut [i32],
+    mut out: &mut [i16],
+    len: usize,
+    order: usize,
 ) {
-    let mut k: libc::c_int = 0;
-    let mut d: libc::c_int = 0;
     let mut in16: libc::c_int = 0;
     let mut out32: libc::c_int = 0;
-    k = 0 as libc::c_int;
-    while k < len {
-        in16 = *in_0.offset(k as isize) as libc::c_int;
-        out32 = (in16 << 12 as libc::c_int) - *S.offset(0 as libc::c_int as isize);
+    for k in 0..len {
+        in16 = in_0[k] as libc::c_int;
+        out32 = (in16 << 12 as libc::c_int) - S[0];
         out32 = if 12 as libc::c_int == 1 as libc::c_int {
             (out32 >> 1 as libc::c_int) + (out32 & 1 as libc::c_int)
         } else {
             (out32 >> 12 as libc::c_int - 1 as libc::c_int) + 1 as libc::c_int
                 >> 1 as libc::c_int
         };
-        d = 0 as libc::c_int;
-        while d < order - 1 as libc::c_int {
-            *S
-                .offset(
-                    d as isize,
-                ) = (*S.offset((d + 1 as libc::c_int) as isize) as libc::c_uint)
+        for d in 0..order - 1 {
+            S[d] = (S[d+1] as libc::c_uint)
                 .wrapping_add(
                     (in16 as libc::c_short as libc::c_int
-                        * *B.offset(d as isize) as libc::c_int) as libc::c_uint,
+                        * B[d] as libc::c_int) as libc::c_uint,
                 ) as libc::c_int;
-            d += 1;
         }
-        *S
-            .offset(
-                (order - 1 as libc::c_int) as isize,
-            ) = in16 as libc::c_short as libc::c_int
-            * *B.offset((order - 1 as libc::c_int) as isize) as libc::c_int;
-        *out
-            .offset(
-                k as isize,
-            ) = (if out32 > 0x7fff as libc::c_int {
+        S[order - 1] = in16 as libc::c_short as libc::c_int
+            * B[order - 1] as libc::c_int;
+        out[k] = (if out32 > 0x7fff as libc::c_int {
             0x7fff as libc::c_int
         } else if out32 < 0x8000 as libc::c_int as libc::c_short as libc::c_int {
             0x8000 as libc::c_int as libc::c_short as libc::c_int
         } else {
             out32
         }) as libc::c_short;
-        k += 1;
     }
 }
 #[no_mangle]

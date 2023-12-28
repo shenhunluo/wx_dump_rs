@@ -21,6 +21,7 @@
         "NLSF",
         "numberofbytesread",
         "OPENFILENAMEA",
+        "ovflw",
         "PCSTR",
         "PICKFOLDERS",
         "PROCESSENTRY",

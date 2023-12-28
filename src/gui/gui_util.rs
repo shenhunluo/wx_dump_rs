@@ -134,7 +134,7 @@ impl PrintInfoText {
 }
 
 
-pub fn play_audio(data: &[u8]) -> Result<Stream,anyhow::Error> {
+pub fn play_audio(data: &[i16]) -> Result<Stream,anyhow::Error> {
     let host = cpal::default_host();
     let device = host.default_output_device().ok_or(anyhow::anyhow!("未找到音频设备"))?;
     let mut configs = device.supported_output_configs()?;
@@ -142,15 +142,9 @@ pub fn play_audio(data: &[u8]) -> Result<Stream,anyhow::Error> {
     let sample_format = supported_config.sample_format();
     let config: StreamConfig = supported_config.into();
     let c = config.sample_rate.0 as f64 / 24000.0;
-    let mut src = vec![];
-    let mut cursor = Cursor::new(data);
-    for _ in 0..data.len() / 2 {
-        let d = cursor.read_i16::<LittleEndian>().unwrap();
-        src.push(d);
-    }
-    let mut output = vec![0i16;(src.len() as f64 * c) as usize];
+    let mut output = vec![0i16;(data.len() as f64 * c) as usize];
     for i in 0..output.len() {
-        output[i] = src[(i as f64 / c) as usize];
+        output[i] = data[(i as f64 / c) as usize];
     }
     let mut index = 0;
     let channels = config.channels as usize;

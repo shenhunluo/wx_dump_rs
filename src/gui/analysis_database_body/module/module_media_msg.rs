@@ -12,7 +12,7 @@ pub struct Media {
     pub reserved2: Option<String>,
 }
 
-pub fn get_audio_pcm(id: i64, conn: &mut SqliteConnection) -> Result<Vec<u8>, anyhow::Error> {
+pub fn get_audio_pcm(id: i64, conn: &mut SqliteConnection) -> Result<Vec<i16>, anyhow::Error> {
 
     let m:Vec<Media> = schema_media_msg::Media::table.select(schema_media_msg::Media::all_columns)
         .filter(schema_media_msg::Media::Reserved0.eq(id))

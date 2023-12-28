@@ -16,7 +16,6 @@ pub mod SKP_Silk_decoder_set_fs;
 pub mod SKP_Silk_CNG;
 pub mod SKP_Silk_PLC;
 pub mod SKP_Silk_biquad;
-pub mod SKP_Silk_decode_core;
 pub mod skp_silk_decode_pitch;
 pub mod SKP_Silk_gain_quant;
 pub mod SKP_Silk_LPC_synthesis_order16;
@@ -29,6 +28,7 @@ pub mod SKP_Silk_code_signs;
 
 pub mod SKP_Silk_tables_LTP;
 
+pub mod skp_silk_decode_core;
 pub mod skp_silk_decode_parameters;
 pub mod skp_silk_nlsf2a_stable;
 pub mod skp_silk_lpc_inv_pred_gain;
@@ -63,11 +63,11 @@ use bytes::Buf;
 
 use crate::{error::SilkError, SKP_Silk_dec_API::{SKP_SILK_SDK_DecControlStruct, SKP_Silk_SDK_Decode, SKP_Silk_decoder_state}};
 
-pub fn decode_silk(src: impl AsRef<[u8]>, sample_rate: i32) -> Result<Vec<u8>, SilkError> {
+pub fn decode_silk(src: impl AsRef<[u8]>, sample_rate: i32) -> Result<Vec<i16>, SilkError> {
     unsafe { _decode_silk(src.as_ref(), sample_rate) }
 }
 
-unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<u8>, SilkError> {
+unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, SilkError> {
     // skip tencent flag
     if src.starts_with(b"\x02") {
         src.advance(1);
@@ -91,7 +91,7 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<u8>, Silk
     let mut decoder = SKP_Silk_decoder_state::default();
     let mut result = vec![];
     let frame_size = sample_rate as usize / 1000 * 40;
-    let mut buf = vec![0u8; frame_size];
+    let mut buf = vec![0i16; frame_size];
     loop {
         if src.remaining() < 2 {
             break;
@@ -114,14 +114,14 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<u8>, Silk
             0,
             input,
             input_size as i32,
-            buf.as_mut_ptr() as *mut i16,
+            &mut buf,
             &mut output_size,
         );
         if r != 0 {
             return Err(r.into());
         }
 
-        result.extend_from_slice(&buf[0..output_size as usize * 2])
+        result.extend_from_slice(&buf[0..output_size as usize])
     }
     Ok(result)
 }

@@ -128,19 +128,13 @@ pub unsafe fn SKP_Silk_SDK_Decode(
     mut lostFlag: i32,
     inData: &[u8],
     nBytesIn: libc::c_int,
-    mut samplesOut: *mut libc::c_short,
+    mut samplesOut: &mut [i16],
     mut nSamplesOut: *mut libc::c_short,
 ) -> libc::c_int {
     let mut ret = 0;
     let mut used_bytes = 0;
     let mut prev_fs_kHz = 0;
-    let mut samplesOutInternal = [0; 960];
-    let mut pSamplesOutInternal: *mut libc::c_short = 0 as *mut libc::c_short;
-    let psDec = decState;
-    pSamplesOutInternal = samplesOut;
-    if (*psDec).fs_kHz * 1000 as libc::c_int > (*decControl).API_sampleRate {
-        pSamplesOutInternal = samplesOutInternal.as_mut_ptr();
-    }
+    let psDec = decState;    
     if (*psDec).moreInternalDecoderFrames == 0 as libc::c_int {
         (*psDec).nFramesDecoded = 0 as libc::c_int;
     }
@@ -154,7 +148,7 @@ pub unsafe fn SKP_Silk_SDK_Decode(
     ret
         += SKP_Silk_decode_frame(
             psDec,
-            pSamplesOutInternal,
+            samplesOut,
             nSamplesOut,
             inData,
             nBytesIn,
@@ -197,10 +191,13 @@ pub unsafe fn SKP_Silk_SDK_Decode(
         let mut samplesOut_tmp: [libc::c_short; 960] = [0; 960];
         memcpy(
             samplesOut_tmp.as_mut_ptr() as *mut libc::c_void,
-            pSamplesOutInternal as *const libc::c_void,
+            (&samplesOut).as_ptr() as *const libc::c_void,
             (*nSamplesOut as libc::c_ulong)
                 .wrapping_mul(::core::mem::size_of::<libc::c_short>() as libc::c_ulong),
         );
+        for i in 0..samplesOut.len() {
+            samplesOut[i] = 0;
+        }
         if prev_fs_kHz != (*psDec).fs_kHz
             || (*psDec).prev_API_sampleRate != (*decControl).API_sampleRate
         {
@@ -214,19 +211,12 @@ pub unsafe fn SKP_Silk_SDK_Decode(
         ret
             += SKP_Silk_resampler(
                 &mut (*psDec).resampler_state,
-                samplesOut,
+                samplesOut.as_mut_ptr(),
                 samplesOut_tmp.as_mut_ptr() as *const libc::c_short,
                 *nSamplesOut as libc::c_int,
             );
         *nSamplesOut = (*nSamplesOut as libc::c_int * (*decControl).API_sampleRate
             / ((*psDec).fs_kHz * 1000 as libc::c_int)) as libc::c_short;
-    } else if prev_fs_kHz * 1000 as libc::c_int > (*decControl).API_sampleRate {
-        memcpy(
-            samplesOut as *mut libc::c_void,
-            pSamplesOutInternal as *const libc::c_void,
-            (*nSamplesOut as libc::c_ulong)
-                .wrapping_mul(::core::mem::size_of::<libc::c_short>() as libc::c_ulong),
-        );
     }
     (*psDec).prev_API_sampleRate = (*decControl).API_sampleRate;
     (*decControl)
