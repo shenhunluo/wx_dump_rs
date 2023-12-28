@@ -24,7 +24,7 @@ pub mod SKP_Silk_sum_sqr_shift;
 pub mod SKP_Silk_lin2log;
 pub mod SKP_Silk_shell_coder;
 
-pub mod SKP_Silk_tables_LTP;
+pub mod skp_silk_tables_ltp;
 
 pub mod SKP_Silk_code_signs;
 pub mod SKP_Silk_MA;

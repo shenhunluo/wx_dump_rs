@@ -33,9 +33,9 @@ use crate::{
         skp_silk_range_coder_check_after_decoding, skp_silk_range_coder_get_length,
         skp_silk_range_decoder_multi, SKP_Silk_range_decoder,
     },
-    SKP_Silk_tables_LTP::{
-        SKP_Silk_LTP_gain_CDF_offsets, SKP_Silk_LTP_gain_CDF_ptrs, SKP_Silk_LTP_per_index_CDF,
-        SKP_Silk_LTP_per_index_CDF_offset, SKP_Silk_LTP_vq_ptrs_Q14,
+    skp_silk_tables_ltp::{
+        SKP_SILK_LTP_GAIN_CDF_OFFSETS, SKP_SILK_LTP_GAIN_CDF_PTRS, SKP_SILK_LTP_PER_INDEX_CDF,
+        SKP_SILK_LTP_PER_INDEX_CDF_OFFSET, SKP_SILK_LTP_VQ_PTRS_Q14,
     },
 };
 
@@ -212,15 +212,15 @@ pub fn skp_silk_decode_parameters(
         );
         ps_dec_ctrl.PERIndex = SKP_Silk_range_decoder(
             ps_r_c,
-            &SKP_Silk_LTP_per_index_CDF,
-            SKP_Silk_LTP_per_index_CDF_offset,
+            &SKP_SILK_LTP_PER_INDEX_CDF,
+            SKP_SILK_LTP_PER_INDEX_CDF_OFFSET,
         );
-        let cbk_ptr_q14 = SKP_Silk_LTP_vq_ptrs_Q14[ps_dec_ctrl.PERIndex as usize];
+        let cbk_ptr_q14 = SKP_SILK_LTP_VQ_PTRS_Q14[ps_dec_ctrl.PERIndex as usize];
         for k in 0..4 {
             ix = SKP_Silk_range_decoder(
                 ps_r_c,
-                SKP_Silk_LTP_gain_CDF_ptrs[ps_dec_ctrl.PERIndex as usize],
-                SKP_Silk_LTP_gain_CDF_offsets[ps_dec_ctrl.PERIndex as usize],
+                SKP_SILK_LTP_GAIN_CDF_PTRS[ps_dec_ctrl.PERIndex as usize],
+                SKP_SILK_LTP_GAIN_CDF_OFFSETS[ps_dec_ctrl.PERIndex as usize],
             );
             for i in 0..5 {
                 ps_dec_ctrl.LTPCoef_Q14[k * 5 + i] = cbk_ptr_q14[ix as usize][i];
