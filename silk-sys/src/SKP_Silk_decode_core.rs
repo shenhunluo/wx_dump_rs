@@ -5,7 +5,7 @@ use crate::{
     skp_utils::{skp_div32_var_q, skp_inverse32_var_q},
 };
 use crate::{
-    SKP_Silk_MA::SKP_Silk_MA_Prediction,
+    SKP_Silk_MA::skp_silk_ma_prediction,
     SKP_Silk_dec_API::{SKP_Silk_decoder_control, SKP_Silk_decoder_state},
 };
 
@@ -66,7 +66,7 @@ pub fn skp_silk_decode_core(
             if k as i32 & 3 - skp_l_shift!(nlsf_interpolation_flag, 1) == 0 {
                 let start_idx = (ps_dec.frame_length - lag - ps_dec.LPC_order - 5 / 2) as usize;
                 let mut filt_state = [0; 16];
-                SKP_Silk_MA_Prediction(
+                skp_silk_ma_prediction(
                     &ps_dec.outBuf[(start_idx + k * (ps_dec.frame_length as usize >> 2))..],
                     a_q12,
                     &mut filt_state,

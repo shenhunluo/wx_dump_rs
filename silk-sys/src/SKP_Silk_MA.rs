@@ -1,40 +1,24 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
-#[no_mangle]
-pub fn SKP_Silk_MA_Prediction(
+
+use crate::{skp_r_shift_round, skp_s_mla_b_b_ovflw, skp_s_mul_b_b, skp_sat_16};
+
+pub fn skp_silk_ma_prediction(
     in_0: &[i16],
-    mut B: &[i16],
-    mut S: &mut [i32],
-    mut out: &mut [i16],
+    b: &[i16],
+    s: &mut [i32],
+    out: &mut [i16],
     len: usize,
     order: usize,
 ) {
-    let mut in16: libc::c_int = 0;
-    let mut out32: libc::c_int = 0;
     for k in 0..len {
-        in16 = in_0[k] as libc::c_int;
-        out32 = (in16 << 12 as libc::c_int) - S[0];
-        out32 = if 12 as libc::c_int == 1 as libc::c_int {
-            (out32 >> 1 as libc::c_int) + (out32 & 1 as libc::c_int)
-        } else {
-            (out32 >> 12 as libc::c_int - 1 as libc::c_int) + 1 as libc::c_int
-                >> 1 as libc::c_int
-        };
+        let in16 = in_0[k] as i32;
+        let out32 = (in16 << 12) - s[0];
+        let out32 = skp_r_shift_round!(out32,12);
         for d in 0..order - 1 {
-            S[d] = (S[d+1] as libc::c_uint)
-                .wrapping_add(
-                    (in16 as libc::c_short as libc::c_int
-                        * B[d] as libc::c_int) as libc::c_uint,
-                ) as libc::c_int;
+            s[d] = skp_s_mla_b_b_ovflw!( s[d+1], in16, b[d]);
         }
-        S[order - 1] = in16 as libc::c_short as libc::c_int
-            * B[order - 1] as libc::c_int;
-        out[k] = (if out32 > 0x7fff as libc::c_int {
-            0x7fff as libc::c_int
-        } else if out32 < 0x8000 as libc::c_int as libc::c_short as libc::c_int {
-            0x8000 as libc::c_int as libc::c_short as libc::c_int
-        } else {
-            out32
-        }) as libc::c_short;
+        s[order-1] = skp_s_mul_b_b!( in16, b[order-1]);
+        out[k] = skp_sat_16!(out32,i32) as i16;
     }
 }
 #[no_mangle]
