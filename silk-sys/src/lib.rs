@@ -22,13 +22,13 @@ pub mod SKP_Silk_LPC_synthesis_order16;
 pub mod SKP_Silk_LPC_synthesis_filter;
 pub mod SKP_Silk_sum_sqr_shift;
 pub mod SKP_Silk_lin2log;
-pub mod SKP_Silk_shell_coder;
 
-pub mod skp_silk_tables_ltp;
 
 pub mod SKP_Silk_code_signs;
 pub mod SKP_Silk_MA;
 
+pub mod skp_silk_shell_coder;
+pub mod skp_silk_tables_ltp;
 pub mod skp_silk_decode_core;
 pub mod skp_silk_decode_parameters;
 pub mod skp_silk_nlsf2a_stable;

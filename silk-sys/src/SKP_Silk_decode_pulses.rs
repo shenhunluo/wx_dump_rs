@@ -8,7 +8,7 @@ use crate::{
     SKP_Silk_code_signs::SKP_Silk_decode_signs,
     SKP_Silk_dec_API::SKP_Silk_decoder_control,
     SKP_Silk_range_coder::{SKP_Silk_range_coder_state, SKP_Silk_range_decoder},
-    SKP_Silk_shell_coder::SKP_Silk_shell_decoder,
+    skp_silk_shell_coder::skp_silk_shell_decoder,
 };
 #[no_mangle]
 pub fn skp_silk_decode_pulses(
@@ -41,7 +41,7 @@ pub fn skp_silk_decode_pulses(
 
     for i in 0..iter {
         if sum_pulses[i] > 0 {
-            SKP_Silk_shell_decoder(
+            skp_silk_shell_decoder(
                 &mut q[skp_s_mul_b_b!(i, 16) as usize..],
                 ps_r_c,
                 sum_pulses[i],
