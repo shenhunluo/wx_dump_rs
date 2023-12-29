@@ -1,5 +1,5 @@
 use crate::{
-    skp_l_shift, skp_l_shift_sat_32, skp_s_m_mul, skp_s_mla_w_b, skp_s_mla_w_w, skp_s_mul_w_b,
+    skp_l_shift, skp_l_shift_sat_32, skp_s_m_mul, skp_s_mla_w_b, skp_s_mla_w_w, skp_s_mul_w_b, skp_s_mul_b_b,
 };
 
 fn skp_silk_clz16(mut in16: i16) -> i32 {
@@ -75,5 +75,47 @@ pub fn skp_div32_var_q(a32: i32, b32: i32, q_res: i32) -> i32 {
         result >> l_shift
     } else {
         0
+    }
+}
+
+
+pub fn skp_ror32(
+    a32: i32,
+    rot: i32,
+) -> i32 {
+    let mut x = a32;
+    let mut r = rot as u32;
+    let mut m = -rot as u32;
+    if rot <= 0 {
+        (x << m | x >> (32 as u32).wrapping_sub(m)) as i32
+    } else {
+        (x << (32 as u32).wrapping_sub(r) | x >> r) as i32
+    }
+}
+
+pub fn skp_silk_clz_frac(
+    in_0: i32,
+    lz: &mut i32,
+    frac_q7: &mut i32
+) {
+    let l_zeros = skp_silk_clz32(in_0);
+    *lz = l_zeros;
+    *frac_q7 = skp_ror32(in_0, 24 - l_zeros) & 0x7f;
+}
+
+pub fn skp_silk_sqrt_approx(x: i32) -> i32 {
+    let mut lz = 0;
+    let mut frac_q7 = 0;
+    if x <= 0 {
+        0
+    } else {
+        skp_silk_clz_frac(x, &mut lz, &mut frac_q7);
+        let mut y = if lz & 1 != 0 {
+            32768
+        } else {
+            46214
+        };
+        y >>= lz >> 1;
+        skp_s_mla_w_b!(y, y, skp_s_mul_b_b!(213, frac_q7))
     }
 }

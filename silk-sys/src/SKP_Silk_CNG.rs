@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, skp_silk_nlsf2a_stable::skp_silk_nlsf2a_stable, SKP_Silk_LPC_synthesis_order16::SKP_Silk_LPC_synthesis_order16, SKP_Silk_LPC_synthesis_filter::SKP_Silk_LPC_synthesis_filter};
+use crate::{SKP_Silk_dec_API::{SkpSilkDecoderStruct, SKP_Silk_decoder_control}, skp_silk_nlsf2a_stable::skp_silk_nlsf2a_stable, SKP_Silk_LPC_synthesis_order16::SKP_Silk_LPC_synthesis_order16, SKP_Silk_LPC_synthesis_filter::SKP_Silk_LPC_synthesis_filter};
 extern "C" {
     fn memcpy(
         _: *mut libc::c_void,
@@ -110,7 +110,7 @@ pub struct SKP_Silk_PLC_struct {
     pub conc_energy_shift: libc::c_int,
     pub prevLTP_scale_Q14: libc::c_short,
     pub prevGain_Q16: [libc::c_int; 4],
-    pub fs_kHz: libc::c_int,
+    pub fs_k_hz: libc::c_int,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -120,12 +120,12 @@ pub struct SKP_Silk_CNG_struct {
     pub CNG_synth_state: [libc::c_int; 16],
     pub CNG_smth_Gain_Q16: libc::c_int,
     pub rand_seed: libc::c_int,
-    pub fs_kHz: libc::c_int,
+    pub fs_k_hz: libc::c_int,
 }
 
 impl Default for SKP_Silk_CNG_struct {
     fn default() -> Self {
-        Self { CNG_exc_buf_Q10: [0;480], CNG_smth_NLSF_Q15: Default::default(), CNG_synth_state: Default::default(), CNG_smth_Gain_Q16: Default::default(), rand_seed: Default::default(), fs_kHz: Default::default() }
+        Self { CNG_exc_buf_Q10: [0;480], CNG_smth_NLSF_Q15: Default::default(), CNG_synth_state: Default::default(), CNG_smth_Gain_Q16: Default::default(), rand_seed: Default::default(), fs_k_hz: Default::default() }
     }
 }
 
@@ -280,7 +280,7 @@ unsafe extern "C" fn SKP_Silk_CNG_exc(
     *rand_seed = seed;
 }
 
-pub fn SKP_Silk_CNG_Reset(psDec: &mut SKP_Silk_decoder_state) {
+pub fn SKP_Silk_CNG_Reset(psDec: &mut SkpSilkDecoderStruct) {
     let NLSF_step_Q15 = 0x7fff / (psDec.LPC_order + 1);
     let mut NLSF_acc_Q15 = 0;
     for i in 0..psDec.LPC_order as usize {
@@ -293,7 +293,7 @@ pub fn SKP_Silk_CNG_Reset(psDec: &mut SKP_Silk_decoder_state) {
 
 #[no_mangle]
 pub unsafe extern "C" fn SKP_Silk_CNG(
-    mut psDec: &mut SKP_Silk_decoder_state,
+    mut psDec: &mut SkpSilkDecoderStruct,
     mut psDecCtrl: *mut SKP_Silk_decoder_control,
     mut signal: *mut libc::c_short,
     mut length: libc::c_int,
@@ -305,9 +305,9 @@ pub unsafe extern "C" fn SKP_Silk_CNG(
     let mut max_Gain_Q16: libc::c_int = 0;
     let mut LPC_buf: [libc::c_short; 16] = [0; 16];
     let mut CNG_sig: [libc::c_short; 480] = [0; 480];
-    if (*psDec).fs_kHz != psDec.sCNG.fs_kHz {
+    if (*psDec).fs_k_hz != psDec.sCNG.fs_k_hz {
         SKP_Silk_CNG_Reset(psDec);
-        psDec.sCNG.fs_kHz = psDec.fs_kHz;
+        psDec.sCNG.fs_k_hz = psDec.fs_k_hz;
     }
     let psCNG = &mut (*psDec).sCNG;
     if (*psDec).lossCnt == 0 as libc::c_int && (*psDec).vadFlag == 0 as libc::c_int {

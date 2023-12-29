@@ -6,11 +6,11 @@ use crate::{
 };
 use crate::{
     SKP_Silk_MA::skp_silk_ma_prediction,
-    SKP_Silk_dec_API::{SKP_Silk_decoder_control, SKP_Silk_decoder_state},
+    SKP_Silk_dec_API::{SKP_Silk_decoder_control, SkpSilkDecoderStruct},
 };
 
 pub fn skp_silk_decode_core(
-    ps_dec: &mut SKP_Silk_decoder_state,
+    ps_dec: &mut SkpSilkDecoderStruct,
     ps_dec_ctrl: &mut SKP_Silk_decoder_control,
     xq: &mut [i16],
     q: &[i32],
@@ -40,7 +40,7 @@ pub fn skp_silk_decode_core(
     for k in 0..4 {
         let a_q12 = &ps_dec_ctrl.PredCoef_Q12[k >> 1];
         let mut a_q12_temp = a_q12.clone();
-        let b_q14 = &mut ps_dec_ctrl.LTPCoef_Q14[k * 5..];
+        let b_q14 = &mut ps_dec_ctrl.ltp_coef_q14[k * 5..];
         let gain_q16 = ps_dec_ctrl.Gains_Q16[k as usize];
         let mut sig_type = ps_dec_ctrl.sig_type;
         let inv_gain_q16 = skp_inverse32_var_q(gain_q16.max(1), 32);
@@ -50,7 +50,7 @@ pub fn skp_silk_decode_core(
             gain_adj_q16 = skp_div32_var_q(inv_gain_q16, ps_dec.prev_inv_gain_Q16, 16);
         }
         if ps_dec.lossCnt != 0
-            && ps_dec.prev_sigtype == 0
+            && ps_dec.prev_sig_type == 0
             && ps_dec_ctrl.sig_type == 1
             && k < 4 >> 1
         {

@@ -3,7 +3,7 @@ use crate::{
     skp_silk_decode_pitch::skp_silk_decode_pitch,
     skp_silk_decode_pulses::skp_silk_decode_pulses,
     skp_silk_nlsf2a_stable::skp_silk_nlsf2a_stable,
-    skp_silk_nlsf_msvq_decode::{skp_silk_nlsf_msvq_decode, SkpSilkNlsfCbStruct},
+    skp_silk_nlsf_msvq_decode::skp_silk_nlsf_msvq_decode,
     skp_silk_tables_gain::{
         SKP_SILK_DELTA_GAIN_CDF, SKP_SILK_DELTA_GAIN_CDF_OFFSET, SKP_SILK_GAIN_CDF,
         SKP_SILK_GAIN_CDF_OFFSET,
@@ -26,7 +26,7 @@ use crate::{
     skp_silk_tables_type_offset::{
         SKP_SILK_TYPE_OFFSET_CDF, SKP_SILK_TYPE_OFFSET_CDF_OFFSET, SKP_SILK_TYPE_OFFSET_JOINT_CDF,
     },
-    SKP_Silk_dec_API::{SKP_Silk_decoder_control, SKP_Silk_decoder_state},
+    SKP_Silk_dec_API::{SKP_Silk_decoder_control, SkpSilkDecoderStruct},
     SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs,
     SKP_Silk_gain_quant::skp_silk_gains_dequant,
     SKP_Silk_range_coder::{
@@ -41,7 +41,7 @@ use crate::{
 
 #[no_mangle]
 pub fn skp_silk_decode_parameters(
-    ps_dec: &mut SKP_Silk_decoder_state,
+    ps_dec: &mut SkpSilkDecoderStruct,
     ps_dec_ctrl: &mut SKP_Silk_decoder_control,
     q: &mut [i32],
     full_decoding: i32,
@@ -166,19 +166,19 @@ pub fn skp_silk_decode_parameters(
     }
     let mut ixs = [0; 4];
     if ps_dec_ctrl.sig_type == 0 {
-        if ps_dec.fs_kHz == 8 {
+        if ps_dec.fs_k_hz == 8 {
             ixs[0] = SKP_Silk_range_decoder(
                 ps_r_c,
                 &SKP_SILK_PITCH_LAG_NB_CDF,
                 SKP_SILK_PITCH_LAG_NB_CDF_OFFSET,
             );
-        } else if ps_dec.fs_kHz == 12 {
+        } else if ps_dec.fs_k_hz == 12 {
             ixs[0] = SKP_Silk_range_decoder(
                 ps_r_c,
                 &SKP_SILK_PITCH_LAG_MB_CDF,
                 SKP_SILK_PITCH_LAG_MB_CDF_OFFSET,
             );
-        } else if ps_dec.fs_kHz == 16 {
+        } else if ps_dec.fs_k_hz == 16 {
             ixs[0] = SKP_Silk_range_decoder(
                 ps_r_c,
                 &SKP_SILK_PITCH_LAG_WB_CDF,
@@ -191,7 +191,7 @@ pub fn skp_silk_decode_parameters(
                 SKP_SILK_PITCH_LAG_SWB_CDF_OFFSET,
             );
         }
-        if ps_dec.fs_kHz == 8 {
+        if ps_dec.fs_k_hz == 8 {
             ixs[1] = SKP_Silk_range_decoder(
                 ps_r_c,
                 &SKP_SILK_PITCH_CONTOUR_NB_CDF,
@@ -208,7 +208,7 @@ pub fn skp_silk_decode_parameters(
             ixs[0] as usize,
             ixs[1] as usize,
             &mut ps_dec_ctrl.pitchL,
-            ps_dec.fs_kHz,
+            ps_dec.fs_k_hz,
         );
         ps_dec_ctrl.PERIndex = SKP_Silk_range_decoder(
             ps_r_c,
@@ -223,7 +223,7 @@ pub fn skp_silk_decode_parameters(
                 SKP_SILK_LTP_GAIN_CDF_OFFSETS[ps_dec_ctrl.PERIndex as usize],
             );
             for i in 0..5 {
-                ps_dec_ctrl.LTPCoef_Q14[k * 5 + i] = cbk_ptr_q14[ix as usize][i];
+                ps_dec_ctrl.ltp_coef_q14[k * 5 + i] = cbk_ptr_q14[ix as usize][i];
             }
         }
         ix = SKP_Silk_range_decoder(ps_r_c, &SKP_SILK_LTP_SCALE_CDF, SKP_SILK_LTP_SCALE_OFFSET);
@@ -233,7 +233,7 @@ pub fn skp_silk_decode_parameters(
             ps_dec_ctrl.pitchL[i] = 0;
         }
         for i in 0..5 * 4 {
-            ps_dec_ctrl.LTPCoef_Q14[i] = 0;
+            ps_dec_ctrl.ltp_coef_q14[i] = 0;
         }
         ps_dec_ctrl.PERIndex = 0;
         ps_dec_ctrl.LTP_scale_Q14 = 0;

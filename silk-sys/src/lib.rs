@@ -14,7 +14,6 @@ pub mod SKP_Silk_decode_frame;
 pub mod SKP_Silk_range_coder;
 pub mod SKP_Silk_decoder_set_fs;
 pub mod SKP_Silk_CNG;
-pub mod SKP_Silk_PLC;
 pub mod SKP_Silk_biquad;
 pub mod skp_silk_decode_pitch;
 pub mod SKP_Silk_gain_quant;
@@ -26,6 +25,7 @@ pub mod SKP_Silk_lin2log;
 pub mod SKP_Silk_code_signs;
 pub mod SKP_Silk_MA;
 
+pub mod skp_silk_plc;
 pub mod skp_silk_sum_sqr_shift;
 pub mod skp_silk_shell_coder;
 pub mod skp_silk_tables_ltp;
@@ -62,7 +62,7 @@ pub mod error;
 
 use bytes::Buf;
 
-use crate::{error::SilkError, SKP_Silk_dec_API::{SKP_SILK_SDK_DecControlStruct, SKP_Silk_SDK_Decode, SKP_Silk_decoder_state}};
+use crate::{error::SilkError, SKP_Silk_dec_API::{SKP_SILK_SDK_DecControlStruct, SKP_Silk_SDK_Decode, SkpSilkDecoderStruct }};
 
 pub fn decode_silk(src: impl AsRef<[u8]>, sample_rate: i32) -> Result<Vec<i16>, SilkError> {
     unsafe { _decode_silk(src.as_ref(), sample_rate) }
@@ -85,7 +85,7 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
         inBandFECOffset: 0,
     };
 
-    let mut decoder = SKP_Silk_decoder_state::default();
+    let mut decoder = SkpSilkDecoderStruct::default();
     let mut result = vec![];
     let frame_size = sample_rate as usize / 1000 * 20;
     let mut buf = vec![0i16; frame_size];
@@ -114,7 +114,7 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
             &mut buf,
             &mut output_size,
         );
-        println!("output_size : {}, buf : {:?}", output_size, &buf[..i16::min(50,output_size) as usize]);
+        // println!("output_size : {}, buf : {:?}", output_size, &buf[..i16::min(50,output_size) as usize]);
         if r != 0 {
             return Err(r.into());
         }

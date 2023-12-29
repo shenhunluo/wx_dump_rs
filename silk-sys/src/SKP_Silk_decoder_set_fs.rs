@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::SKP_Silk_dec_API::SKP_Silk_decoder_state;
+use crate::SKP_Silk_dec_API::SkpSilkDecoderStruct;
 use crate::skp_s_mul_b_b;
 use crate::skp_silk_tables_nlsf_cb0_10::SKP_SILK_NLSF_CB0_10;
 use crate::skp_silk_tables_nlsf_cb0_16::SKP_SILK_NLSF_CB0_16;
@@ -90,7 +90,7 @@ pub struct SKP_Silk_PLC_struct {
     pub conc_energy_shift: libc::c_int,
     pub prevLTP_scale_Q14: libc::c_short,
     pub prevGain_Q16: [libc::c_int; 4],
-    pub fs_kHz: libc::c_int,
+    pub fs_k_hz: libc::c_int,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -100,18 +100,18 @@ pub struct SKP_Silk_CNG_struct {
     pub CNG_synth_state: [libc::c_int; 16],
     pub CNG_smth_Gain_Q16: libc::c_int,
     pub rand_seed: libc::c_int,
-    pub fs_kHz: libc::c_int,
+    pub fs_k_hz: libc::c_int,
 }
 
 pub fn SKP_Silk_decoder_set_fs(
-    mut psDec: &mut SKP_Silk_decoder_state,
-    mut fs_kHz: libc::c_int,
+    mut psDec: &mut SkpSilkDecoderStruct,
+    mut fs_k_hz: libc::c_int,
 ) {
-    if psDec.fs_kHz != fs_kHz {
-        psDec.fs_kHz = fs_kHz;
-        psDec.frame_length = skp_s_mul_b_b!(20, fs_kHz);
-        psDec.subfr_length = skp_s_mul_b_b!(20 / 4, fs_kHz);
-        if psDec.fs_kHz == 8 {
+    if psDec.fs_k_hz != fs_k_hz {
+        psDec.fs_k_hz = fs_k_hz;
+        psDec.frame_length = skp_s_mul_b_b!(20, fs_k_hz);
+        psDec.subfr_length = skp_s_mul_b_b!(20 / 4, fs_k_hz);
+        if psDec.fs_k_hz == 8 {
             psDec.LPC_order = 10;
             psDec.psNLSF_CB[0] = Some(&SKP_SILK_NLSF_CB0_10);
             psDec.psNLSF_CB[1] = Some(&SKP_SILK_NLSF_CB1_10);
@@ -131,18 +131,18 @@ pub fn SKP_Silk_decoder_set_fs(
         }
         psDec.lagPrev = 100;
         psDec.LastGainIndex = 1;
-        psDec.prev_sigtype = 0;
+        psDec.prev_sig_type = 0;
         psDec.first_frame_after_reset = 1;
-        if fs_kHz == 24 {
+        if fs_k_hz == 24 {
             psDec.HP_A = Some(&SKP_SILK_DEC_A_HP_24);
             psDec.HP_B = Some(&SKP_SILK_DEC_B_HP_24);
-        } else if fs_kHz == 16 {
+        } else if fs_k_hz == 16 {
             psDec.HP_A = Some(&SKP_SILK_DEC_A_HP_16);
             psDec.HP_B = Some(&SKP_SILK_DEC_B_HP_16);
-        } else if fs_kHz == 12 {
+        } else if fs_k_hz == 12 {
             psDec.HP_A = Some(&SKP_SILK_DEC_A_HP_12);
             psDec.HP_B = Some(&SKP_SILK_DEC_B_HP_12);
-        } else if fs_kHz == 8 {
+        } else if fs_k_hz == 8 {
             psDec.HP_A = Some(&SKP_SILK_DEC_A_HP_8);
             psDec.HP_B = Some(&SKP_SILK_DEC_B_HP_8);
         }

@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, SKP_Silk_range_coder::SKP_Silk_range_dec_init, SKP_Silk_biquad::SKP_Silk_biquad, SKP_Silk_PLC::{SKP_Silk_PLC, SKP_Silk_PLC_glue_frames}, SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs, SKP_Silk_CNG::SKP_Silk_CNG, skp_silk_decode_parameters::skp_silk_decode_parameters, skp_silk_decode_core::skp_silk_decode_core};
+use crate::{SKP_Silk_dec_API::{SkpSilkDecoderStruct, SKP_Silk_decoder_control}, SKP_Silk_range_coder::SKP_Silk_range_dec_init, SKP_Silk_biquad::SKP_Silk_biquad, skp_silk_plc::{skp_silk_plc, skp_silk_plc_glue_frames}, SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs, SKP_Silk_CNG::SKP_Silk_CNG, skp_silk_decode_parameters::skp_silk_decode_parameters, skp_silk_decode_core::skp_silk_decode_core};
 extern "C" {
     fn memcpy(
         _: *mut libc::c_void,
@@ -81,7 +81,7 @@ pub struct SkpSilkNlsfCbStruct {
 #[repr(C)]
 pub struct SKP_Silk_PLC_struct {
     pub pitchL_Q8: libc::c_int,
-    pub LTPCoef_Q14: [libc::c_short; 5],
+    pub ltp_coef_q14: [libc::c_short; 5],
     pub prevLPC_Q12: [libc::c_short; 16],
     pub last_frame_lost: libc::c_int,
     pub rand_seed: libc::c_int,
@@ -90,7 +90,7 @@ pub struct SKP_Silk_PLC_struct {
     pub conc_energy_shift: libc::c_int,
     pub prevLTP_scale_Q14: libc::c_short,
     pub prevGain_Q16: [libc::c_int; 4],
-    pub fs_kHz: libc::c_int,
+    pub fs_k_hz: libc::c_int,
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -100,11 +100,11 @@ pub struct SKP_Silk_CNG_struct {
     pub CNG_synth_state: [libc::c_int; 16],
     pub CNG_smth_Gain_Q16: libc::c_int,
     pub rand_seed: libc::c_int,
-    pub fs_kHz: libc::c_int,
+    pub fs_k_hz: libc::c_int,
 }
 #[no_mangle]
 pub unsafe fn SKP_Silk_decode_frame(
-    mut psDec: &mut SKP_Silk_decoder_state,
+    mut psDec: &mut SkpSilkDecoderStruct,
     mut pOut: &mut [i16],
     mut pN: *mut libc::c_short,
     mut pCode: &[u8],
@@ -117,7 +117,7 @@ pub unsafe fn SKP_Silk_decode_frame(
         Gains_Q16: [0; 4],
         Seed: 0,
         PredCoef_Q12: [[0; 16]; 2],
-        LTPCoef_Q14: [0; 20],
+        ltp_coef_q14: [0; 20],
         LTP_scale_Q14: 0,
         PERIndex: 0,
         RateLevelIndex: 0,
@@ -126,14 +126,14 @@ pub unsafe fn SKP_Silk_decode_frame(
         NLSFInterpCoef_Q2: 0,
     };
     let mut L: libc::c_int = 0;
-    let mut fs_Khz_old: libc::c_int = 0;
+    let mut fs_k_hz_old: libc::c_int = 0;
     let mut ret: libc::c_int = 0 as libc::c_int;
     let mut Pulses: [libc::c_int; 480] = [0; 480];
     L = (*psDec).frame_length;
     sDecCtrl.LTP_scale_Q14 = 0 as libc::c_int;
     *decBytes = 0 as libc::c_int;
     if action == 0 as libc::c_int {
-        fs_Khz_old = (*psDec).fs_kHz;
+        fs_k_hz_old = (*psDec).fs_k_hz;
         if (*psDec).nFramesDecoded == 0 as libc::c_int {
             SKP_Silk_range_dec_init(&mut (*psDec).sRC, pCode, nBytes);
         }
@@ -146,7 +146,7 @@ pub unsafe fn SKP_Silk_decode_frame(
         if (*psDec).sRC.error != 0 {
             (*psDec).nBytesLeft = 0 as libc::c_int;
             action = 1 as libc::c_int;
-            SKP_Silk_decoder_set_fs(psDec, fs_Khz_old);
+            SKP_Silk_decoder_set_fs(psDec, fs_k_hz_old);
             *decBytes = (*psDec).sRC.bufferLength;
             if (*psDec).sRC.error == -(8 as libc::c_int) {
                 ret = -(11 as libc::c_int);
@@ -164,14 +164,14 @@ pub unsafe fn SKP_Silk_decode_frame(
                 pOut,
                 &Pulses,
             );
-            SKP_Silk_PLC(psDec, &mut sDecCtrl, pOut, action);
+            skp_silk_plc(psDec, &mut sDecCtrl, pOut, action);
             (*psDec).lossCnt = 0 as libc::c_int;
-            (*psDec).prev_sigtype = sDecCtrl.sig_type;
+            (*psDec).prev_sig_type = sDecCtrl.sig_type;
             (*psDec).first_frame_after_reset = 0 as libc::c_int;
         }
     }
     if action == 1 as libc::c_int {
-        SKP_Silk_PLC(psDec, &mut sDecCtrl, pOut, action);
+        skp_silk_plc(psDec, &mut sDecCtrl, pOut, action);
     }
     memcpy(
         ((*psDec).outBuf).as_mut_ptr() as *mut libc::c_void,
@@ -179,7 +179,7 @@ pub unsafe fn SKP_Silk_decode_frame(
         (L as libc::c_ulong)
             .wrapping_mul(::core::mem::size_of::<libc::c_short>() as libc::c_ulong),
     );
-    SKP_Silk_PLC_glue_frames(psDec, &mut sDecCtrl, pOut, L);
+    skp_silk_plc_glue_frames(psDec, &mut sDecCtrl, pOut, L as usize);
     SKP_Silk_CNG(psDec, &mut sDecCtrl, pOut.as_mut_ptr(), L);
     SKP_Silk_biquad(
         pOut.as_ptr(),
