@@ -6,7 +6,7 @@ use crate::{
     skp_silk_plc::{skp_silk_plc, skp_silk_plc_glue_frames},
     skp_utils::NB_SUBFR,
     SKP_Silk_dec_API::{SKP_Silk_decoder_control, SkpSilkDecoderStruct},
-    SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs,
+    skp_silk_decoder_set_fs::skp_silk_decoder_set_fs,
     SKP_Silk_range_coder::SKP_Silk_range_dec_init,
 };
 
@@ -47,7 +47,7 @@ pub fn skp_silk_decode_frame(
         if (*ps_dec).sRC.error != 0 {
             (*ps_dec).nBytesLeft = 0;
             action = 1;
-            SKP_Silk_decoder_set_fs(ps_dec, fs_k_hz_old);
+            skp_silk_decoder_set_fs(ps_dec, fs_k_hz_old);
             *dec_bytes = ps_dec.sRC.bufferLength;
             if ps_dec.sRC.error == -8 {
                 ret = -11;

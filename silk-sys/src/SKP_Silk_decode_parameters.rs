@@ -27,7 +27,7 @@ use crate::{
         SKP_SILK_TYPE_OFFSET_CDF, SKP_SILK_TYPE_OFFSET_CDF_OFFSET, SKP_SILK_TYPE_OFFSET_JOINT_CDF,
     },
     SKP_Silk_dec_API::{SKP_Silk_decoder_control, SkpSilkDecoderStruct},
-    SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs,
+    skp_silk_decoder_set_fs::skp_silk_decoder_set_fs,
     SKP_Silk_gain_quant::skp_silk_gains_dequant,
     SKP_Silk_range_coder::{
         skp_silk_range_coder_check_after_decoding, skp_silk_range_coder_get_length,
@@ -60,7 +60,7 @@ pub fn skp_silk_decode_parameters(
             return;
         }
         let fs_k_hz_dec = SKP_SILK_SAMPLING_RATES_TABLE[ix as usize];
-        SKP_Silk_decoder_set_fs(ps_dec, fs_k_hz_dec);
+        skp_silk_decoder_set_fs(ps_dec, fs_k_hz_dec);
     }
     let ps_r_c = &mut ps_dec.sRC;
     if ps_dec.nFramesDecoded == 0 {
