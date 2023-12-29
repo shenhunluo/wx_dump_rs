@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{SKP_Silk_dec_API::{SkpSilkDecoderStruct, SKP_Silk_decoder_control}, SKP_Silk_range_coder::SKP_Silk_range_dec_init, SKP_Silk_biquad::SKP_Silk_biquad, skp_silk_plc::{skp_silk_plc, skp_silk_plc_glue_frames}, SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs, skp_silk_cng::skp_silk_cng, skp_silk_decode_parameters::skp_silk_decode_parameters, skp_silk_decode_core::skp_silk_decode_core};
+use crate::{SKP_Silk_dec_API::{SkpSilkDecoderStruct, SKP_Silk_decoder_control}, SKP_Silk_range_coder::SKP_Silk_range_dec_init, skp_silk_biquad::skp_silk_biquad, skp_silk_plc::{skp_silk_plc, skp_silk_plc_glue_frames}, SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs, skp_silk_cng::skp_silk_cng, skp_silk_decode_parameters::skp_silk_decode_parameters, skp_silk_decode_core::skp_silk_decode_core};
 extern "C" {
     fn memcpy(
         _: *mut libc::c_void,
@@ -87,13 +87,13 @@ pub unsafe fn SKP_Silk_decode_frame(
     );
     skp_silk_plc_glue_frames(psDec, &mut sDecCtrl, pOut, L as usize);
     skp_silk_cng(psDec, &mut sDecCtrl, &mut pOut, L as usize);
-    SKP_Silk_biquad(
-        pOut.as_ptr(),
+    skp_silk_biquad(
+        &pOut.to_vec(),
         psDec.HP_B.unwrap(),
         psDec.HP_A.unwrap(),
-        ((*psDec).HPState).as_mut_ptr(),
-        pOut.as_mut_ptr(),
-        L,
+        &mut psDec.HPState,
+        &mut pOut,
+        L as usize,
     );
     *pN = L as libc::c_short;
     (*psDec).lagPrev = sDecCtrl.pitchL[(4 as libc::c_int - 1 as libc::c_int) as usize];

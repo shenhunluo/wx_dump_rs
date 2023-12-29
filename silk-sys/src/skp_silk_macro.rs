@@ -154,6 +154,13 @@ macro_rules! skp_mla_ovflw {
 }
 
 #[macro_export]
+macro_rules! skp_s_mla_b_b {
+    ($a32:expr,$b32:expr,$c32:expr) => {{
+        $a32 + ($b32 as i16 as i32) * ($c32 as i16 as i32)
+    }}
+}
+
+#[macro_export]
 macro_rules! skp_s_mla_b_b_ovflw {
     ($a32:expr,$b32:expr,$c32:expr) => {{
         crate::skp_add32_ovflw!($a32,crate::skp_s_mul_b_b!($b32,$c32))

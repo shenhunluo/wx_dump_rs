@@ -14,7 +14,6 @@ pub mod SKP_Silk_decode_frame;
 pub mod SKP_Silk_range_coder;
 pub mod SKP_Silk_decoder_set_fs;
 pub mod skp_silk_cng;
-pub mod SKP_Silk_biquad;
 pub mod skp_silk_decode_pitch;
 pub mod SKP_Silk_gain_quant;
 pub mod SKP_Silk_lin2log;
@@ -23,6 +22,8 @@ pub mod SKP_Silk_lin2log;
 pub mod SKP_Silk_code_signs;
 pub mod SKP_Silk_MA;
 
+
+pub mod skp_silk_biquad;
 pub mod skp_silk_lpc_synthesis_filter;
 pub mod skp_silk_lpc_synthesis_order16;
 pub mod skp_silk_plc;
