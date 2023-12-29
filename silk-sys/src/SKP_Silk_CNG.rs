@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{SKP_Silk_dec_API::{SkpSilkDecoderStruct, SKP_Silk_decoder_control}, skp_silk_nlsf2a_stable::skp_silk_nlsf2a_stable, SKP_Silk_LPC_synthesis_order16::SKP_Silk_LPC_synthesis_order16, SKP_Silk_LPC_synthesis_filter::SKP_Silk_LPC_synthesis_filter};
+use crate::{SKP_Silk_dec_API::{SkpSilkDecoderStruct, SKP_Silk_decoder_control}, skp_silk_nlsf2a_stable::skp_silk_nlsf2a_stable, SKP_Silk_LPC_synthesis_order16::SKP_Silk_LPC_synthesis_order16, SKP_Silk_LPC_synthesis_filter::SKP_Silk_LPC_synthesis_filter, skp_rand, skp_sat_16, skp_r_shift_round, skp_s_mul_w_w};
 extern "C" {
     fn memcpy(
         _: *mut libc::c_void,
@@ -129,153 +129,22 @@ impl Default for SKP_Silk_CNG_struct {
     }
 }
 
-#[inline]
-unsafe extern "C" fn SKP_Silk_CNG_exc(
-    mut residual: *mut libc::c_short,
-    mut exc_buf_Q10: *mut libc::c_int,
-    mut Gain_Q16: libc::c_int,
-    mut length: libc::c_int,
-    mut rand_seed: *mut libc::c_int,
+fn skp_silk_cng_exc(
+    residual: &mut [i16],
+    exc_buf_q10: &[i32],
+    gain_q16: i32,
+    length: i32,
+    rand_seed: &mut i32,
 ) {
-    let mut seed: libc::c_int = 0;
-    let mut i: libc::c_int = 0;
-    let mut idx: libc::c_int = 0;
-    let mut exc_mask: libc::c_int = 0;
-    exc_mask = 255 as libc::c_int;
+    let mut exc_mask = 255;
     while exc_mask > length {
-        exc_mask = exc_mask >> 1 as libc::c_int;
+        exc_mask = exc_mask >> 1;
     }
-    seed = *rand_seed;
-    i = 0 as libc::c_int;
-    while i < length {
-        seed = (907633515 as libc::c_int as libc::c_uint)
-            .wrapping_add(
-                (seed as libc::c_uint)
-                    .wrapping_mul(196314165 as libc::c_int as libc::c_uint),
-            ) as libc::c_int;
-        idx = seed >> 24 as libc::c_int & exc_mask;
-        *residual
-            .offset(
-                i as isize,
-            ) = (if (if 10 as libc::c_int == 1 as libc::c_int {
-            ((*exc_buf_Q10.offset(idx as isize) >> 16 as libc::c_int)
-                * Gain_Q16 as libc::c_short as libc::c_int
-                + ((*exc_buf_Q10.offset(idx as isize) & 0xffff as libc::c_int)
-                    * Gain_Q16 as libc::c_short as libc::c_int >> 16 as libc::c_int)
-                + *exc_buf_Q10.offset(idx as isize)
-                    * (if 16 as libc::c_int == 1 as libc::c_int {
-                        (Gain_Q16 >> 1 as libc::c_int) + (Gain_Q16 & 1 as libc::c_int)
-                    } else {
-                        (Gain_Q16 >> 16 as libc::c_int - 1 as libc::c_int)
-                            + 1 as libc::c_int >> 1 as libc::c_int
-                    }) >> 1 as libc::c_int)
-                + ((*exc_buf_Q10.offset(idx as isize) >> 16 as libc::c_int)
-                    * Gain_Q16 as libc::c_short as libc::c_int
-                    + ((*exc_buf_Q10.offset(idx as isize) & 0xffff as libc::c_int)
-                        * Gain_Q16 as libc::c_short as libc::c_int >> 16 as libc::c_int)
-                    + *exc_buf_Q10.offset(idx as isize)
-                        * (if 16 as libc::c_int == 1 as libc::c_int {
-                            (Gain_Q16 >> 1 as libc::c_int)
-                                + (Gain_Q16 & 1 as libc::c_int)
-                        } else {
-                            (Gain_Q16 >> 16 as libc::c_int - 1 as libc::c_int)
-                                + 1 as libc::c_int >> 1 as libc::c_int
-                        }) & 1 as libc::c_int)
-        } else {
-            ((*exc_buf_Q10.offset(idx as isize) >> 16 as libc::c_int)
-                * Gain_Q16 as libc::c_short as libc::c_int
-                + ((*exc_buf_Q10.offset(idx as isize) & 0xffff as libc::c_int)
-                    * Gain_Q16 as libc::c_short as libc::c_int >> 16 as libc::c_int)
-                + *exc_buf_Q10.offset(idx as isize)
-                    * (if 16 as libc::c_int == 1 as libc::c_int {
-                        (Gain_Q16 >> 1 as libc::c_int) + (Gain_Q16 & 1 as libc::c_int)
-                    } else {
-                        (Gain_Q16 >> 16 as libc::c_int - 1 as libc::c_int)
-                            + 1 as libc::c_int >> 1 as libc::c_int
-                    }) >> 10 as libc::c_int - 1 as libc::c_int) + 1 as libc::c_int
-                >> 1 as libc::c_int
-        }) > 0x7fff as libc::c_int
-        {
-            0x7fff as libc::c_int
-        } else if (if 10 as libc::c_int == 1 as libc::c_int {
-            ((*exc_buf_Q10.offset(idx as isize) >> 16 as libc::c_int)
-                * Gain_Q16 as libc::c_short as libc::c_int
-                + ((*exc_buf_Q10.offset(idx as isize) & 0xffff as libc::c_int)
-                    * Gain_Q16 as libc::c_short as libc::c_int >> 16 as libc::c_int)
-                + *exc_buf_Q10.offset(idx as isize)
-                    * (if 16 as libc::c_int == 1 as libc::c_int {
-                        (Gain_Q16 >> 1 as libc::c_int) + (Gain_Q16 & 1 as libc::c_int)
-                    } else {
-                        (Gain_Q16 >> 16 as libc::c_int - 1 as libc::c_int)
-                            + 1 as libc::c_int >> 1 as libc::c_int
-                    }) >> 1 as libc::c_int)
-                + ((*exc_buf_Q10.offset(idx as isize) >> 16 as libc::c_int)
-                    * Gain_Q16 as libc::c_short as libc::c_int
-                    + ((*exc_buf_Q10.offset(idx as isize) & 0xffff as libc::c_int)
-                        * Gain_Q16 as libc::c_short as libc::c_int >> 16 as libc::c_int)
-                    + *exc_buf_Q10.offset(idx as isize)
-                        * (if 16 as libc::c_int == 1 as libc::c_int {
-                            (Gain_Q16 >> 1 as libc::c_int)
-                                + (Gain_Q16 & 1 as libc::c_int)
-                        } else {
-                            (Gain_Q16 >> 16 as libc::c_int - 1 as libc::c_int)
-                                + 1 as libc::c_int >> 1 as libc::c_int
-                        }) & 1 as libc::c_int)
-        } else {
-            ((*exc_buf_Q10.offset(idx as isize) >> 16 as libc::c_int)
-                * Gain_Q16 as libc::c_short as libc::c_int
-                + ((*exc_buf_Q10.offset(idx as isize) & 0xffff as libc::c_int)
-                    * Gain_Q16 as libc::c_short as libc::c_int >> 16 as libc::c_int)
-                + *exc_buf_Q10.offset(idx as isize)
-                    * (if 16 as libc::c_int == 1 as libc::c_int {
-                        (Gain_Q16 >> 1 as libc::c_int) + (Gain_Q16 & 1 as libc::c_int)
-                    } else {
-                        (Gain_Q16 >> 16 as libc::c_int - 1 as libc::c_int)
-                            + 1 as libc::c_int >> 1 as libc::c_int
-                    }) >> 10 as libc::c_int - 1 as libc::c_int) + 1 as libc::c_int
-                >> 1 as libc::c_int
-        }) < 0x8000 as libc::c_int as libc::c_short as libc::c_int
-        {
-            0x8000 as libc::c_int as libc::c_short as libc::c_int
-        } else if 10 as libc::c_int == 1 as libc::c_int {
-            ((*exc_buf_Q10.offset(idx as isize) >> 16 as libc::c_int)
-                * Gain_Q16 as libc::c_short as libc::c_int
-                + ((*exc_buf_Q10.offset(idx as isize) & 0xffff as libc::c_int)
-                    * Gain_Q16 as libc::c_short as libc::c_int >> 16 as libc::c_int)
-                + *exc_buf_Q10.offset(idx as isize)
-                    * (if 16 as libc::c_int == 1 as libc::c_int {
-                        (Gain_Q16 >> 1 as libc::c_int) + (Gain_Q16 & 1 as libc::c_int)
-                    } else {
-                        (Gain_Q16 >> 16 as libc::c_int - 1 as libc::c_int)
-                            + 1 as libc::c_int >> 1 as libc::c_int
-                    }) >> 1 as libc::c_int)
-                + ((*exc_buf_Q10.offset(idx as isize) >> 16 as libc::c_int)
-                    * Gain_Q16 as libc::c_short as libc::c_int
-                    + ((*exc_buf_Q10.offset(idx as isize) & 0xffff as libc::c_int)
-                        * Gain_Q16 as libc::c_short as libc::c_int >> 16 as libc::c_int)
-                    + *exc_buf_Q10.offset(idx as isize)
-                        * (if 16 as libc::c_int == 1 as libc::c_int {
-                            (Gain_Q16 >> 1 as libc::c_int)
-                                + (Gain_Q16 & 1 as libc::c_int)
-                        } else {
-                            (Gain_Q16 >> 16 as libc::c_int - 1 as libc::c_int)
-                                + 1 as libc::c_int >> 1 as libc::c_int
-                        }) & 1 as libc::c_int)
-        } else {
-            ((*exc_buf_Q10.offset(idx as isize) >> 16 as libc::c_int)
-                * Gain_Q16 as libc::c_short as libc::c_int
-                + ((*exc_buf_Q10.offset(idx as isize) & 0xffff as libc::c_int)
-                    * Gain_Q16 as libc::c_short as libc::c_int >> 16 as libc::c_int)
-                + *exc_buf_Q10.offset(idx as isize)
-                    * (if 16 as libc::c_int == 1 as libc::c_int {
-                        (Gain_Q16 >> 1 as libc::c_int) + (Gain_Q16 & 1 as libc::c_int)
-                    } else {
-                        (Gain_Q16 >> 16 as libc::c_int - 1 as libc::c_int)
-                            + 1 as libc::c_int >> 1 as libc::c_int
-                    }) >> 10 as libc::c_int - 1 as libc::c_int) + 1 as libc::c_int
-                >> 1 as libc::c_int
-        }) as libc::c_short;
-        i += 1;
+    let mut seed = *rand_seed;
+    for i in 0..length as usize {
+        seed = skp_rand!( seed );
+        let idx = (seed >> 24 & exc_mask) as usize;
+        residual[i] = skp_sat_16!(skp_r_shift_round!(skp_s_mul_w_w!(exc_buf_q10[idx], gain_q16 ), 10 ),i32) as i16;
     }
     *rand_seed = seed;
 }
@@ -366,12 +235,12 @@ pub unsafe extern "C" fn SKP_Silk_CNG(
         }
     }
     if (*psDec).lossCnt != 0 {
-        SKP_Silk_CNG_exc(
-            CNG_sig.as_mut_ptr(),
-            ((*psCNG).CNG_exc_buf_Q10).as_mut_ptr(),
+        skp_silk_cng_exc(
+            &mut CNG_sig,
+            &psCNG.CNG_exc_buf_Q10,
             (*psCNG).CNG_smth_Gain_Q16,
             length,
-            &mut (*psCNG).rand_seed,
+            &mut psCNG.rand_seed,
         );
         skp_silk_nlsf2a_stable(
             &mut LPC_buf,
