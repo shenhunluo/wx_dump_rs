@@ -12,7 +12,7 @@ extern "C" {
     ) -> *mut libc::c_void;
 }
 
-use crate::SKP_Silk_CNG::{SKP_Silk_CNG_struct, skp_silk_cng_reset};
+use crate::skp_silk_cng::{SkpSilkCngStruct, skp_silk_cng_reset};
 use crate::skp_silk_plc::{SkpSilkPlcStruct, skp_silk_plc_reset};
 use crate::skp_silk_nlsf_msvq_decode::SkpSilkNlsfCbStruct;
 use crate::SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs;
@@ -61,7 +61,7 @@ pub struct SkpSilkDecoderStruct {
     pub vadFlag: libc::c_int,
     pub no_FEC_counter: libc::c_int,
     pub inband_FEC_offset: libc::c_int,
-    pub sCNG: SKP_Silk_CNG_struct,
+    pub sCNG: SkpSilkCngStruct,
     pub lossCnt: libc::c_int,
     pub prev_sig_type: libc::c_int,
     pub sPLC: SkpSilkPlcStruct,
@@ -295,10 +295,10 @@ pub unsafe fn SKP_Silk_SDK_Decode(
 //         no_FEC_counter: 0,
 //         inband_FEC_offset: 0,
 //         sCNG: SKP_Silk_CNG_struct {
-//             CNG_exc_buf_Q10: [0; 480],
-//             CNG_smth_NLSF_Q15: [0; 16],
-//             CNG_synth_state: [0; 16],
-//             CNG_smth_Gain_Q16: 0,
+//             cng_exc_buf_q10: [0; 480],
+//             cng_smth_nlsf_q15: [0; 16],
+//             cng_synth_state: [0; 16],
+//             cng_smth_gain_q16: 0,
 //             rand_seed: 0,
 //             fs_k_hz: 0,
 //         },
@@ -448,11 +448,11 @@ pub unsafe fn SKP_Silk_SDK_get_TOC(
         vadFlag: 0,
         no_FEC_counter: 0,
         inband_FEC_offset: 0,
-        sCNG: SKP_Silk_CNG_struct {
-            CNG_exc_buf_Q10: [0; 480],
-            CNG_smth_NLSF_Q15: [0; 16],
-            CNG_synth_state: [0; 16],
-            CNG_smth_Gain_Q16: 0,
+        sCNG: SkpSilkCngStruct {
+            cng_exc_buf_q10: [0; 480],
+            cng_smth_nlsf_q15: [0; 16],
+            cng_synth_state: [0; 16],
+            cng_smth_gain_q16: 0,
             rand_seed: 0,
             fs_k_hz: 0,
         },

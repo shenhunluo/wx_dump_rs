@@ -2,6 +2,14 @@ use crate::{
     skp_l_shift, skp_l_shift_sat_32, skp_s_m_mul, skp_s_mla_w_b, skp_s_mla_w_w, skp_s_mul_w_b, skp_s_mul_b_b,
 };
 
+pub const MAX_LPC_ORDER: usize = 16;
+pub const NB_SUBFR: usize = 4;
+pub const LTP_ORDER: usize = 5;
+pub const V_PITCH_GAIN_START_MIN_Q14: i32 = 11469;
+pub const CNG_NLSF_SMTH_Q16: i32 = 16348;
+pub const CNG_GAIN_SMTH_Q16: i32 = 4634;
+
+
 fn skp_silk_clz16(mut in16: i16) -> i32 {
     let mut out32 = 0;
     if in16 == 0 {

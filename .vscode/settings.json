@@ -31,6 +31,7 @@
         "repr",
         "resampler",
         "SIGDN",
+        "SMTH",
         "SNAPMODULE",
         "SNAPPROCESS",
         "splitn",

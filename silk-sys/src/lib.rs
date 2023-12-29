@@ -13,7 +13,7 @@ pub mod SKP_Silk_resampler_private_copy;
 pub mod SKP_Silk_decode_frame;
 pub mod SKP_Silk_range_coder;
 pub mod SKP_Silk_decoder_set_fs;
-pub mod SKP_Silk_CNG;
+pub mod skp_silk_cng;
 pub mod SKP_Silk_biquad;
 pub mod skp_silk_decode_pitch;
 pub mod SKP_Silk_gain_quant;
@@ -59,6 +59,7 @@ pub mod skp_silk_macro;
 pub mod skp_utils;
 
 pub mod error;
+mod SKP_Silk_PLC;
 
 use bytes::Buf;
 
@@ -89,6 +90,7 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
     let mut result = vec![];
     let frame_size = sample_rate as usize / 1000 * 20;
     let mut buf = vec![0i16; frame_size];
+//    let mut aaa = 0;
     loop {
         if src.remaining() < 2 {
             break;
@@ -114,6 +116,8 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
             &mut buf,
             &mut output_size,
         );
+        //println!("data: {aaa} \n{:?}", buf);
+        //aaa += 1;
         // println!("output_size : {}, buf : {:?}", output_size, &buf[..i16::min(50,output_size) as usize]);
         if r != 0 {
             return Err(r.into());

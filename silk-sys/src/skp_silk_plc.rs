@@ -4,14 +4,9 @@ use crate::{
     skp_silk_bwexpander::skp_silk_bwexpander,
     skp_silk_lpc_inv_pred_gain::skp_silk_lpc_inverse_pred_gain,
     skp_silk_sum_sqr_shift::skp_silk_sum_sqr_shift,
-    skp_utils::{skp_silk_clz32, skp_silk_sqrt_approx},
+    skp_utils::{skp_silk_clz32, skp_silk_sqrt_approx, NB_SUBFR, LTP_ORDER, V_PITCH_GAIN_START_MIN_Q14, MAX_LPC_ORDER},
     SKP_Silk_dec_API::{SKP_Silk_decoder_control, SkpSilkDecoderStruct},
 };
-
-const MAX_LPC_ORDER: usize = 16;
-const NB_SUBFR: usize = 4;
-const LTP_ORDER: usize = 5;
-const V_PITCH_GAIN_START_MIN_Q14: i32 = 11469;
 
 #[derive(Copy, Clone)]
 pub struct SkpSilkPlcStruct {
