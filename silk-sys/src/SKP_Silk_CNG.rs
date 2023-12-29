@@ -149,15 +149,15 @@ fn skp_silk_cng_exc(
     *rand_seed = seed;
 }
 
-pub fn SKP_Silk_CNG_Reset(psDec: &mut SkpSilkDecoderStruct) {
-    let NLSF_step_Q15 = 0x7fff / (psDec.LPC_order + 1);
-    let mut NLSF_acc_Q15 = 0;
-    for i in 0..psDec.LPC_order as usize {
-        NLSF_acc_Q15 += NLSF_step_Q15;
-        psDec.sCNG.CNG_smth_NLSF_Q15[i] = NLSF_acc_Q15;
+pub fn skp_silk_cng_reset(ps_dec: &mut SkpSilkDecoderStruct) {
+    let nlsf_step_q15 = 0x7fff / (ps_dec.LPC_order + 1);
+    let mut nlsf_acc_q15 = 0;
+    for i in 0..ps_dec.LPC_order as usize {
+        nlsf_acc_q15 += nlsf_step_q15;
+        ps_dec.sCNG.CNG_smth_NLSF_Q15[i] = nlsf_acc_q15;
     }
-    psDec.sCNG.CNG_smth_Gain_Q16 = 0;
-    psDec.sCNG.rand_seed = 3176576;
+    ps_dec.sCNG.CNG_smth_Gain_Q16 = 0;
+    ps_dec.sCNG.rand_seed = 3176576;
 }
 
 #[no_mangle]
@@ -175,7 +175,7 @@ pub unsafe extern "C" fn SKP_Silk_CNG(
     let mut LPC_buf: [libc::c_short; 16] = [0; 16];
     let mut CNG_sig: [libc::c_short; 480] = [0; 480];
     if (*psDec).fs_k_hz != psDec.sCNG.fs_k_hz {
-        SKP_Silk_CNG_Reset(psDec);
+        skp_silk_cng_reset(psDec);
         psDec.sCNG.fs_k_hz = psDec.fs_k_hz;
     }
     let psCNG = &mut (*psDec).sCNG;

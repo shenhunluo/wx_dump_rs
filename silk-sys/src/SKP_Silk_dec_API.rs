@@ -12,7 +12,7 @@ extern "C" {
     ) -> *mut libc::c_void;
 }
 
-use crate::SKP_Silk_CNG::{SKP_Silk_CNG_struct, SKP_Silk_CNG_Reset};
+use crate::SKP_Silk_CNG::{SKP_Silk_CNG_struct, skp_silk_cng_reset};
 use crate::skp_silk_plc::{SkpSilkPlcStruct, skp_silk_plc_reset};
 use crate::skp_silk_nlsf_msvq_decode::SkpSilkNlsfCbStruct;
 use crate::SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs;
@@ -73,7 +73,7 @@ impl Default for SkpSilkDecoderStruct {
         SKP_Silk_decoder_set_fs(&mut ps_dec, 24);
         ps_dec.first_frame_after_reset = 1;
         ps_dec.prev_inv_gain_Q16 = 65536;
-        SKP_Silk_CNG_Reset(&mut ps_dec);
+        skp_silk_cng_reset(&mut ps_dec);
         skp_silk_plc_reset(&mut ps_dec);
         ps_dec
     }
