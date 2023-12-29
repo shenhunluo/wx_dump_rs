@@ -20,13 +20,13 @@ pub mod skp_silk_decode_pitch;
 pub mod SKP_Silk_gain_quant;
 pub mod SKP_Silk_LPC_synthesis_order16;
 pub mod SKP_Silk_LPC_synthesis_filter;
-pub mod SKP_Silk_sum_sqr_shift;
 pub mod SKP_Silk_lin2log;
 
 
 pub mod SKP_Silk_code_signs;
 pub mod SKP_Silk_MA;
 
+pub mod skp_silk_sum_sqr_shift;
 pub mod skp_silk_shell_coder;
 pub mod skp_silk_tables_ltp;
 pub mod skp_silk_decode_core;
@@ -69,10 +69,6 @@ pub fn decode_silk(src: impl AsRef<[u8]>, sample_rate: i32) -> Result<Vec<i16>, 
 }
 
 unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, SilkError> {
-    // skip tencent flag
-    if src.starts_with(b"\x02") {
-        src.advance(1);
-    };
 
     const SILK_HEADER: &[u8] = b"#!SILK_V3";
     if src.starts_with(SILK_HEADER) {
@@ -91,7 +87,7 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
 
     let mut decoder = SKP_Silk_decoder_state::default();
     let mut result = vec![];
-    let frame_size = sample_rate as usize / 1000 * 40;
+    let frame_size = sample_rate as usize / 1000 * 20;
     let mut buf = vec![0i16; frame_size];
     loop {
         if src.remaining() < 2 {
@@ -112,12 +108,13 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
         let r = SKP_Silk_SDK_Decode(
             &mut decoder,
             &mut dec_control,
-            0,
+            1,
             input,
             input_size as i32,
             &mut buf,
             &mut output_size,
         );
+        println!("output_size : {}, buf : {:?}", output_size, &buf[..i16::min(50,output_size) as usize]);
         if r != 0 {
             return Err(r.into());
         }

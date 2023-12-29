@@ -164,14 +164,14 @@ pub unsafe fn SKP_Silk_decode_frame(
                 pOut,
                 &Pulses,
             );
-            SKP_Silk_PLC(psDec, &mut sDecCtrl, pOut.as_mut_ptr(), L, action);
+            SKP_Silk_PLC(psDec, &mut sDecCtrl, pOut, L, action);
             (*psDec).lossCnt = 0 as libc::c_int;
             (*psDec).prev_sigtype = sDecCtrl.sig_type;
             (*psDec).first_frame_after_reset = 0 as libc::c_int;
         }
     }
     if action == 1 as libc::c_int {
-        SKP_Silk_PLC(psDec, &mut sDecCtrl, pOut.as_mut_ptr(), L, action);
+        SKP_Silk_PLC(psDec, &mut sDecCtrl, pOut, L, action);
     }
     memcpy(
         ((*psDec).outBuf).as_mut_ptr() as *mut libc::c_void,
@@ -179,7 +179,7 @@ pub unsafe fn SKP_Silk_decode_frame(
         (L as libc::c_ulong)
             .wrapping_mul(::core::mem::size_of::<libc::c_short>() as libc::c_ulong),
     );
-    SKP_Silk_PLC_glue_frames(psDec, &mut sDecCtrl, pOut.as_mut_ptr(), L);
+    SKP_Silk_PLC_glue_frames(psDec, &mut sDecCtrl, pOut, L);
     SKP_Silk_CNG(psDec, &mut sDecCtrl, pOut.as_mut_ptr(), L);
     SKP_Silk_biquad(
         pOut.as_ptr(),
