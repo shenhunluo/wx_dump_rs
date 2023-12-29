@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, skp_silk_bwexpander::skp_silk_bwexpander, skp_silk_sum_sqr_shift::skp_silk_sum_sqr_shift, skp_silk_lpc_inv_pred_gain::skp_silk_lpc_inverse_pred_gain, skp_r_shift, skp_s_mul_b_b, skp_utils::skp_silk_clz32, skp_s_mul_w_b, skp_r_shift_round, skp_rand, skp_s_mla_w_b, skp_l_shift, skp_s_mla_w_t, skp_sat_16, skp_s_mul_w_w};
+use crate::{SKP_Silk_dec_API::{SKP_Silk_decoder_state, SKP_Silk_decoder_control}, skp_silk_bwexpander::skp_silk_bwexpander, skp_silk_sum_sqr_shift::skp_silk_sum_sqr_shift, skp_silk_lpc_inv_pred_gain::skp_silk_lpc_inverse_pred_gain, skp_r_shift, skp_s_mul_b_b, skp_utils::skp_silk_clz32, skp_s_mul_w_b, skp_r_shift_round, skp_rand, skp_s_mla_w_b, skp_l_shift, skp_s_mla_w_t, skp_sat_16, skp_s_mul_w_w, i16_to_i32};
 extern "C" {
     fn memcpy(
         _: *mut libc::c_void,
@@ -127,7 +127,6 @@ pub struct SKP_Silk_CNG_struct {
     pub fs_kHz: libc::c_int,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
 pub union C2RustUnnamed {
     pub as_int16: [libc::c_short; 16],
     pub as_int32: [libc::c_int; 8],
@@ -185,15 +184,15 @@ unsafe extern "C" fn SKP_Silk_SQRT_APPROX(mut x: libc::c_int) -> libc::c_int {
                     as libc::c_int >> 16 as libc::c_int));
     return y;
 }
-static mut HARM_ATT_Q15: [libc::c_short; 2] = [
+static HARM_ATT_Q15: [libc::c_short; 2] = [
     32440 as libc::c_int as libc::c_short,
     31130 as libc::c_int as libc::c_short,
 ];
-static mut PLC_RAND_ATTENUATE_V_Q15: [libc::c_short; 2] = [
+static PLC_RAND_ATTENUATE_V_Q15: [libc::c_short; 2] = [
     31130 as libc::c_int as libc::c_short,
     26214 as libc::c_int as libc::c_short,
 ];
-static mut PLC_RAND_ATTENUATE_UV_Q15: [libc::c_short; 2] = [
+static PLC_RAND_ATTENUATE_UV_Q15: [libc::c_short; 2] = [
     32440 as libc::c_int as libc::c_short,
     29491 as libc::c_int as libc::c_short,
 ];
@@ -207,173 +206,88 @@ pub unsafe fn SKP_Silk_PLC(
     mut psDec: &mut SKP_Silk_decoder_state,
     mut psDecCtrl: &mut SKP_Silk_decoder_control,
     mut signal: &mut [i16],
-    mut length: libc::c_int,
-    mut lost: libc::c_int,
+    mut lost: i32,
 ) {
     if psDec.fs_kHz != psDec.sPLC.fs_kHz {
         SKP_Silk_PLC_Reset(psDec);
         psDec.sPLC.fs_kHz = psDec.fs_kHz;
     }
     if lost != 0 {
-        SKP_Silk_PLC_conceal(psDec, psDecCtrl, signal, length);
+        SKP_Silk_PLC_conceal(psDec, psDecCtrl, signal);
         (*psDec).lossCnt += 1;
         (*psDec).lossCnt;
     } else {
-        SKP_Silk_PLC_update(psDec, psDecCtrl, signal, length);
+        SKP_Silk_PLC_update(psDec, psDecCtrl);
     };
 }
+
+const NB_SUBFR: usize = 4;
+const LTP_ORDER: usize = 5;
+const V_PITCH_GAIN_START_MIN_Q14:i32 = 11469;
+
 #[no_mangle]
-pub unsafe extern "C" fn SKP_Silk_PLC_update(
-    mut psDec: *mut SKP_Silk_decoder_state,
-    mut psDecCtrl: *mut SKP_Silk_decoder_control,
-    mut _signal: &mut [i16],
-    mut _length: libc::c_int,
+pub fn SKP_Silk_PLC_update(
+    mut psDec: &mut SKP_Silk_decoder_state,
+    mut psDecCtrl: &mut SKP_Silk_decoder_control,
 ) {
-    let mut LTP_Gain_Q14: libc::c_int = 0;
-    let mut temp_LTP_Gain_Q14: libc::c_int = 0;
-    let mut i: libc::c_int = 0;
-    let mut j: libc::c_int = 0;
-    let mut psPLC: *mut SKP_Silk_PLC_struct = 0 as *mut SKP_Silk_PLC_struct;
-    psPLC = &mut (*psDec).sPLC;
-    (*psDec).prev_sigtype = (*psDecCtrl).sig_type;
-    LTP_Gain_Q14 = 0 as libc::c_int;
-    if (*psDecCtrl).sig_type == 0 as libc::c_int {
-        j = 0 as libc::c_int;
-        while j * (*psDec).subfr_length
-            < (*psDecCtrl).pitchL[(4 as libc::c_int - 1 as libc::c_int) as usize]
-        {
-            temp_LTP_Gain_Q14 = 0 as libc::c_int;
-            i = 0 as libc::c_int;
-            while i < 5 as libc::c_int {
-                temp_LTP_Gain_Q14
-                    += (*psDecCtrl)
-                        .LTPCoef_Q14[((4 as libc::c_int - 1 as libc::c_int - j)
-                        * 5 as libc::c_int + i) as usize] as libc::c_int;
-                i += 1;
+    let psPLC = &mut psDec.sPLC;
+    psDec.prev_sigtype = psDecCtrl.sig_type;
+    let mut LTP_Gain_Q14 = 0;
+    if (*psDecCtrl).sig_type == 0  {
+        let mut j = 0;
+        while j * (psDec.subfr_length as usize) < (psDecCtrl.pitchL[NB_SUBFR - 1] as usize) {
+            let mut temp_LTP_Gain_Q14 = 0;
+            for i in 0..LTP_ORDER {
+                temp_LTP_Gain_Q14 += psDecCtrl.LTPCoef_Q14[(NB_SUBFR-1- j)*LTP_ORDER+i] as i32;
             }
             if temp_LTP_Gain_Q14 > LTP_Gain_Q14 {
                 LTP_Gain_Q14 = temp_LTP_Gain_Q14;
-                memcpy(
-                    ((*psPLC).LTPCoef_Q14).as_mut_ptr() as *mut libc::c_void,
-                    &mut *((*psDecCtrl).LTPCoef_Q14)
-                        .as_mut_ptr()
-                        .offset(
-                            ((4 as libc::c_int - 1 as libc::c_int - j) as libc::c_short
-                                as libc::c_int
-                                * 5 as libc::c_int as libc::c_short as libc::c_int) as isize,
-                        ) as *mut libc::c_short as *const libc::c_void,
-                    (5 as libc::c_int as libc::c_ulong)
-                        .wrapping_mul(
-                            ::core::mem::size_of::<libc::c_short>() as libc::c_ulong,
-                        ),
-                );
-                (*psPLC)
-                    .pitchL_Q8 = (*psDecCtrl)
-                    .pitchL[(4 as libc::c_int - 1 as libc::c_int - j) as usize]
-                    << 8 as libc::c_int;
+                for i in 0..LTP_ORDER {
+                    psPLC.LTPCoef_Q14[i] = psDecCtrl.LTPCoef_Q14[skp_s_mul_b_b!(NB_SUBFR - 1 - j as usize, LTP_ORDER) as usize + i]
+                }
+                psPLC.pitchL_Q8 = psDecCtrl.pitchL[NB_SUBFR-1-j] << 8;
             }
             j += 1;
         }
-        memset(
-            ((*psPLC).LTPCoef_Q14).as_mut_ptr() as *mut libc::c_void,
-            0 as libc::c_int,
-            (5 as libc::c_int as libc::c_ulong)
-                .wrapping_mul(::core::mem::size_of::<libc::c_short>() as libc::c_ulong),
-        );
-        (*psPLC)
-            .LTPCoef_Q14[(5 as libc::c_int / 2 as libc::c_int)
-            as usize] = LTP_Gain_Q14 as libc::c_short;
-        if LTP_Gain_Q14 < 11469 as libc::c_int {
-            let mut scale_Q10: libc::c_int = 0;
-            let mut tmp: libc::c_int = 0;
-            tmp = (11469 as libc::c_int) << 10 as libc::c_int;
-            scale_Q10 = tmp
-                / (if LTP_Gain_Q14 > 1 as libc::c_int {
-                    LTP_Gain_Q14
-                } else {
-                    1 as libc::c_int
-                });
-            i = 0 as libc::c_int;
-            while i < 5 as libc::c_int {
-                (*psPLC)
-                    .LTPCoef_Q14[i
-                    as usize] = ((*psPLC).LTPCoef_Q14[i as usize] as libc::c_int
-                    * scale_Q10 as libc::c_short as libc::c_int >> 10 as libc::c_int)
-                    as libc::c_short;
-                i += 1;
+        for i in 0..LTP_ORDER {
+            psPLC.LTPCoef_Q14[i] = 0;
+        }
+        psPLC.LTPCoef_Q14[LTP_ORDER/2] = LTP_Gain_Q14 as i16;
+        if LTP_Gain_Q14 < V_PITCH_GAIN_START_MIN_Q14 {
+            let tmp = V_PITCH_GAIN_START_MIN_Q14 << 10 as libc::c_int;
+            let scale_Q10 = tmp / LTP_Gain_Q14.max(1);
+            for i in 0..LTP_ORDER {
+                psPLC.LTPCoef_Q14[i] = skp_r_shift!(skp_s_mul_b_b!(psPLC.LTPCoef_Q14[i],scale_Q10),10) as i16;
             }
-        } else if LTP_Gain_Q14 > 15565 as libc::c_int {
-            let mut scale_Q14: libc::c_int = 0;
-            let mut tmp_0: libc::c_int = 0;
-            tmp_0 = (15565 as libc::c_int) << 14 as libc::c_int;
-            scale_Q14 = tmp_0
-                / (if LTP_Gain_Q14 > 1 as libc::c_int {
-                    LTP_Gain_Q14
-                } else {
-                    1 as libc::c_int
-                });
-            i = 0 as libc::c_int;
-            while i < 5 as libc::c_int {
-                (*psPLC)
-                    .LTPCoef_Q14[i
-                    as usize] = ((*psPLC).LTPCoef_Q14[i as usize] as libc::c_int
-                    * scale_Q14 as libc::c_short as libc::c_int >> 14 as libc::c_int)
-                    as libc::c_short;
-                i += 1;
+        } else if LTP_Gain_Q14 > V_PITCH_GAIN_START_MIN_Q14 {
+            let tmp_0 = V_PITCH_GAIN_START_MIN_Q14 << 14;
+            let scale_Q10 = tmp_0 / LTP_Gain_Q14.max(1);
+            for i in 0..LTP_ORDER {
+                psPLC.LTPCoef_Q14[i] = skp_r_shift!(skp_s_mul_b_b!(psPLC.LTPCoef_Q14[i],scale_Q10),14) as i16;
             }
         }
     } else {
-        (*psPLC)
-            .pitchL_Q8 = ((*psDec).fs_kHz as libc::c_short as libc::c_int
-            * 18 as libc::c_int as libc::c_short as libc::c_int) << 8 as libc::c_int;
-        memset(
-            ((*psPLC).LTPCoef_Q14).as_mut_ptr() as *mut libc::c_void,
-            0 as libc::c_int,
-            (5 as libc::c_int as libc::c_ulong)
-                .wrapping_mul(::core::mem::size_of::<libc::c_short>() as libc::c_ulong),
-        );
+        psPLC.pitchL_Q8 = skp_l_shift!(skp_s_mul_b_b!(psDec.fs_kHz,18),8);
+        for i in 0..LTP_ORDER {
+            psPLC.LTPCoef_Q14[i] = 0;
+        }
     }
-    memcpy(
-        ((*psPLC).prevLPC_Q12).as_mut_ptr() as *mut libc::c_void,
-        ((*psDecCtrl).PredCoef_Q12[1 as libc::c_int as usize]).as_mut_ptr()
-            as *const libc::c_void,
-        ((*psDec).LPC_order as libc::c_ulong)
-            .wrapping_mul(::core::mem::size_of::<libc::c_short>() as libc::c_ulong),
-    );
-    (*psPLC).prevLTP_scale_Q14 = (*psDecCtrl).LTP_scale_Q14 as libc::c_short;
-    memcpy(
-        ((*psPLC).prevGain_Q16).as_mut_ptr() as *mut libc::c_void,
-        ((*psDecCtrl).Gains_Q16).as_mut_ptr() as *const libc::c_void,
-        (4 as libc::c_int as libc::c_ulong)
-            .wrapping_mul(::core::mem::size_of::<libc::c_int>() as libc::c_ulong),
-    );
+    for i in 0..psDec.LPC_order as usize {
+        psPLC.prevLPC_Q12[i] = psDecCtrl.PredCoef_Q12[1][i];
+    }
+    psPLC.prevLTP_scale_Q14 = psDecCtrl.LTP_scale_Q14 as i16;
+    for i in 0..NB_SUBFR {
+        psPLC.prevGain_Q16[i] = psDecCtrl.Gains_Q16[i];
+    }
 }
-#[no_mangle]
-pub unsafe fn SKP_Silk_PLC_conceal(
+
+pub fn SKP_Silk_PLC_conceal(
     mut psDec: &mut SKP_Silk_decoder_state,
     mut psDecCtrl: &mut SKP_Silk_decoder_control,
     mut signal: &mut [i16],
-    mut _length: libc::c_int,
 ) {
-    let mut k: libc::c_int = 0;
-    let mut exc_buf: [libc::c_short; 480] = [0; 480];
-    let mut rand_scale_Q14: libc::c_short = 0;
-    let mut A_Q12_tmp: C2RustUnnamed = C2RustUnnamed { as_int16: [0; 16] };
-    let mut rand_seed: libc::c_int = 0;
-    let mut harm_Gain_Q15: libc::c_int = 0;
-    let mut rand_Gain_Q15: libc::c_int = 0;
-    let mut lag: libc::c_int = 0;
-    let mut idx: libc::c_int = 0;
-    let mut sLTP_buf_idx: libc::c_int = 0;
-    let mut shift1: libc::c_int = 0;
-    let mut shift2: libc::c_int = 0;
-    let mut energy1: libc::c_int = 0;
-    let mut energy2: libc::c_int = 0;
+    let mut exc_buf = [0; 480];
     let mut sig_Q10: [libc::c_int; 480] = [0; 480];
-    let mut LPC_exc_Q10: libc::c_int = 0;
-    let mut LPC_pred_Q10: libc::c_int = 0;
-    let mut LTP_pred_Q14: libc::c_int = 0;
-    let mut Atmp: libc::c_int = 0;
     let psPLC = &mut psDec.sPLC;
     for i in 0..psDec.frame_length as usize {
         psDec.sLTP_Q16[i] = psDec.sLTP_Q16[psDec.frame_length as usize + i];
@@ -386,22 +300,25 @@ pub unsafe fn SKP_Silk_PLC_conceal(
     let mut exc_buf_ptr = &mut exc_buf[..];
     for k in (4 >> 1)..4 {
         for i in 0..psDec.subfr_length as usize {
-            exc_buf_ptr[i] = skp_r_shift!( 
-                skp_s_mul_w_w!( psDec.exc_Q10[ i + k * psDec.subfr_length as usize ], psPLC.prevGain_Q16[ k ] ), 10 ) as i16;
+            exc_buf_ptr[i] = skp_r_shift!( skp_s_mul_w_w!( psDec.exc_Q10[ i + k * psDec.subfr_length as usize ], psPLC.prevGain_Q16[ k ] ), 10 ) as i16;
         }
         exc_buf_ptr = &mut exc_buf_ptr[psDec.subfr_length as usize..];
     }
+    let mut shift1 = 0;
+    let mut energy1 = 0;
     skp_silk_sum_sqr_shift(
         &mut energy1,
         &mut shift1,
         &exc_buf,
-        (*psDec).subfr_length as usize,
+        psDec.subfr_length as usize,
     );
+    let mut shift2 = 0;
+    let mut energy2 = 0;
     skp_silk_sum_sqr_shift(
         &mut energy2,
         &mut shift2,
         &exc_buf[psDec.subfr_length as usize..],
-        (*psDec).subfr_length as usize,
+        psDec.subfr_length as usize,
     );
     let rand_ptr =  if energy1 >> shift2 < energy2 >> shift1 {
         &mut psDec.exc_Q10[i32::max(0, 3 * psDec.subfr_length - 128) as usize..]
@@ -409,22 +326,13 @@ pub unsafe fn SKP_Silk_PLC_conceal(
         &mut psDec.exc_Q10[i32::max(0, psDec.subfr_length - 128) as usize..]
     };
     let B_Q14 = &mut psPLC.LTPCoef_Q14;
-    rand_scale_Q14 = (*psPLC).randScale_Q14;
-    harm_Gain_Q15 = HARM_ATT_Q15[i32::min(
-        2 as libc::c_int - 1 as libc::c_int,
-        (*psDec).lossCnt,
-    ) as usize] as libc::c_int;
-    if (*psDec).prev_sigtype == 0 as libc::c_int {
-        rand_Gain_Q15 = PLC_RAND_ATTENUATE_V_Q15[i32::min(
-            2 as libc::c_int - 1 as libc::c_int,
-            (*psDec).lossCnt,
-        ) as usize] as libc::c_int;
+    let mut rand_scale_Q14 = (*psPLC).randScale_Q14;
+    let harm_Gain_Q15 = HARM_ATT_Q15[i32::min(2 - 1,psDec.lossCnt,) as usize];
+    let mut rand_Gain_Q15 =  if (*psDec).prev_sigtype == 0 as libc::c_int {
+        PLC_RAND_ATTENUATE_V_Q15[i32::min(2 - 1,psDec.lossCnt) as usize]
     } else {
-        rand_Gain_Q15 = PLC_RAND_ATTENUATE_UV_Q15[i32::min(
-            2 as libc::c_int - 1 as libc::c_int,
-            (*psDec).lossCnt,
-        ) as usize] as libc::c_int;
-    }
+        PLC_RAND_ATTENUATE_UV_Q15[i32::min(2 - 1,psDec.lossCnt) as usize]
+    } as i32;
     if (*psDec).lossCnt == 0 as libc::c_int {
         rand_scale_Q14 = ((1 as libc::c_int) << 14 as libc::c_int) as libc::c_short;
         if (*psDec).prev_sigtype == 0 as libc::c_int {
@@ -458,64 +366,60 @@ pub unsafe fn SKP_Silk_PLC_conceal(
             rand_Gain_Q15 = skp_r_shift!( skp_s_mul_w_b!( down_scale_Q30, rand_Gain_Q15 ), 14 );
         }
     }
-    rand_seed = (*psPLC).rand_seed;
-    lag = skp_r_shift_round!( psPLC.pitchL_Q8, 8 );
-    sLTP_buf_idx = (*psDec).frame_length;
+    let mut rand_seed = (*psPLC).rand_seed;
+    let mut lag = skp_r_shift_round!( psPLC.pitchL_Q8, 8 );
+    let mut sLTP_buf_idx = psDec.frame_length;
     let mut sig_Q10_ptr = &mut sig_Q10[..];
-    k = 0 as libc::c_int;
-    while k < 4 as libc::c_int {
+    for _ in 0..4 {
         let mut pred_lag_ptr = (sLTP_buf_idx - lag + 5 / 2) as usize;
         for i in 0..psDec.subfr_length as usize {
             rand_seed = skp_rand!( rand_seed );
-            idx = rand_seed >> 25 as libc::c_int & 128 as libc::c_int - 1 as libc::c_int;
-            LTP_pred_Q14 = skp_s_mul_w_b!(               psDec.sLTP_Q16[pred_lag_ptr - 0], B_Q14[0] );
+            let idx = rand_seed >> 25 as libc::c_int & 128 as libc::c_int - 1 as libc::c_int;
+            let mut LTP_pred_Q14 = skp_s_mul_w_b!(               psDec.sLTP_Q16[pred_lag_ptr - 0], B_Q14[0] );
             LTP_pred_Q14 = skp_s_mla_w_b!( LTP_pred_Q14, psDec.sLTP_Q16[pred_lag_ptr - 1], B_Q14[1] );
             LTP_pred_Q14 = skp_s_mla_w_b!( LTP_pred_Q14, psDec.sLTP_Q16[pred_lag_ptr - 2], B_Q14[2] );
             LTP_pred_Q14 = skp_s_mla_w_b!( LTP_pred_Q14, psDec.sLTP_Q16[pred_lag_ptr - 3], B_Q14[3] );
             LTP_pred_Q14 = skp_s_mla_w_b!( LTP_pred_Q14, psDec.sLTP_Q16[pred_lag_ptr - 4], B_Q14[4] );
             pred_lag_ptr += if pred_lag_ptr == psDec.sLTP_Q16.len() - 1 { 0 } else { 1 };
-            LPC_exc_Q10 = skp_l_shift!( skp_s_mul_w_b!( rand_ptr[idx as usize], rand_scale_Q14 ), 2 );
-            LPC_exc_Q10 = LPC_exc_Q10 + skp_r_shift_round!( LTP_pred_Q14, 4 ) ;
+            let LPC_exc_Q10 = skp_l_shift!( skp_s_mul_w_b!( rand_ptr[idx as usize], rand_scale_Q14 ), 2 );
+            let LPC_exc_Q10 = LPC_exc_Q10 + skp_r_shift_round!( LTP_pred_Q14, 4 ) ;
             (*psDec).sLTP_Q16[sLTP_buf_idx as usize] = LPC_exc_Q10 << 6;
             sLTP_buf_idx += 1;
             sig_Q10_ptr[i] = LPC_exc_Q10;
         }
         sig_Q10_ptr = &mut sig_Q10_ptr[psDec.subfr_length as usize..];
         for j in 0..5 {
-            B_Q14[j] = skp_r_shift!( skp_s_mul_b_b!( harm_Gain_Q15 as i16, B_Q14[j]), 15 ) as i16;
+            B_Q14[j] = skp_r_shift!( skp_s_mul_b_b!( harm_Gain_Q15, B_Q14[j]), 15 ) as i16;
         }
         rand_scale_Q14 = skp_r_shift!( skp_s_mul_b_b!(rand_scale_Q14, rand_Gain_Q15 as i16), 15) as i16;
         psPLC.pitchL_Q8 += skp_s_mul_w_b!( psPLC.pitchL_Q8, 655 );
         psPLC.pitchL_Q8 = i32::min( psPLC.pitchL_Q8, skp_l_shift!( skp_s_mul_b_b!( 18, psDec.fs_kHz ), 8 ) );
         lag = skp_r_shift_round!( psPLC.pitchL_Q8, 8 );
-        k += 1;
     }
     sig_Q10_ptr = &mut sig_Q10[..];
-    memcpy(
-        (A_Q12_tmp.as_int16).as_mut_ptr() as *mut libc::c_void,
-        ((*psPLC).prevLPC_Q12).as_mut_ptr() as *const libc::c_void,
-        ((*psDec).LPC_order as libc::c_ulong)
-            .wrapping_mul(::core::mem::size_of::<libc::c_short>() as libc::c_ulong),
-    );
+    let mut A_Q12_tmp = [0; 16];
+    for i in 0..psDec.LPC_order as usize {
+        A_Q12_tmp[i] = psPLC.prevLPC_Q12[i];
+    }
     for _ in 0..4 {
         for i in 0..psDec.subfr_length as usize {
-            Atmp = A_Q12_tmp.as_int32[ 0 ];
-            LPC_pred_Q10 = skp_s_mul_w_b!(               psDec.sLPC_Q14[ MAX_LPC_ORDER + i -  1 ], Atmp );
+            let Atmp = i16_to_i32!(A_Q12_tmp[0],A_Q12_tmp[1]);
+            let mut LPC_pred_Q10 = skp_s_mul_w_b!(  psDec.sLPC_Q14[ MAX_LPC_ORDER + i -  1 ], Atmp );
             LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, psDec.sLPC_Q14[ MAX_LPC_ORDER + i -  2 ], Atmp );
-            Atmp = A_Q12_tmp.as_int32[ 1 ];
+            let Atmp = i16_to_i32!(A_Q12_tmp[2],A_Q12_tmp[3]);
             LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, psDec.sLPC_Q14[ MAX_LPC_ORDER + i -  3 ], Atmp );
             LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, psDec.sLPC_Q14[ MAX_LPC_ORDER + i -  4 ], Atmp );
-            Atmp = A_Q12_tmp.as_int32[ 2 ];
+            let Atmp = i16_to_i32!(A_Q12_tmp[4],A_Q12_tmp[5]);
             LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, psDec.sLPC_Q14[ MAX_LPC_ORDER + i -  5 ], Atmp );
             LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, psDec.sLPC_Q14[ MAX_LPC_ORDER + i -  6 ], Atmp );
-            Atmp = A_Q12_tmp.as_int32[ 3 ];
+            let Atmp = i16_to_i32!(A_Q12_tmp[6],A_Q12_tmp[7]);
             LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, psDec.sLPC_Q14[ MAX_LPC_ORDER + i -  7 ], Atmp );
             LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, psDec.sLPC_Q14[ MAX_LPC_ORDER + i -  8 ], Atmp );
-            Atmp = A_Q12_tmp.as_int32[ 4 ];
+            let Atmp = i16_to_i32!(A_Q12_tmp[8],A_Q12_tmp[9]);
             LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, psDec.sLPC_Q14[ MAX_LPC_ORDER + i -  9 ], Atmp );
             LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, psDec.sLPC_Q14[ MAX_LPC_ORDER + i - 10 ], Atmp );
             for j in (10..psDec.LPC_order as usize).step_by(2) {
-                Atmp = A_Q12_tmp.as_int32[ j / 2 ];
+                let Atmp = i16_to_i32!(A_Q12_tmp[j],A_Q12_tmp[j+1]);
                 LPC_pred_Q10 = skp_s_mla_w_b!( LPC_pred_Q10, psDec.sLPC_Q14[ MAX_LPC_ORDER + i -  1 - j ], Atmp );
                 LPC_pred_Q10 = skp_s_mla_w_t!( LPC_pred_Q10, psDec.sLPC_Q14[ MAX_LPC_ORDER + i -  2 - j ], Atmp );
             }
@@ -523,13 +427,9 @@ pub unsafe fn SKP_Silk_PLC_conceal(
             psDec.sLPC_Q14[16 + i] = sig_Q10_ptr[i] << 4 as libc::c_int;
         }
         sig_Q10_ptr = &mut sig_Q10_ptr[psDec.subfr_length as usize..];
-        memcpy(
-            ((*psDec).sLPC_Q14).as_mut_ptr() as *mut libc::c_void,
-            &mut *((*psDec).sLPC_Q14).as_mut_ptr().offset((*psDec).subfr_length as isize)
-                as *mut libc::c_int as *const libc::c_void,
-            (16 as libc::c_int as libc::c_ulong)
-                .wrapping_mul(::core::mem::size_of::<libc::c_int>() as libc::c_ulong),
-        );
+        for i in 0..16 {
+            psDec.sLPC_Q14[i] = psDec.sLPC_Q14[psDec.subfr_length as usize + i];
+        }
     }
     for i in 0..psDec.frame_length as usize {
         signal[i] = skp_sat_16!(skp_r_shift_round!(skp_s_mul_w_w!(sig_Q10[i], psPLC.prevGain_Q16[4-1]),10), i32) as i16;

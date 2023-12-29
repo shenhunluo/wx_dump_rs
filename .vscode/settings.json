@@ -33,6 +33,7 @@
         "SNAPMODULE",
         "SNAPPROCESS",
         "splitn",
+        "SUBFR",
         "thiserror",
         "Toolhelp",
         "wechat",

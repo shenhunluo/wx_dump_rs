@@ -108,7 +108,7 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
         let r = SKP_Silk_SDK_Decode(
             &mut decoder,
             &mut dec_control,
-            1,
+            0,
             input,
             input_size as i32,
             &mut buf,

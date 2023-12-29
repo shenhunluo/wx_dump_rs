@@ -164,14 +164,14 @@ pub unsafe fn SKP_Silk_decode_frame(
                 pOut,
                 &Pulses,
             );
-            SKP_Silk_PLC(psDec, &mut sDecCtrl, pOut, L, action);
+            SKP_Silk_PLC(psDec, &mut sDecCtrl, pOut, action);
             (*psDec).lossCnt = 0 as libc::c_int;
             (*psDec).prev_sigtype = sDecCtrl.sig_type;
             (*psDec).first_frame_after_reset = 0 as libc::c_int;
         }
     }
     if action == 1 as libc::c_int {
-        SKP_Silk_PLC(psDec, &mut sDecCtrl, pOut, L, action);
+        SKP_Silk_PLC(psDec, &mut sDecCtrl, pOut, action);
     }
     memcpy(
         ((*psDec).outBuf).as_mut_ptr() as *mut libc::c_void,
