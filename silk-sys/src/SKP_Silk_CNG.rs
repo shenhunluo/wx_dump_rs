@@ -1,6 +1,6 @@
 #![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
 
-use crate::{SKP_Silk_dec_API::{SkpSilkDecoderStruct, SKP_Silk_decoder_control}, skp_silk_nlsf2a_stable::skp_silk_nlsf2a_stable, skp_silk_lpc_synthesis_order16::skp_silk_lpc_synthesis_order16, SKP_Silk_LPC_synthesis_filter::SKP_Silk_LPC_synthesis_filter, skp_rand, skp_sat_16, skp_r_shift_round, skp_s_mul_w_w};
+use crate::{SKP_Silk_dec_API::{SkpSilkDecoderStruct, SKP_Silk_decoder_control}, skp_silk_nlsf2a_stable::skp_silk_nlsf2a_stable, skp_silk_lpc_synthesis_order16::skp_silk_lpc_synthesis_order16, skp_silk_lpc_synthesis_filter::skp_silk_lpc_synthesis_filter, skp_rand, skp_sat_16, skp_r_shift_round, skp_s_mul_w_w};
 extern "C" {
     fn memcpy(
         _: *mut libc::c_void,
@@ -258,14 +258,14 @@ pub unsafe extern "C" fn SKP_Silk_CNG(
                 length as usize,
             );
         } else {
-            SKP_Silk_LPC_synthesis_filter(
-                CNG_sig.as_mut_ptr(),
-                LPC_buf.as_mut_ptr(),
+            skp_silk_lpc_synthesis_filter(
+                &CNG_sig.clone(),
+                &LPC_buf,
                 Gain_Q26,
-                ((*psCNG).CNG_synth_state).as_mut_ptr(),
-                CNG_sig.as_mut_ptr(),
-                length,
-                (*psDec).LPC_order,
+                &mut psCNG.CNG_synth_state,
+                &mut CNG_sig,
+                length as usize,
+                psDec.LPC_order as usize,
             );
         }
         i = 0 as libc::c_int;

@@ -17,14 +17,14 @@ pub mod SKP_Silk_CNG;
 pub mod SKP_Silk_biquad;
 pub mod skp_silk_decode_pitch;
 pub mod SKP_Silk_gain_quant;
-pub mod skp_silk_lpc_synthesis_order16;
-pub mod SKP_Silk_LPC_synthesis_filter;
 pub mod SKP_Silk_lin2log;
 
 
 pub mod SKP_Silk_code_signs;
 pub mod SKP_Silk_MA;
 
+pub mod skp_silk_lpc_synthesis_filter;
+pub mod skp_silk_lpc_synthesis_order16;
 pub mod skp_silk_plc;
 pub mod skp_silk_sum_sqr_shift;
 pub mod skp_silk_shell_coder;
