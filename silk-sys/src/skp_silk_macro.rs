@@ -131,6 +131,14 @@ macro_rules! skp_s_mul_w_w {
     }};
 }
 
+
+#[macro_export]
+macro_rules! skp_s_mul_w_t {
+    ($a32:expr,$b32:expr) => {{
+        (($a32 >> 16) * ($b32 >> 16) + ((($a32 & 0x0000FFFF) * ($b32 >> 16)) >> 16))
+    }}
+}
+
 #[macro_export]
 macro_rules! skp_mla {
     ($a32:expr,$b32:expr,$c32:expr) => {{
@@ -184,6 +192,13 @@ macro_rules! skp_s_mla_w_t {
 }
 
 #[macro_export]
+macro_rules! skp_s_mla_w_t_ovflw {
+    ($a32:expr,$b32:expr,$c32:expr) => {{
+        crate::skp_add32_ovflw!($a32, crate::skp_s_mul_w_t!($b32,$c32))
+    }}
+}
+
+#[macro_export]
 macro_rules! skp_dec_map {
     ($a:expr) => {{
         crate::skp_l_shift!($a,1)-1
@@ -212,6 +227,25 @@ macro_rules! skp_l_shift_sat_32 {
     }}
 }
 
+
+#[macro_export]
+macro_rules! skp_add_sat32 {
+    ($a:expr,$b:expr) => {{
+        if ($a + $b) as u32 & 0x80000000 == 0 {
+            if ($a & $b) as u32 & 0x80000000 != 0 {
+                i32::MIN
+            } else {
+                $a + $b
+            }
+        } else {
+            if ($a | $b) as u32 & 0x80000000 == 0 {
+                i32::MAX
+            } else {
+                $a + $b
+            }
+        }
+    }}
+}
 
 #[macro_export]
 macro_rules! i16_to_i32 {
