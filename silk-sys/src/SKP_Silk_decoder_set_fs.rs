@@ -1,5 +1,3 @@
-#![allow(dead_code, mutable_transmutes, non_camel_case_types, non_snake_case, non_upper_case_globals, unused_assignments, unused_mut)]
-
 use crate::SKP_Silk_dec_API::SkpSilkDecoderStruct;
 use crate::skp_s_mul_b_b;
 use crate::skp_silk_tables_nlsf_cb0_10::SKP_SILK_NLSF_CB0_10;
@@ -8,143 +6,49 @@ use crate::skp_silk_tables_nlsf_cb1_10::SKP_SILK_NLSF_CB1_10;
 use crate::skp_silk_tables_nlsf_cb1_16::SKP_SILK_NLSF_CB1_16;
 use crate::skp_silk_tables_other::{SKP_SILK_DEC_A_HP_24, SKP_SILK_DEC_B_HP_24, SKP_SILK_DEC_B_HP_16, SKP_SILK_DEC_A_HP_16, SKP_SILK_DEC_A_HP_12, SKP_SILK_DEC_B_HP_12, SKP_SILK_DEC_A_HP_8, SKP_SILK_DEC_B_HP_8};
 
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct _SKP_Silk_resampler_state_struct {
-    pub sIIR: [libc::c_int; 6],
-    pub sFIR: [libc::c_int; 16],
-    pub sDown2: [libc::c_int; 2],
-    pub resampler_function: Option::<
-        unsafe extern "C" fn(
-            *mut libc::c_void,
-            *mut libc::c_short,
-            *const libc::c_short,
-            libc::c_int,
-        ) -> (),
-    >,
-    pub up2_function: Option::<
-        unsafe extern "C" fn(
-            *mut libc::c_int,
-            *mut libc::c_short,
-            *const libc::c_short,
-            libc::c_int,
-        ) -> (),
-    >,
-    pub batchSize: libc::c_int,
-    pub invRatio_Q16: libc::c_int,
-    pub FIR_Fracs: libc::c_int,
-    pub input2x: libc::c_int,
-    pub Coefs: *const libc::c_short,
-    pub sDownPre: [libc::c_int; 2],
-    pub sUpPost: [libc::c_int; 2],
-    pub down_pre_function: Option::<
-        unsafe extern "C" fn(
-            *mut libc::c_int,
-            *mut libc::c_short,
-            *const libc::c_short,
-            libc::c_int,
-        ) -> (),
-    >,
-    pub up_post_function: Option::<
-        unsafe extern "C" fn(
-            *mut libc::c_int,
-            *mut libc::c_short,
-            *const libc::c_short,
-            libc::c_int,
-        ) -> (),
-    >,
-    pub batchSizePrePost: libc::c_int,
-    pub ratio_Q16: libc::c_int,
-    pub nPreDownsamplers: libc::c_int,
-    pub nPostUpsamplers: libc::c_int,
-    pub magic_number: libc::c_int,
-}
-pub type SKP_Silk_resampler_state_struct = _SKP_Silk_resampler_state_struct;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct SKP_Silk_range_coder_state {
-    pub bufferLength: libc::c_int,
-    pub bufferIx: libc::c_int,
-    pub base_Q32: libc::c_uint,
-    pub range_Q16: libc::c_uint,
-    pub error: libc::c_int,
-    pub buffer: [libc::c_uchar; 1024],
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct SKP_Silk_NLSF_CBS {
-    pub nVectors: libc::c_int,
-    pub CB_NLSF_Q15: *const libc::c_short,
-    pub Rates_Q5: *const libc::c_short,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct SKP_Silk_PLC_struct {
-    pub pitchL_Q8: libc::c_int,
-    pub LTPCoef_Q14: [libc::c_short; 5],
-    pub prevLPC_Q12: [libc::c_short; 16],
-    pub last_frame_lost: libc::c_int,
-    pub rand_seed: libc::c_int,
-    pub randScale_Q14: libc::c_short,
-    pub conc_energy: libc::c_int,
-    pub conc_energy_shift: libc::c_int,
-    pub prevLTP_scale_Q14: libc::c_short,
-    pub prevGain_Q16: [libc::c_int; 4],
-    pub fs_k_hz: libc::c_int,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct SKP_Silk_CNG_struct {
-    pub CNG_exc_buf_Q10: [libc::c_int; 480],
-    pub CNG_smth_NLSF_Q15: [libc::c_int; 16],
-    pub CNG_synth_state: [libc::c_int; 16],
-    pub CNG_smth_Gain_Q16: libc::c_int,
-    pub rand_seed: libc::c_int,
-    pub fs_k_hz: libc::c_int,
-}
 
-pub fn SKP_Silk_decoder_set_fs(
-    mut psDec: &mut SkpSilkDecoderStruct,
-    mut fs_k_hz: libc::c_int,
+pub fn skp_silk_decoder_set_fs(
+    p_s_dec: &mut SkpSilkDecoderStruct,
+    fs_k_hz: i32,
 ) {
-    if psDec.fs_k_hz != fs_k_hz {
-        psDec.fs_k_hz = fs_k_hz;
-        psDec.frame_length = skp_s_mul_b_b!(20, fs_k_hz);
-        psDec.subfr_length = skp_s_mul_b_b!(20 / 4, fs_k_hz);
-        if psDec.fs_k_hz == 8 {
-            psDec.LPC_order = 10;
-            psDec.psNLSF_CB[0] = Some(&SKP_SILK_NLSF_CB0_10);
-            psDec.psNLSF_CB[1] = Some(&SKP_SILK_NLSF_CB1_10);
+    if p_s_dec.fs_k_hz != fs_k_hz {
+        p_s_dec.fs_k_hz = fs_k_hz;
+        p_s_dec.frame_length = skp_s_mul_b_b!(20, fs_k_hz);
+        p_s_dec.subfr_length = skp_s_mul_b_b!(20 / 4, fs_k_hz);
+        if p_s_dec.fs_k_hz == 8 {
+            p_s_dec.LPC_order = 10;
+            p_s_dec.psNLSF_CB[0] = Some(&SKP_SILK_NLSF_CB0_10);
+            p_s_dec.psNLSF_CB[1] = Some(&SKP_SILK_NLSF_CB1_10);
         } else {
-            psDec.LPC_order = 16;
-            psDec.psNLSF_CB[0] = Some(&SKP_SILK_NLSF_CB0_16);
-            psDec.psNLSF_CB[1] = Some(&SKP_SILK_NLSF_CB1_16);
+            p_s_dec.LPC_order = 16;
+            p_s_dec.psNLSF_CB[0] = Some(&SKP_SILK_NLSF_CB0_16);
+            p_s_dec.psNLSF_CB[1] = Some(&SKP_SILK_NLSF_CB1_16);
         }
-        for i in &mut psDec.sLPC_Q14[0..16] {
+        for i in &mut p_s_dec.sLPC_Q14[0..16] {
             *i = 0;
         }
-        for i in &mut psDec.outBuf[0..20*24] {
+        for i in &mut p_s_dec.outBuf[0..20*24] {
             *i = 0;
         }
-        for i in &mut psDec.prevNLSF_Q15[0..16] {
+        for i in &mut p_s_dec.prevNLSF_Q15[0..16] {
             *i = 0;
         }
-        psDec.lagPrev = 100;
-        psDec.LastGainIndex = 1;
-        psDec.prev_sig_type = 0;
-        psDec.first_frame_after_reset = 1;
+        p_s_dec.lagPrev = 100;
+        p_s_dec.LastGainIndex = 1;
+        p_s_dec.prev_sig_type = 0;
+        p_s_dec.first_frame_after_reset = 1;
         if fs_k_hz == 24 {
-            psDec.HP_A = Some(&SKP_SILK_DEC_A_HP_24);
-            psDec.HP_B = Some(&SKP_SILK_DEC_B_HP_24);
+            p_s_dec.HP_A = Some(&SKP_SILK_DEC_A_HP_24);
+            p_s_dec.HP_B = Some(&SKP_SILK_DEC_B_HP_24);
         } else if fs_k_hz == 16 {
-            psDec.HP_A = Some(&SKP_SILK_DEC_A_HP_16);
-            psDec.HP_B = Some(&SKP_SILK_DEC_B_HP_16);
+            p_s_dec.HP_A = Some(&SKP_SILK_DEC_A_HP_16);
+            p_s_dec.HP_B = Some(&SKP_SILK_DEC_B_HP_16);
         } else if fs_k_hz == 12 {
-            psDec.HP_A = Some(&SKP_SILK_DEC_A_HP_12);
-            psDec.HP_B = Some(&SKP_SILK_DEC_B_HP_12);
+            p_s_dec.HP_A = Some(&SKP_SILK_DEC_A_HP_12);
+            p_s_dec.HP_B = Some(&SKP_SILK_DEC_B_HP_12);
         } else if fs_k_hz == 8 {
-            psDec.HP_A = Some(&SKP_SILK_DEC_A_HP_8);
-            psDec.HP_B = Some(&SKP_SILK_DEC_B_HP_8);
+            p_s_dec.HP_A = Some(&SKP_SILK_DEC_A_HP_8);
+            p_s_dec.HP_B = Some(&SKP_SILK_DEC_B_HP_8);
         }
     }
 }

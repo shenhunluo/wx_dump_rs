@@ -10,9 +10,7 @@ pub mod SKP_Silk_resampler_private_IIR_FIR;
 pub mod SKP_Silk_resampler_private_AR2;
 pub mod SKP_Silk_resampler_private_ARMA4;
 pub mod SKP_Silk_resampler_private_copy;
-pub mod SKP_Silk_decode_frame;
 pub mod SKP_Silk_range_coder;
-pub mod SKP_Silk_decoder_set_fs;
 pub mod skp_silk_cng;
 pub mod skp_silk_decode_pitch;
 pub mod SKP_Silk_gain_quant;
@@ -22,7 +20,8 @@ pub mod SKP_Silk_lin2log;
 pub mod SKP_Silk_code_signs;
 pub mod SKP_Silk_MA;
 
-
+pub mod skp_silk_decoder_set_fs;
+pub mod skp_silk_decode_frame;
 pub mod skp_silk_biquad;
 pub mod skp_silk_lpc_synthesis_filter;
 pub mod skp_silk_lpc_synthesis_order16;
@@ -60,7 +59,6 @@ pub mod skp_silk_macro;
 pub mod skp_utils;
 
 pub mod error;
-mod SKP_Silk_PLC;
 
 use bytes::Buf;
 
@@ -107,7 +105,7 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
         let input;
         (input, src) = src.split_at(input_size as usize);
 
-        let mut output_size = 0i16;
+        let mut output_size = 0;
         let r = SKP_Silk_SDK_Decode(
             &mut decoder,
             &mut dec_control,
@@ -124,7 +122,7 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
             return Err(r.into());
         }
 
-        result.extend_from_slice(&buf[0..output_size as usize])
+        result.extend_from_slice(&buf[0..output_size])
     }
     Ok(result)
 }

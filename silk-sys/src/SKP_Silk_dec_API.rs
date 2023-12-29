@@ -15,13 +15,13 @@ extern "C" {
 use crate::skp_silk_cng::{SkpSilkCngStruct, skp_silk_cng_reset};
 use crate::skp_silk_plc::{SkpSilkPlcStruct, skp_silk_plc_reset};
 use crate::skp_silk_nlsf_msvq_decode::SkpSilkNlsfCbStruct;
-use crate::SKP_Silk_decoder_set_fs::SKP_Silk_decoder_set_fs;
+use crate::skp_silk_decoder_set_fs::skp_silk_decoder_set_fs;
 use super::SKP_Silk_resampler::{
     SKP_Silk_resampler,
     SKP_Silk_resampler_init,
     SKP_Silk_resampler_state_struct,
 };
-use super::SKP_Silk_decode_frame::SKP_Silk_decode_frame;
+use super::skp_silk_decode_frame::skp_silk_decode_frame;
 use super::skp_silk_decode_parameters::skp_silk_decode_parameters;
 use super::SKP_Silk_range_coder::{
     SKP_Silk_range_dec_init,
@@ -70,7 +70,7 @@ pub struct SkpSilkDecoderStruct {
 impl Default for SkpSilkDecoderStruct {
     fn default() -> Self {
         let mut ps_dec = Self { sRC: Default::default(), prev_inv_gain_Q16: Default::default(), sLTP_Q16: [0;960], sLPC_Q14: [0;136], exc_Q10: [0;480], res_Q10: [0;480], outBuf: [0;960], lagPrev: Default::default(), LastGainIndex: Default::default(), LastGainIndex_EnhLayer: Default::default(), typeOffsetPrev: Default::default(), HPState: Default::default(), HP_A: Default::default(), HP_B: None, fs_k_hz: Default::default(), prev_API_sampleRate: Default::default(), frame_length: Default::default(), subfr_length: Default::default(), LPC_order: Default::default(), prevNLSF_Q15: Default::default(), first_frame_after_reset: Default::default(), nBytesLeft: Default::default(), nFramesDecoded: Default::default(), nFramesInPacket: Default::default(), moreInternalDecoderFrames: Default::default(), FrameTermination: Default::default(), resampler_state: Default::default(), psNLSF_CB: Default::default(), vadFlag: Default::default(), no_FEC_counter: Default::default(), inband_FEC_offset: Default::default(), sCNG: Default::default(), lossCnt: Default::default(), prev_sig_type: Default::default(), sPLC: Default::default() };
-        SKP_Silk_decoder_set_fs(&mut ps_dec, 24);
+        skp_silk_decoder_set_fs(&mut ps_dec, 24);
         ps_dec.first_frame_after_reset = 1;
         ps_dec.prev_inv_gain_Q16 = 65536;
         skp_silk_cng_reset(&mut ps_dec);
@@ -129,7 +129,7 @@ pub unsafe fn SKP_Silk_SDK_Decode(
     inData: &[u8],
     nBytesIn: libc::c_int,
     mut samplesOut: &mut [i16],
-    mut nSamplesOut: *mut libc::c_short,
+    mut nSamplesOut: &mut usize,
 ) -> libc::c_int {
     let mut ret = 0;
     let mut used_bytes = 0;
@@ -146,7 +146,7 @@ pub unsafe fn SKP_Silk_SDK_Decode(
     }
     prev_fs_k_hz = (*psDec).fs_k_hz;
     ret
-        += SKP_Silk_decode_frame(
+        += skp_silk_decode_frame(
             psDec,
             samplesOut,
             nSamplesOut,
@@ -215,8 +215,7 @@ pub unsafe fn SKP_Silk_SDK_Decode(
                 samplesOut_tmp.as_mut_ptr() as *const libc::c_short,
                 *nSamplesOut as libc::c_int,
             );
-        *nSamplesOut = (*nSamplesOut as libc::c_int * (*decControl).API_sampleRate
-            / ((*psDec).fs_k_hz * 1000 as libc::c_int)) as libc::c_short;
+        *nSamplesOut = *nSamplesOut * decControl.API_sampleRate as usize / (psDec.fs_k_hz as usize * 1000);
     }
     (*psDec).prev_API_sampleRate = (*decControl).API_sampleRate;
     (*decControl)

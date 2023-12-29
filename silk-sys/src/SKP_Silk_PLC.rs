@@ -49,7 +49,7 @@ pub fn skp_silk_plc_reset(ps_dec: &mut SkpSilkDecoderStruct) {
     ps_dec.sPLC.pitch_l_q8 = ps_dec.frame_length >> 1;
 }
 
-pub unsafe fn skp_silk_plc(
+pub fn skp_silk_plc(
     ps_dec: &mut SkpSilkDecoderStruct,
     ps_dec_ctrl: &mut SKP_Silk_decoder_control,
     signal: &mut [i16],
