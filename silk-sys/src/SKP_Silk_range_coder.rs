@@ -2,7 +2,7 @@
 
 use crate::skp_utils::skp_silk_clz32;
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct SKP_Silk_range_coder_state {
     pub bufferLength: libc::c_int,
     pub bufferIx: libc::c_int,

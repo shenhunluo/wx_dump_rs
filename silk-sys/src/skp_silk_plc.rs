@@ -5,7 +5,7 @@ use crate::{
     skp_silk_lpc_inv_pred_gain::skp_silk_lpc_inverse_pred_gain,
     skp_silk_sum_sqr_shift::skp_silk_sum_sqr_shift,
     skp_utils::{skp_silk_clz32, skp_silk_sqrt_approx, NB_SUBFR, LTP_ORDER, V_PITCH_GAIN_START_MIN_Q14, MAX_LPC_ORDER},
-    SKP_Silk_dec_API::{SKP_Silk_decoder_control, SkpSilkDecoderStruct},
+    skp_silk_dec_api::{SkpSilkDecoderControl, SkpSilkDecoderStruct},
 };
 
 #[derive(Copy, Clone)]
@@ -46,23 +46,23 @@ static PLC_RAND_ATTENUATE_V_Q15: [i16; 2] = [31130, 26214];
 static PLC_RAND_ATTENUATE_UV_Q15: [i16; 2] = [32440, 29491];
 
 pub fn skp_silk_plc_reset(ps_dec: &mut SkpSilkDecoderStruct) {
-    ps_dec.sPLC.pitch_l_q8 = ps_dec.frame_length >> 1;
+    ps_dec.s_plc.pitch_l_q8 = ps_dec.frame_length >> 1;
 }
 
 pub fn skp_silk_plc(
     ps_dec: &mut SkpSilkDecoderStruct,
-    ps_dec_ctrl: &mut SKP_Silk_decoder_control,
+    ps_dec_ctrl: &mut SkpSilkDecoderControl,
     signal: &mut [i16],
     lost: i32,
 ) {
-    if ps_dec.fs_k_hz != ps_dec.sPLC.fs_k_hz {
+    if ps_dec.fs_k_hz != ps_dec.s_plc.fs_k_hz {
         skp_silk_plc_reset(ps_dec);
-        ps_dec.sPLC.fs_k_hz = ps_dec.fs_k_hz;
+        ps_dec.s_plc.fs_k_hz = ps_dec.fs_k_hz;
     }
     if lost != 0 {
         skp_silk_plc_conceal(ps_dec, ps_dec_ctrl, signal);
-        (*ps_dec).lossCnt += 1;
-        (*ps_dec).lossCnt;
+        (*ps_dec).loss_cnt += 1;
+        (*ps_dec).loss_cnt;
     } else {
         skp_silk_plc_update(ps_dec, ps_dec_ctrl);
     };
@@ -70,14 +70,14 @@ pub fn skp_silk_plc(
 
 pub fn skp_silk_plc_update(
     ps_dec: &mut SkpSilkDecoderStruct,
-    ps_dec_ctrl: &mut SKP_Silk_decoder_control,
+    ps_dec_ctrl: &mut SkpSilkDecoderControl,
 ) {
-    let ps_plc = &mut ps_dec.sPLC;
+    let ps_plc = &mut ps_dec.s_plc;
     ps_dec.prev_sig_type = ps_dec_ctrl.sig_type;
     let mut ltp_gain_q14 = 0;
     if (*ps_dec_ctrl).sig_type == 0 {
         let mut j = 0;
-        while j * (ps_dec.subfr_length as usize) < (ps_dec_ctrl.pitchL[NB_SUBFR - 1] as usize) {
+        while j * (ps_dec.subfr_length as usize) < (ps_dec_ctrl.pitch_l[NB_SUBFR - 1] as usize) {
             let mut temp_ltp_gain_q14 = 0;
             for i in 0..LTP_ORDER {
                 temp_ltp_gain_q14 +=
@@ -89,7 +89,7 @@ pub fn skp_silk_plc_update(
                     ps_plc.ltp_coef_q14[i] = ps_dec_ctrl.ltp_coef_q14
                         [skp_s_mul_b_b!(NB_SUBFR - 1 - j as usize, LTP_ORDER) as usize + i]
                 }
-                ps_plc.pitch_l_q8 = ps_dec_ctrl.pitchL[NB_SUBFR - 1 - j] << 8;
+                ps_plc.pitch_l_q8 = ps_dec_ctrl.pitch_l[NB_SUBFR - 1 - j] << 8;
             }
             j += 1;
         }
@@ -118,33 +118,33 @@ pub fn skp_silk_plc_update(
             ps_plc.ltp_coef_q14[i] = 0;
         }
     }
-    for i in 0..ps_dec.LPC_order as usize {
-        ps_plc.prev_lpc_q12[i] = ps_dec_ctrl.PredCoef_Q12[1][i];
+    for i in 0..ps_dec.lpc_order as usize {
+        ps_plc.prev_lpc_q12[i] = ps_dec_ctrl.pred_coef_q12[1][i];
     }
-    ps_plc.prev_ltp_scale_q14 = ps_dec_ctrl.LTP_scale_Q14 as i16;
+    ps_plc.prev_ltp_scale_q14 = ps_dec_ctrl.ltp_scale_q14 as i16;
     for i in 0..NB_SUBFR {
-        ps_plc.prev_gain_q16[i] = ps_dec_ctrl.Gains_Q16[i];
+        ps_plc.prev_gain_q16[i] = ps_dec_ctrl.gains_q16[i];
     }
 }
 
 pub fn skp_silk_plc_conceal(
     ps_dec: &mut SkpSilkDecoderStruct,
-    ps_dec_ctrl: &mut SKP_Silk_decoder_control,
+    ps_dec_ctrl: &mut SkpSilkDecoderControl,
     signal: &mut [i16],
 ) {
     let mut exc_buf = [0; 480];
     let mut sig_q10 = [0; 480];
-    let ps_plc = &mut ps_dec.sPLC;
+    let ps_plc = &mut ps_dec.s_plc;
     for i in 0..ps_dec.frame_length as usize {
-        ps_dec.sLTP_Q16[i] = ps_dec.sLTP_Q16[ps_dec.frame_length as usize + i];
+        ps_dec.s_ltp_q16[i] = ps_dec.s_ltp_q16[ps_dec.frame_length as usize + i];
     }
-    skp_silk_bwexpander(&mut ps_plc.prev_lpc_q12, ps_dec.LPC_order as usize, 64880);
+    skp_silk_bwexpander(&mut ps_plc.prev_lpc_q12, ps_dec.lpc_order as usize, 64880);
     let mut exc_buf_ptr = &mut exc_buf[..];
     for k in (4 >> 1)..4 {
         for i in 0..ps_dec.subfr_length as usize {
             exc_buf_ptr[i] = skp_r_shift!(
                 skp_s_mul_w_w!(
-                    ps_dec.exc_Q10[i + k * ps_dec.subfr_length as usize],
+                    ps_dec.exc_q10[i + k * ps_dec.subfr_length as usize],
                     ps_plc.prev_gain_q16[k]
                 ),
                 10
@@ -169,19 +169,19 @@ pub fn skp_silk_plc_conceal(
         ps_dec.subfr_length as usize,
     );
     let rand_ptr = if energy1 >> shift2 < energy2 >> shift1 {
-        &mut ps_dec.exc_Q10[i32::max(0, 3 * ps_dec.subfr_length - 128) as usize..]
+        &mut ps_dec.exc_q10[i32::max(0, 3 * ps_dec.subfr_length - 128) as usize..]
     } else {
-        &mut ps_dec.exc_Q10[i32::max(0, ps_dec.subfr_length - 128) as usize..]
+        &mut ps_dec.exc_q10[i32::max(0, ps_dec.subfr_length - 128) as usize..]
     };
     let b_q14 = &mut ps_plc.ltp_coef_q14;
     let mut rand_scale_q14 = ps_plc.rand_scale_q14;
-    let harm_gain_q15 = HARM_ATT_Q15[i32::min(2 - 1, ps_dec.lossCnt) as usize];
+    let harm_gain_q15 = HARM_ATT_Q15[i32::min(2 - 1, ps_dec.loss_cnt) as usize];
     let mut rand_gain_q15 = if (*ps_dec).prev_sig_type == 0 {
-        PLC_RAND_ATTENUATE_V_Q15[i32::min(2 - 1, ps_dec.lossCnt) as usize]
+        PLC_RAND_ATTENUATE_V_Q15[i32::min(2 - 1, ps_dec.loss_cnt) as usize]
     } else {
-        PLC_RAND_ATTENUATE_UV_Q15[i32::min(2 - 1, ps_dec.lossCnt) as usize]
+        PLC_RAND_ATTENUATE_UV_Q15[i32::min(2 - 1, ps_dec.loss_cnt) as usize]
     } as i32;
-    if ps_dec.lossCnt == 0 {
+    if ps_dec.loss_cnt == 0 {
         rand_scale_q14 = (1 << 14) as i16;
         if (*ps_dec).prev_sig_type == 0 {
             for i in 0..5 {
@@ -198,7 +198,7 @@ pub fn skp_silk_plc_conceal(
             skp_silk_lpc_inverse_pred_gain(
                 &mut inv_gain_q30,
                 &mut ((*ps_plc).prev_lpc_q12),
-                (*ps_dec).LPC_order as usize,
+                (*ps_dec).lpc_order as usize,
             );
             let mut down_scale_q30 = i32::min(1 << 30 >> 3, inv_gain_q30);
             down_scale_q30 = i32::max(1 << 30 >> 8, down_scale_q30);
@@ -216,16 +216,16 @@ pub fn skp_silk_plc_conceal(
         for i in 0..ps_dec.subfr_length as usize {
             rand_seed = skp_rand!(rand_seed);
             let idx = rand_seed >> 25 & 128 - 1;
-            let mut ltp_pred_q14 = skp_s_mul_w_b!(ps_dec.sLTP_Q16[pred_lag_ptr - 0], b_q14[0]);
+            let mut ltp_pred_q14 = skp_s_mul_w_b!(ps_dec.s_ltp_q16[pred_lag_ptr - 0], b_q14[0]);
             ltp_pred_q14 =
-                skp_s_mla_w_b!(ltp_pred_q14, ps_dec.sLTP_Q16[pred_lag_ptr - 1], b_q14[1]);
+                skp_s_mla_w_b!(ltp_pred_q14, ps_dec.s_ltp_q16[pred_lag_ptr - 1], b_q14[1]);
             ltp_pred_q14 =
-                skp_s_mla_w_b!(ltp_pred_q14, ps_dec.sLTP_Q16[pred_lag_ptr - 2], b_q14[2]);
+                skp_s_mla_w_b!(ltp_pred_q14, ps_dec.s_ltp_q16[pred_lag_ptr - 2], b_q14[2]);
             ltp_pred_q14 =
-                skp_s_mla_w_b!(ltp_pred_q14, ps_dec.sLTP_Q16[pred_lag_ptr - 3], b_q14[3]);
+                skp_s_mla_w_b!(ltp_pred_q14, ps_dec.s_ltp_q16[pred_lag_ptr - 3], b_q14[3]);
             ltp_pred_q14 =
-                skp_s_mla_w_b!(ltp_pred_q14, ps_dec.sLTP_Q16[pred_lag_ptr - 4], b_q14[4]);
-            pred_lag_ptr += if pred_lag_ptr == ps_dec.sLTP_Q16.len() - 1 {
+                skp_s_mla_w_b!(ltp_pred_q14, ps_dec.s_ltp_q16[pred_lag_ptr - 4], b_q14[4]);
+            pred_lag_ptr += if pred_lag_ptr == ps_dec.s_ltp_q16.len() - 1 {
                 0
             } else {
                 1
@@ -233,7 +233,7 @@ pub fn skp_silk_plc_conceal(
             let lpc_exc_q10 =
                 skp_l_shift!(skp_s_mul_w_b!(rand_ptr[idx as usize], rand_scale_q14), 2);
             let lpc_exc_q10 = lpc_exc_q10 + skp_r_shift_round!(ltp_pred_q14, 4);
-            (*ps_dec).sLTP_Q16[s_ltp_buf_idx as usize] = lpc_exc_q10 << 6;
+            (*ps_dec).s_ltp_q16[s_ltp_buf_idx as usize] = lpc_exc_q10 << 6;
             s_ltp_buf_idx += 1;
             sig_q10_ptr[i] = lpc_exc_q10;
         }
@@ -252,54 +252,54 @@ pub fn skp_silk_plc_conceal(
     }
     sig_q10_ptr = &mut sig_q10[..];
     let mut a_q12_tmp = [0; 16];
-    for i in 0..ps_dec.LPC_order as usize {
+    for i in 0..ps_dec.lpc_order as usize {
         a_q12_tmp[i] = ps_plc.prev_lpc_q12[i];
     }
     for _ in 0..4 {
         for i in 0..ps_dec.subfr_length as usize {
             let a_tmp = i16_to_i32!(a_q12_tmp[0], a_q12_tmp[1]);
-            let mut lpc_pred_q10 = skp_s_mul_w_b!(ps_dec.sLPC_Q14[MAX_LPC_ORDER + i - 1], a_tmp);
+            let mut lpc_pred_q10 = skp_s_mul_w_b!(ps_dec.s_lpc_q14[MAX_LPC_ORDER + i - 1], a_tmp);
             lpc_pred_q10 =
-                skp_s_mla_w_t!(lpc_pred_q10, ps_dec.sLPC_Q14[MAX_LPC_ORDER + i - 2], a_tmp);
+                skp_s_mla_w_t!(lpc_pred_q10, ps_dec.s_lpc_q14[MAX_LPC_ORDER + i - 2], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[2], a_q12_tmp[3]);
             lpc_pred_q10 =
-                skp_s_mla_w_b!(lpc_pred_q10, ps_dec.sLPC_Q14[MAX_LPC_ORDER + i - 3], a_tmp);
+                skp_s_mla_w_b!(lpc_pred_q10, ps_dec.s_lpc_q14[MAX_LPC_ORDER + i - 3], a_tmp);
             lpc_pred_q10 =
-                skp_s_mla_w_t!(lpc_pred_q10, ps_dec.sLPC_Q14[MAX_LPC_ORDER + i - 4], a_tmp);
+                skp_s_mla_w_t!(lpc_pred_q10, ps_dec.s_lpc_q14[MAX_LPC_ORDER + i - 4], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[4], a_q12_tmp[5]);
             lpc_pred_q10 =
-                skp_s_mla_w_b!(lpc_pred_q10, ps_dec.sLPC_Q14[MAX_LPC_ORDER + i - 5], a_tmp);
+                skp_s_mla_w_b!(lpc_pred_q10, ps_dec.s_lpc_q14[MAX_LPC_ORDER + i - 5], a_tmp);
             lpc_pred_q10 =
-                skp_s_mla_w_t!(lpc_pred_q10, ps_dec.sLPC_Q14[MAX_LPC_ORDER + i - 6], a_tmp);
+                skp_s_mla_w_t!(lpc_pred_q10, ps_dec.s_lpc_q14[MAX_LPC_ORDER + i - 6], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[6], a_q12_tmp[7]);
             lpc_pred_q10 =
-                skp_s_mla_w_b!(lpc_pred_q10, ps_dec.sLPC_Q14[MAX_LPC_ORDER + i - 7], a_tmp);
+                skp_s_mla_w_b!(lpc_pred_q10, ps_dec.s_lpc_q14[MAX_LPC_ORDER + i - 7], a_tmp);
             lpc_pred_q10 =
-                skp_s_mla_w_t!(lpc_pred_q10, ps_dec.sLPC_Q14[MAX_LPC_ORDER + i - 8], a_tmp);
+                skp_s_mla_w_t!(lpc_pred_q10, ps_dec.s_lpc_q14[MAX_LPC_ORDER + i - 8], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[8], a_q12_tmp[9]);
             lpc_pred_q10 =
-                skp_s_mla_w_b!(lpc_pred_q10, ps_dec.sLPC_Q14[MAX_LPC_ORDER + i - 9], a_tmp);
+                skp_s_mla_w_b!(lpc_pred_q10, ps_dec.s_lpc_q14[MAX_LPC_ORDER + i - 9], a_tmp);
             lpc_pred_q10 =
-                skp_s_mla_w_t!(lpc_pred_q10, ps_dec.sLPC_Q14[MAX_LPC_ORDER + i - 10], a_tmp);
-            for j in (10..ps_dec.LPC_order as usize).step_by(2) {
+                skp_s_mla_w_t!(lpc_pred_q10, ps_dec.s_lpc_q14[MAX_LPC_ORDER + i - 10], a_tmp);
+            for j in (10..ps_dec.lpc_order as usize).step_by(2) {
                 let a_tmp = i16_to_i32!(a_q12_tmp[j], a_q12_tmp[j + 1]);
                 lpc_pred_q10 = skp_s_mla_w_b!(
                     lpc_pred_q10,
-                    ps_dec.sLPC_Q14[MAX_LPC_ORDER + i - 1 - j],
+                    ps_dec.s_lpc_q14[MAX_LPC_ORDER + i - 1 - j],
                     a_tmp
                 );
                 lpc_pred_q10 = skp_s_mla_w_t!(
                     lpc_pred_q10,
-                    ps_dec.sLPC_Q14[MAX_LPC_ORDER + i - 2 - j],
+                    ps_dec.s_lpc_q14[MAX_LPC_ORDER + i - 2 - j],
                     a_tmp
                 );
             }
             sig_q10_ptr[i] = sig_q10_ptr[i] + lpc_pred_q10;
-            ps_dec.sLPC_Q14[16 + i] = sig_q10_ptr[i] << 4;
+            ps_dec.s_lpc_q14[16 + i] = sig_q10_ptr[i] << 4;
         }
         sig_q10_ptr = &mut sig_q10_ptr[ps_dec.subfr_length as usize..];
         for i in 0..16 {
-            ps_dec.sLPC_Q14[i] = ps_dec.sLPC_Q14[ps_dec.subfr_length as usize + i];
+            ps_dec.s_lpc_q14[i] = ps_dec.s_lpc_q14[ps_dec.subfr_length as usize + i];
         }
     }
     for i in 0..ps_dec.frame_length as usize {
@@ -311,18 +311,18 @@ pub fn skp_silk_plc_conceal(
     (*ps_plc).rand_seed = rand_seed;
     (*ps_plc).rand_scale_q14 = rand_scale_q14;
     for i in 0..4 {
-        (*ps_dec_ctrl).pitchL[i] = lag;
+        (*ps_dec_ctrl).pitch_l[i] = lag;
     }
 }
 
 pub fn skp_silk_plc_glue_frames(
     ps_dec: &mut SkpSilkDecoderStruct,
-    _ps_dec_ctrl: &mut SKP_Silk_decoder_control,
+    _ps_dec_ctrl: &mut SkpSilkDecoderControl,
     signal: &mut [i16],
     length: usize,
 ) {
-    let ps_plc = &mut ps_dec.sPLC;
-    if (*ps_dec).lossCnt != 0 {
+    let ps_plc = &mut ps_dec.s_plc;
+    if (*ps_dec).loss_cnt != 0 {
         skp_silk_sum_sqr_shift(
             &mut (*ps_plc).conc_energy,
             &mut (*ps_plc).conc_energy_shift,

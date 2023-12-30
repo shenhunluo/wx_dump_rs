@@ -6,26 +6,26 @@ use crate::{
         SKP_SILK_RATE_LEVELS_CDF, SKP_SILK_RATE_LEVELS_CDF_OFFSET,
     },
     SKP_Silk_code_signs::SKP_Silk_decode_signs,
-    SKP_Silk_dec_API::SKP_Silk_decoder_control,
+    skp_silk_dec_api::SkpSilkDecoderControl,
     SKP_Silk_range_coder::{SKP_Silk_range_coder_state, SKP_Silk_range_decoder},
     skp_silk_shell_coder::skp_silk_shell_decoder,
 };
 #[no_mangle]
 pub fn skp_silk_decode_pulses(
     ps_r_c: &mut SKP_Silk_range_coder_state,
-    ps_dec_ctrl: &mut SKP_Silk_decoder_control,
+    ps_dec_ctrl: &mut SkpSilkDecoderControl,
     q: &mut [i32],
     frame_length: i32,
 ) {
     let mut sum_pulses = [0; 30];
     let mut n_l_shifts = [0; 30];
-    ps_dec_ctrl.RateLevelIndex = SKP_Silk_range_decoder(
+    ps_dec_ctrl.rate_level_index = SKP_Silk_range_decoder(
         ps_r_c,
         &SKP_SILK_RATE_LEVELS_CDF[ps_dec_ctrl.sig_type as usize],
         SKP_SILK_RATE_LEVELS_CDF_OFFSET,
     );
     let iter = frame_length as usize / 16;
-    let cdf_ptr = &SKP_SILK_PULSES_PER_BLOCK_CDF[ps_dec_ctrl.RateLevelIndex as usize];
+    let cdf_ptr = &SKP_SILK_PULSES_PER_BLOCK_CDF[ps_dec_ctrl.rate_level_index as usize];
     for i in 0..iter {
         n_l_shifts[i] = 0;
         sum_pulses[i] = SKP_Silk_range_decoder(ps_r_c, cdf_ptr, SKP_SILK_PULSES_PER_BLOCK_CDF_OFFSET);
@@ -71,7 +71,7 @@ pub fn skp_silk_decode_pulses(
         q,
         frame_length,
         ps_dec_ctrl.sig_type,
-        ps_dec_ctrl.QuantOffsetType,
-        ps_dec_ctrl.RateLevelIndex,
+        ps_dec_ctrl.quant_offset_type,
+        ps_dec_ctrl.rate_level_index,
     );
 }

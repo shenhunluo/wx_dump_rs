@@ -4,7 +4,7 @@ use crate::{
     skp_silk_lpc_synthesis_order16::skp_silk_lpc_synthesis_order16,
     skp_silk_nlsf2a_stable::skp_silk_nlsf2a_stable,
     skp_utils::{CNG_GAIN_SMTH_Q16, CNG_NLSF_SMTH_Q16, NB_SUBFR},
-    SKP_Silk_dec_API::{SKP_Silk_decoder_control, SkpSilkDecoderStruct},
+    skp_silk_dec_api::{SkpSilkDecoderControl, SkpSilkDecoderStruct},
 };
 #[derive(Copy, Clone)]
 pub struct SkpSilkCngStruct {
@@ -53,41 +53,41 @@ fn skp_silk_cng_exc(
 }
 
 pub fn skp_silk_cng_reset(ps_dec: &mut SkpSilkDecoderStruct) {
-    let nlsf_step_q15 = 0x7fff / (ps_dec.LPC_order + 1);
+    let nlsf_step_q15 = 0x7fff / (ps_dec.lpc_order + 1);
     let mut nlsf_acc_q15 = 0;
-    for i in 0..ps_dec.LPC_order as usize {
+    for i in 0..ps_dec.lpc_order as usize {
         nlsf_acc_q15 += nlsf_step_q15;
-        ps_dec.sCNG.cng_smth_nlsf_q15[i] = nlsf_acc_q15;
+        ps_dec.s_cng.cng_smth_nlsf_q15[i] = nlsf_acc_q15;
     }
-    ps_dec.sCNG.cng_smth_gain_q16 = 0;
-    ps_dec.sCNG.rand_seed = 3176576;
+    ps_dec.s_cng.cng_smth_gain_q16 = 0;
+    ps_dec.s_cng.rand_seed = 3176576;
 }
 
 pub fn skp_silk_cng(
     ps_dec: &mut SkpSilkDecoderStruct,
-    ps_dec_ctrl: &mut SKP_Silk_decoder_control,
+    ps_dec_ctrl: &mut SkpSilkDecoderControl,
     signal: &mut [i16],
     length: usize,
 ) {
     let mut lpc_buf = [0; 16];
     let mut cng_sig = [0; 480];
-    if (*ps_dec).fs_k_hz != ps_dec.sCNG.fs_k_hz {
+    if (*ps_dec).fs_k_hz != ps_dec.s_cng.fs_k_hz {
         skp_silk_cng_reset(ps_dec);
-        ps_dec.sCNG.fs_k_hz = ps_dec.fs_k_hz;
+        ps_dec.s_cng.fs_k_hz = ps_dec.fs_k_hz;
     }
-    let p_s_cng = &mut ps_dec.sCNG;
-    if (*ps_dec).lossCnt == 0 && (*ps_dec).vadFlag == 0 {
-        for i in 0..ps_dec.LPC_order as usize {
+    let p_s_cng = &mut ps_dec.s_cng;
+    if (*ps_dec).loss_cnt == 0 && (*ps_dec).vad_flag == 0 {
+        for i in 0..ps_dec.lpc_order as usize {
             p_s_cng.cng_smth_nlsf_q15[i] += skp_s_mul_w_b!(
-                ps_dec.prevNLSF_Q15[i] - p_s_cng.cng_smth_nlsf_q15[i],
+                ps_dec.prev_nlsf_q15[i] - p_s_cng.cng_smth_nlsf_q15[i],
                 CNG_NLSF_SMTH_Q16
             );
         }
         let mut max_gain_q16 = 0;
         let mut subfr = 0;
         for i in 0..4 {
-            if ps_dec_ctrl.Gains_Q16[i] > max_gain_q16 {
-                max_gain_q16 = ps_dec_ctrl.Gains_Q16[i];
+            if ps_dec_ctrl.gains_q16[i] > max_gain_q16 {
+                max_gain_q16 = ps_dec_ctrl.gains_q16[i];
                 subfr = i as i32;
             }
         }
@@ -97,16 +97,16 @@ pub fn skp_silk_cng(
             p_s_cng.cng_exc_buf_q10[ps_dec.subfr_length as usize + i] = data_clone[i];
         }
         for i in 0..ps_dec.subfr_length as usize {
-            p_s_cng.cng_exc_buf_q10[i] = ps_dec.exc_Q10[(subfr * ps_dec.subfr_length) as usize];
+            p_s_cng.cng_exc_buf_q10[i] = ps_dec.exc_q10[(subfr * ps_dec.subfr_length) as usize];
         }
         for i in 0..NB_SUBFR {
             p_s_cng.cng_smth_gain_q16 += skp_s_mul_w_b!(
-                ps_dec_ctrl.Gains_Q16[i] - p_s_cng.cng_smth_gain_q16,
+                ps_dec_ctrl.gains_q16[i] - p_s_cng.cng_smth_gain_q16,
                 CNG_GAIN_SMTH_Q16
             );
         }
     }
-    if (*ps_dec).lossCnt != 0 {
+    if (*ps_dec).loss_cnt != 0 {
         skp_silk_cng_exc(
             &mut cng_sig,
             &p_s_cng.cng_exc_buf_q10,
@@ -117,10 +117,10 @@ pub fn skp_silk_cng(
         skp_silk_nlsf2a_stable(
             &mut lpc_buf,
             &p_s_cng.cng_smth_nlsf_q15,
-            ps_dec.LPC_order as usize,
+            ps_dec.lpc_order as usize,
         );
         let gain_q26 = 1 << 26;
-        if (*ps_dec).LPC_order == 16 {
+        if (*ps_dec).lpc_order == 16 {
             skp_silk_lpc_synthesis_order16(
                 &cng_sig.clone(),
                 &lpc_buf,
@@ -137,7 +137,7 @@ pub fn skp_silk_cng(
                 &mut p_s_cng.cng_synth_state,
                 &mut cng_sig,
                 length,
-                ps_dec.LPC_order as usize,
+                ps_dec.lpc_order as usize,
             );
         }
         for i in 0..length {
@@ -145,7 +145,7 @@ pub fn skp_silk_cng(
             signal[i] = skp_sat_16!(tmp_32, i32) as i16;
         }
     } else {
-        for i in 0..ps_dec.LPC_order as usize {
+        for i in 0..ps_dec.lpc_order as usize {
             p_s_cng.cng_synth_state[i] = 0;
         }
     };

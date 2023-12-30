@@ -1,4 +1,4 @@
-pub mod SKP_Silk_dec_API;
+pub mod skp_silk_dec_api;
 pub mod SKP_Silk_range_coder;
 pub mod SKP_Silk_gain_quant;
 pub mod SKP_Silk_lin2log;
@@ -62,7 +62,7 @@ pub mod error;
 
 use bytes::Buf;
 
-use crate::{error::SilkError, SKP_Silk_dec_API::{SKP_SILK_SDK_DecControlStruct, SKP_Silk_SDK_Decode, SkpSilkDecoderStruct }};
+use crate::{error::SilkError, skp_silk_dec_api::{SkpSilkSdkDecControlStruct, skp_silk_sdk_decode, SkpSilkDecoderStruct }};
 
 pub fn decode_silk(src: impl AsRef<[u8]>, sample_rate: u32) -> Result<Vec<i16>, SilkError> {
     unsafe { _decode_silk(src.as_ref(), sample_rate as i32) }
@@ -77,12 +77,12 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
         return Err(SilkError::Invalid);
     };
 
-    let mut dec_control = SKP_SILK_SDK_DecControlStruct {
-        API_sampleRate: sample_rate,
-        frameSize: 0,
-        framesPerPacket: 1,
-        moreInternalDecoderFrames: 0,
-        inBandFECOffset: 0,
+    let mut dec_control = SkpSilkSdkDecControlStruct {
+        api_sample_rate: sample_rate,
+        frame_size: 0,
+        frames_per_packet: 1,
+        more_internal_decoder_frames: 0,
+        in_band_fec_offset: 0,
     };
 
     let mut decoder = SkpSilkDecoderStruct::default();
@@ -107,7 +107,7 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
         (input, src) = src.split_at(input_size as usize);
 
         let mut output_size = 0;
-        let r = SKP_Silk_SDK_Decode(
+        let r = skp_silk_sdk_decode(
             &mut decoder,
             &mut dec_control,
             0,
