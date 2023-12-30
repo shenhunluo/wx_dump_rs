@@ -12,6 +12,7 @@
         "dequant",
         "FILESYSPATH",
         "FIXEDFILEINFO",
+        "fracs",
         "Hmac",
         "Inband",
         "INPROC",

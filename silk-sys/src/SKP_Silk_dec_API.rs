@@ -16,10 +16,10 @@ use crate::skp_silk_cng::{SkpSilkCngStruct, skp_silk_cng_reset};
 use crate::skp_silk_plc::{SkpSilkPlcStruct, skp_silk_plc_reset};
 use crate::skp_silk_nlsf_msvq_decode::SkpSilkNlsfCbStruct;
 use crate::skp_silk_decoder_set_fs::skp_silk_decoder_set_fs;
-use super::SKP_Silk_resampler::{
-    SKP_Silk_resampler,
-    SKP_Silk_resampler_init,
-    SKP_Silk_resampler_state_struct,
+use super::skp_silk_resampler::{
+    skp_silk_resampler,
+    skp_silk_resampler_init,
+    SkpSilkResamplerStateStruct,
 };
 use super::skp_silk_decode_frame::skp_silk_decode_frame;
 use super::skp_silk_decode_parameters::skp_silk_decode_parameters;
@@ -56,7 +56,7 @@ pub struct SkpSilkDecoderStruct {
     pub nFramesInPacket: libc::c_int,
     pub moreInternalDecoderFrames: libc::c_int,
     pub FrameTermination: libc::c_int,
-    pub resampler_state: SKP_Silk_resampler_state_struct,
+    pub resampler_state: SkpSilkResamplerStateStruct,
     pub psNLSF_CB: [Option<&'static SkpSilkNlsfCbStruct>; 2],
     pub vadFlag: libc::c_int,
     pub no_FEC_counter: libc::c_int,
@@ -205,7 +205,7 @@ pub unsafe fn SKP_Silk_SDK_Decode(
         if prev_fs_k_hz != psDec.fs_k_hz
             || (*psDec).prev_API_sampleRate != (*decControl).API_sampleRate
         {
-            ret = SKP_Silk_resampler_init(
+            ret = skp_silk_resampler_init(
                 &mut (*psDec).resampler_state,
                 (*psDec).fs_k_hz as libc::c_short as libc::c_int
                     * 1000 as libc::c_int as libc::c_short as libc::c_int,
@@ -213,7 +213,7 @@ pub unsafe fn SKP_Silk_SDK_Decode(
             );
         }
         ret
-            += SKP_Silk_resampler(
+            += skp_silk_resampler(
                 &mut (*psDec).resampler_state,
                 samplesOut,
                 &samplesOut_tmp,
@@ -272,7 +272,7 @@ pub unsafe fn SKP_Silk_SDK_Decode(
 //         nFramesInPacket: 0,
 //         moreInternalDecoderFrames: 0,
 //         FrameTermination: 0,
-//         resampler_state: SKP_Silk_resampler_state_struct {
+//         resampler_state: SkpSilkResamplerStateStruct {
 //             sIIR: [0; 6],
 //             sFIR: [0; 16],
 //             sDown2: [0; 2],
@@ -392,89 +392,7 @@ pub unsafe fn SKP_Silk_SDK_get_TOC(
     nBytesIn: libc::c_int,
     mut Silk_TOC: *mut SKP_Silk_TOC_struct,
 ) {
-    let mut sDec: SkpSilkDecoderStruct = SkpSilkDecoderStruct {
-        sRC: SKP_Silk_range_coder_state {
-            bufferLength: 0,
-            bufferIx: 0,
-            base_Q32: 0,
-            range_Q16: 0,
-            error: 0,
-            buffer: [0; 1024],
-        },
-        prev_inv_gain_Q16: 0,
-        sLTP_Q16: [0; 960],
-        sLPC_Q14: [0; 136],
-        exc_Q10: [0; 480],
-        res_Q10: [0; 480],
-        outBuf: [0; 960],
-        lagPrev: 0,
-        LastGainIndex: 0,
-        LastGainIndex_EnhLayer: 0,
-        typeOffsetPrev: 0,
-        HPState: [0; 2],
-        HP_A: None,
-        HP_B: None,
-        fs_k_hz: 0,
-        prev_API_sampleRate: 0,
-        frame_length: 0,
-        subfr_length: 0,
-        LPC_order: 0,
-        prevNLSF_Q15: [0; 16],
-        first_frame_after_reset: 0,
-        nBytesLeft: 0,
-        nFramesDecoded: 0,
-        nFramesInPacket: 0,
-        moreInternalDecoderFrames: 0,
-        FrameTermination: 0,
-        resampler_state: SKP_Silk_resampler_state_struct {
-            sIIR: [0; 6],
-            sFIR: [0; 16],
-            sDown2: [0; 2],
-            resampler_function: None,
-            up2_function: None,
-            batchSize: 0,
-            invRatio_Q16: 0,
-            FIR_Fracs: 0,
-            input2x: 0,
-            Coefs: None,
-            sDownPre: [0; 2],
-            sUpPost: [0; 2],
-            down_pre_function: None,
-            up_post_function: None,
-            batchSizePrePost: 0,
-            ratio_Q16: 0,
-            nPreDownsamplers: 0,
-            nPostUpsamplers: 0,
-            magic_number: 0,
-        },
-        psNLSF_CB: [None; 2],
-        vadFlag: 0,
-        no_FEC_counter: 0,
-        inband_FEC_offset: 0,
-        sCNG: SkpSilkCngStruct {
-            cng_exc_buf_q10: [0; 480],
-            cng_smth_nlsf_q15: [0; 16],
-            cng_synth_state: [0; 16],
-            cng_smth_gain_q16: 0,
-            rand_seed: 0,
-            fs_k_hz: 0,
-        },
-        lossCnt: 0,
-        prev_sig_type: 0,
-        sPLC: SkpSilkPlcStruct {
-            pitch_l_q8: 0,
-            ltp_coef_q14: [0; 5],
-            prev_lpc_q12: [0; 16],
-            last_frame_lost: 0,
-            rand_seed: 0,
-            rand_scale_q14: 0,
-            conc_energy: 0,
-            conc_energy_shift: 0,
-            prev_ltp_scale_q14: 0,
-            prev_gain_q16: [0; 4],
-            fs_k_hz: 0,
-        },
-    };
+    let mut sDec = SkpSilkDecoderStruct::default();
     let mut sDecCtrl: SKP_Silk_decoder_control = SKP_Silk_decoder_control {
         pitchL: [0; 4],
         Gains_Q16: [0; 4],

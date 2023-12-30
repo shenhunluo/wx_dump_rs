@@ -3,7 +3,7 @@ use crate::{
     skp_silk_resampler_rom::{
         SKP_SILK_RESAMPLER_UP2_HQ_0, SKP_SILK_RESAMPLER_UP2_HQ_1, SKP_SILK_RESAMPLER_UP2_HQ_NOTCH,
     },
-    SKP_Silk_resampler::SKP_Silk_resampler_state_struct,
+    skp_silk_resampler::SkpSilkResamplerStateStruct,
 };
 
 pub fn skp_silk_resampler_private_up2_hq(s: &mut [i32], out: &mut [i16], in_0: &[i16], len: usize) {
@@ -55,10 +55,10 @@ pub fn skp_silk_resampler_private_up2_hq(s: &mut [i32], out: &mut [i16], in_0: &
 }
 
 pub fn skp_silk_resampler_private_up2_hq_wrapper(
-    ss: &mut SKP_Silk_resampler_state_struct,
+    ss: &mut SkpSilkResamplerStateStruct,
     out: &mut [i16],
     in_0: &[i16],
     len: usize,
 ) {
-    skp_silk_resampler_private_up2_hq(&mut ss.sIIR, out, in_0, len);
+    skp_silk_resampler_private_up2_hq(&mut ss.s_iir, out, in_0, len);
 }

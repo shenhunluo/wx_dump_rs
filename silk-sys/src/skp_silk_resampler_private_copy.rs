@@ -1,7 +1,7 @@
-use crate::SKP_Silk_resampler::SKP_Silk_resampler_state_struct;
+use crate::skp_silk_resampler::SkpSilkResamplerStateStruct;
 
 pub fn skp_silk_resampler_private_copy(
-    _ss: &mut SKP_Silk_resampler_state_struct,
+    _ss: &mut SkpSilkResamplerStateStruct,
     out: &mut [i16],
     in_0: &[i16],
     len: usize,

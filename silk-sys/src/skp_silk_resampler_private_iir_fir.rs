@@ -2,7 +2,7 @@ use crate::{
     i16_to_i32, i32_to_i16, skp_r_shift_round, skp_s_mla_b_b, skp_s_mul_w_b, skp_sat_16,
     skp_silk_resampler_private_arma4::skp_silk_resampler_private_arma4,
     skp_silk_resampler_rom::SKP_SILK_RESAMPLER_FRAC_FIR_144,
-    SKP_Silk_resampler::SKP_Silk_resampler_state_struct,
+    skp_silk_resampler::SkpSilkResamplerStateStruct,
 };
 
 fn skp_silk_resampler_private_iir_fir_interpol<'a>(
@@ -51,36 +51,36 @@ fn skp_silk_resampler_private_iir_fir_interpol<'a>(
 }
 
 pub fn skp_silk_resampler_private_iir_fir(
-    ss: &mut SKP_Silk_resampler_state_struct,
+    ss: &mut SkpSilkResamplerStateStruct,
     mut out: &mut [i16],
     mut in_0: &[i16],
     mut in_len: usize,
 ) {
     let mut buf = [0; 966];
     for i in 0..6 {
-        (buf[2 * i], buf[2 * i + 1]) = i32_to_i16!(ss.sFIR[i]);
+        (buf[2 * i], buf[2 * i + 1]) = i32_to_i16!(ss.s_fir[i]);
     }
-    let index_increment_q16 = ss.invRatio_Q16;
+    let index_increment_q16 = ss.inv_ratio_q16;
     let mut n_samples_in;
     loop {
-        n_samples_in = if in_len < ss.batchSize as usize {
+        n_samples_in = if in_len < ss.batch_size as usize {
             in_len
         } else {
-            ss.batchSize as usize
+            ss.batch_size as usize
         };
         if ss.input2x == 1 {
             (ss.up2_function).expect("non-null function pointer")(
-                &mut ss.sIIR,
+                &mut ss.s_iir,
                 &mut buf[6..],
                 in_0,
                 n_samples_in,
             );
         } else {
             skp_silk_resampler_private_arma4(
-                &mut ss.sIIR,
+                &mut ss.s_iir,
                 &mut buf[6..],
                 &in_0,
-                &ss.Coefs.unwrap(),
+                &ss.coefs.unwrap(),
                 n_samples_in,
             );
         }
@@ -101,7 +101,7 @@ pub fn skp_silk_resampler_private_iir_fir(
         }
     }
     for i in 0..6 {
-        ss.sFIR[i] = i16_to_i32!(
+        ss.s_fir[i] = i16_to_i32!(
             buf[(n_samples_in << ss.input2x) + 2 * i],
             buf[(n_samples_in << ss.input2x) + 2 * i + 1]
         );

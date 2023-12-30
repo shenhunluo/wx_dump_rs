@@ -91,9 +91,9 @@ pub fn skp_ror32(
     a32: i32,
     rot: i32,
 ) -> i32 {
-    let mut x = a32;
-    let mut r = rot as u32;
-    let mut m = -rot as u32;
+    let x = a32;
+    let r = rot as u32;
+    let m = -rot as u32;
     if rot <= 0 {
         (x << m | x >> (32 as u32).wrapping_sub(m)) as i32
     } else {

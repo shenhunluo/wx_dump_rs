@@ -1,5 +1,4 @@
 pub mod SKP_Silk_dec_API;
-pub mod SKP_Silk_resampler;
 pub mod SKP_Silk_range_coder;
 pub mod SKP_Silk_gain_quant;
 pub mod SKP_Silk_lin2log;
@@ -8,6 +7,7 @@ pub mod SKP_Silk_lin2log;
 pub mod SKP_Silk_code_signs;
 pub mod SKP_Silk_MA;
 
+pub mod skp_silk_resampler;
 pub mod skp_silk_resampler_up2;
 pub mod skp_silk_resampler_down2;
 pub mod skp_silk_resampler_private_up4;

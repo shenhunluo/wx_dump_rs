@@ -4,12 +4,12 @@ use crate::{
 };
 
 pub fn skp_silk_resampler_private_down4(
-    mut s: &mut [i32],
-    mut out: &mut [i16],
-    mut in_0: &[i16],
-    mut in_len: usize,
+    s: &mut [i32],
+    out: &mut [i16],
+    in_0: &[i16],
+    in_len: usize,
 ) {
-    let mut len4 = in_len >> 2;
+    let len4 = in_len >> 2;
     for k in 0..len4 {
         let in32 = (in_0[4 * k] as i32 + in_0[4 * k + 1] as i32) << 9;
         let y = in32 - s[0];
