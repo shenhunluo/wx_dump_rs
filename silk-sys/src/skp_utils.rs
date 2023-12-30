@@ -8,7 +8,7 @@ pub const LTP_ORDER: usize = 5;
 pub const V_PITCH_GAIN_START_MIN_Q14: i32 = 11469;
 pub const CNG_NLSF_SMTH_Q16: i32 = 16348;
 pub const CNG_GAIN_SMTH_Q16: i32 = 4634;
-
+pub const RESAMPLER_DOWN_ORDER_FIR: i32 = 12;
 
 fn skp_silk_clz16(mut in16: i16) -> i32 {
     let mut out32 = 0;

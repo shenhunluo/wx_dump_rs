@@ -131,19 +131,12 @@ impl AnalysisDatabaseBody {
             },
             AnalysisDatabaseMessage::ButtonMsgPlayAudio(id , key) => {
                 if let Some(conn) = self.conn.as_mut().unwrap().media_msg_conn_map.get_mut(&key) {
-                    match module::module_media_msg::get_audio_pcm(id,conn) {
-                        Ok(data) => {
-                            match gui_util::play_audio(&data) {
-                                Ok(stream) => {
-                                    self.audio_stream = Some((stream,id));
-                                },
-                                Err(e) => {
-                                    self.audio_err_texts.insert(id, e.to_string());
-                                },
-                            }
+                    match gui_util::play_audio(|sample_rate| module::module_media_msg::get_audio_pcm(id,sample_rate,conn)) {
+                        Ok(stream) => {
+                            self.audio_stream = Some((stream,id));
                         },
-                        Err(err) => {
-                            self.audio_err_texts.insert(id, err.to_string());
+                        Err(e) => {
+                            self.audio_err_texts.insert(id, e.to_string());
                         },
                     }
                 } else {

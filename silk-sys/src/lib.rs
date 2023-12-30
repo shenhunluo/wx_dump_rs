@@ -1,18 +1,6 @@
 pub mod SKP_Silk_dec_API;
 pub mod SKP_Silk_resampler;
-pub mod SKP_Silk_resampler_private_up2_HQ;
-pub mod SKP_Silk_resampler_up2;
-pub mod SKP_Silk_resampler_down2;
-pub mod SKP_Silk_resampler_private_up4;
-pub mod SKP_Silk_resampler_private_down4;
-pub mod SKP_Silk_resampler_private_down_FIR;
-pub mod SKP_Silk_resampler_private_IIR_FIR;
-pub mod SKP_Silk_resampler_private_AR2;
-pub mod SKP_Silk_resampler_private_ARMA4;
-pub mod SKP_Silk_resampler_private_copy;
 pub mod SKP_Silk_range_coder;
-pub mod skp_silk_cng;
-pub mod skp_silk_decode_pitch;
 pub mod SKP_Silk_gain_quant;
 pub mod SKP_Silk_lin2log;
 
@@ -20,6 +8,18 @@ pub mod SKP_Silk_lin2log;
 pub mod SKP_Silk_code_signs;
 pub mod SKP_Silk_MA;
 
+pub mod skp_silk_resampler_up2;
+pub mod skp_silk_resampler_down2;
+pub mod skp_silk_resampler_private_up4;
+pub mod skp_silk_resampler_private_up2_hq;
+pub mod skp_silk_resampler_private_iir_fir;
+pub mod skp_silk_resampler_private_down_fir;
+pub mod skp_silk_resampler_private_copy;
+pub mod skp_silk_resampler_private_arma4;
+pub mod skp_silk_resampler_private_down4;
+pub mod skp_silk_resampler_private_ar2;
+pub mod skp_silk_cng;
+pub mod skp_silk_decode_pitch;
 pub mod skp_silk_decoder_set_fs;
 pub mod skp_silk_decode_frame;
 pub mod skp_silk_biquad;
@@ -64,8 +64,8 @@ use bytes::Buf;
 
 use crate::{error::SilkError, SKP_Silk_dec_API::{SKP_SILK_SDK_DecControlStruct, SKP_Silk_SDK_Decode, SkpSilkDecoderStruct }};
 
-pub fn decode_silk(src: impl AsRef<[u8]>, sample_rate: i32) -> Result<Vec<i16>, SilkError> {
-    unsafe { _decode_silk(src.as_ref(), sample_rate) }
+pub fn decode_silk(src: impl AsRef<[u8]>, sample_rate: u32) -> Result<Vec<i16>, SilkError> {
+    unsafe { _decode_silk(src.as_ref(), sample_rate as i32) }
 }
 
 unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, SilkError> {
@@ -86,8 +86,9 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
     };
 
     let mut decoder = SkpSilkDecoderStruct::default();
+    decoder.init();
     let mut result = vec![];
-    let frame_size = sample_rate as usize / 1000 * 20;
+    let frame_size = 960;
     let mut buf = vec![0i16; frame_size];
 //    let mut aaa = 0;
     loop {
@@ -121,7 +122,6 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
         if r != 0 {
             return Err(r.into());
         }
-
         result.extend_from_slice(&buf[0..output_size])
     }
     Ok(result)

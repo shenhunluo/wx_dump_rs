@@ -20,6 +20,13 @@ macro_rules! skp_r_shift {
 }
 
 #[macro_export]
+macro_rules! skp_add_l_shift {
+    ($a:expr,$b:expr,$shift:expr) => {{
+        $a + crate::skp_l_shift!($b,$shift)
+    }}
+}
+
+#[macro_export]
 macro_rules! skp_add_r_shift {
     ($a:expr,$b:expr,$shift:expr) => {{
         $a + crate::skp_r_shift!($b,$shift)
@@ -258,6 +265,13 @@ macro_rules! skp_add_sat32 {
 macro_rules! i16_to_i32 {
     ($a:expr,$b:expr) => {{
         ($a as i32 & 0xffff) | (($b as i32) << 16)
+    }}
+}
+
+#[macro_export]
+macro_rules! i32_to_i16 {
+    ($a:expr) => {{
+        ($a as i16 , ($a >> 16) as i16)
     }}
 }
 

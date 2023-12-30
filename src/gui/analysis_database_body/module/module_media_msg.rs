@@ -3,6 +3,7 @@ use diesel::{Queryable, SqliteConnection, QueryDsl, RunQueryDsl, ExpressionMetho
 
 use super::super::schema::schema_media_msg;
 
+const SAMPLE_RATE: u32 = 20000;
 #[derive(Queryable, Debug)]
 pub struct Media {
     pub key: Option<String>,
@@ -12,7 +13,7 @@ pub struct Media {
     pub reserved2: Option<String>,
 }
 
-pub fn get_audio_pcm(id: i64, conn: &mut SqliteConnection) -> Result<Vec<i16>, anyhow::Error> {
+pub fn get_audio_pcm(id: i64, sample_rate: u32, conn: &mut SqliteConnection) -> Result<Vec<i16>, anyhow::Error> {
 
     let m:Vec<Media> = schema_media_msg::Media::table.select(schema_media_msg::Media::all_columns)
         .filter(schema_media_msg::Media::Reserved0.eq(id))
@@ -23,11 +24,11 @@ pub fn get_audio_pcm(id: i64, conn: &mut SqliteConnection) -> Result<Vec<i16>, a
     let data = m[0].buf.as_ref().unwrap();
     match data[0] {
         2 => {
-            let r = silk_sys::decode_silk(&data[1..], 24000)?;
+            let r = silk_sys::decode_silk(&data[1..], sample_rate)?;
             Ok(r)
         }
         35 => {
-            let r = silk_sys::decode_silk(&data[7..], 24000)?;
+            let r = silk_sys::decode_silk(&data[7..], sample_rate)?;
             Ok(r)
         }
         _ => {
@@ -45,20 +46,22 @@ pub fn test_for_silk(conn: &mut SqliteConnection) -> Result<(), anyhow::Error> {
         // println!("load key: {}",m.key.as_ref().unwrap());
         match data[0] {
             2 => {
-                let t = silk_sys::decode_silk(&data[1..], 24000)?;
                 // 1099511686545
                 if m.key.as_ref().unwrap() == "1099511686541" {
-                    let t = crate::gui::gui_util::play_audio(&t)?;
+                    let t = crate::gui::gui_util::play_audio(|sample_rate| Ok(silk_sys::decode_silk(&data[1..], sample_rate)?))?;
                     stream = Some(t);
                     println!("play audio. key: {}",m.key.unwrap());
+                } else {
+                    silk_sys::decode_silk(&data[1..], SAMPLE_RATE)?;
                 }
             }
             35 => {
-                let data = silk_sys::decode_silk(&data[7..], 24000)?;
                 if stream.is_none() {
-                    let t = crate::gui::gui_util::play_audio(&data)?;
+                    let t = crate::gui::gui_util::play_audio(|sample_rate| Ok(silk_sys::decode_silk(&data[7..], sample_rate)?))?;
                     stream = Some(t);
                     println!("play audio. key: {}",m.key.unwrap());
+                } else {
+                    silk_sys::decode_silk(&data[7..], SAMPLE_RATE)?;
                 }
             }
             _ => {

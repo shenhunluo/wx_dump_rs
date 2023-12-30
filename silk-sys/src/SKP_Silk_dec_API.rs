@@ -28,7 +28,7 @@ use super::SKP_Silk_range_coder::{
     SKP_Silk_range_coder_state,
 };
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct SkpSilkDecoderStruct {
     pub sRC: SKP_Silk_range_coder_state,
     pub prev_inv_gain_Q16: libc::c_int,
@@ -69,13 +69,17 @@ pub struct SkpSilkDecoderStruct {
 
 impl Default for SkpSilkDecoderStruct {
     fn default() -> Self {
-        let mut ps_dec = Self { sRC: Default::default(), prev_inv_gain_Q16: Default::default(), sLTP_Q16: [0;960], sLPC_Q14: [0;136], exc_Q10: [0;480], res_Q10: [0;480], outBuf: [0;960], lagPrev: Default::default(), LastGainIndex: Default::default(), LastGainIndex_EnhLayer: Default::default(), typeOffsetPrev: Default::default(), HPState: Default::default(), HP_A: Default::default(), HP_B: None, fs_k_hz: Default::default(), prev_API_sampleRate: Default::default(), frame_length: Default::default(), subfr_length: Default::default(), LPC_order: Default::default(), prevNLSF_Q15: Default::default(), first_frame_after_reset: Default::default(), nBytesLeft: Default::default(), nFramesDecoded: Default::default(), nFramesInPacket: Default::default(), moreInternalDecoderFrames: Default::default(), FrameTermination: Default::default(), resampler_state: Default::default(), psNLSF_CB: Default::default(), vadFlag: Default::default(), no_FEC_counter: Default::default(), inband_FEC_offset: Default::default(), sCNG: Default::default(), lossCnt: Default::default(), prev_sig_type: Default::default(), sPLC: Default::default() };
-        skp_silk_decoder_set_fs(&mut ps_dec, 24);
-        ps_dec.first_frame_after_reset = 1;
-        ps_dec.prev_inv_gain_Q16 = 65536;
-        skp_silk_cng_reset(&mut ps_dec);
-        skp_silk_plc_reset(&mut ps_dec);
-        ps_dec
+        Self { sRC: Default::default(), prev_inv_gain_Q16: Default::default(), sLTP_Q16: [0;960], sLPC_Q14: [0;136], exc_Q10: [0;480], res_Q10: [0;480], outBuf: [0;960], lagPrev: Default::default(), LastGainIndex: Default::default(), LastGainIndex_EnhLayer: Default::default(), typeOffsetPrev: Default::default(), HPState: Default::default(), HP_A: Default::default(), HP_B: None, fs_k_hz: Default::default(), prev_API_sampleRate: Default::default(), frame_length: Default::default(), subfr_length: Default::default(), LPC_order: Default::default(), prevNLSF_Q15: Default::default(), first_frame_after_reset: Default::default(), nBytesLeft: Default::default(), nFramesDecoded: Default::default(), nFramesInPacket: Default::default(), moreInternalDecoderFrames: Default::default(), FrameTermination: Default::default(), resampler_state: Default::default(), psNLSF_CB: Default::default(), vadFlag: Default::default(), no_FEC_counter: Default::default(), inband_FEC_offset: Default::default(), sCNG: Default::default(), lossCnt: Default::default(), prev_sig_type: Default::default(), sPLC: Default::default() }
+    }
+}
+
+impl SkpSilkDecoderStruct {
+    pub fn init(&mut self) {
+        skp_silk_decoder_set_fs(self, 24);
+        self.first_frame_after_reset = 1;
+        self.prev_inv_gain_Q16 = 65536;
+        skp_silk_cng_reset(self);
+        skp_silk_plc_reset(self);
     }
 }
 
@@ -181,7 +185,7 @@ pub unsafe fn SKP_Silk_SDK_Decode(
             }
         }
     }
-    if (48 as libc::c_int * 1000 as libc::c_int) < (*decControl).API_sampleRate
+    if (48 as libc::c_int * 1000 as libc::c_int) < decControl.API_sampleRate
         || 8000 as libc::c_int > (*decControl).API_sampleRate
     {
         ret = -(10 as libc::c_int);
@@ -198,7 +202,7 @@ pub unsafe fn SKP_Silk_SDK_Decode(
         for i in 0..samplesOut.len() {
             samplesOut[i] = 0;
         }
-        if prev_fs_k_hz != (*psDec).fs_k_hz
+        if prev_fs_k_hz != psDec.fs_k_hz
             || (*psDec).prev_API_sampleRate != (*decControl).API_sampleRate
         {
             ret = SKP_Silk_resampler_init(
@@ -211,9 +215,9 @@ pub unsafe fn SKP_Silk_SDK_Decode(
         ret
             += SKP_Silk_resampler(
                 &mut (*psDec).resampler_state,
-                samplesOut.as_mut_ptr(),
-                samplesOut_tmp.as_mut_ptr() as *const libc::c_short,
-                *nSamplesOut as libc::c_int,
+                samplesOut,
+                &samplesOut_tmp,
+                *nSamplesOut,
             );
         *nSamplesOut = *nSamplesOut * decControl.API_sampleRate as usize / (psDec.fs_k_hz as usize * 1000);
     }
@@ -432,7 +436,7 @@ pub unsafe fn SKP_Silk_SDK_get_TOC(
             invRatio_Q16: 0,
             FIR_Fracs: 0,
             input2x: 0,
-            Coefs: 0 as *const libc::c_short,
+            Coefs: None,
             sDownPre: [0; 2],
             sUpPost: [0; 2],
             down_pre_function: None,
