@@ -2,7 +2,7 @@ use crate::{
     i16_to_i32, skp_l_shift, skp_r_shift, skp_r_shift_round, skp_rand, skp_s_mla_w_b,
     skp_s_mla_w_t, skp_s_mul_w_b, skp_s_mul_w_w, skp_sat_16,
     skp_silk_tables_other::SKP_SILK_QUANTIZATION_OFFSETS_Q10,
-    skp_utils::{skp_div32_var_q, skp_inverse32_var_q},
+    skp_utils::{skp_div32_var_q, skp_inverse32_var_q, MAX_LPC_ORDER},
 };
 use crate::{
     SKP_Silk_MA::skp_silk_ma_prediction,
@@ -146,8 +146,6 @@ pub fn skp_silk_decode_core(
     }
 }
 
-const MAX_lpc_order: usize = 16;
-
 pub fn skp_silk_decode_short_term_prediction(
     vec_q10: &mut [i32],
     p_res_q10: &[i32],
@@ -160,60 +158,56 @@ pub fn skp_silk_decode_short_term_prediction(
         for i in 0..subfr_length {
             /* unrolled */
             let a_tmp = i16_to_i32!(a_q12_tmp[0], a_q12_tmp[1]);
-            let mut lpc_pred_q10 = skp_s_mul_w_b!(s_lpc_q14[MAX_lpc_order + i - 1], a_tmp);
-            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 2], a_tmp);
+            let mut lpc_pred_q10 = skp_s_mul_w_b!(s_lpc_q14[MAX_LPC_ORDER + i - 1], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 2], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[2], a_q12_tmp[3]);
-            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 3], a_tmp);
-            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 4], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 3], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 4], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[4], a_q12_tmp[5]);
-            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 5], a_tmp);
-            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 6], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 5], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 6], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[6], a_q12_tmp[7]);
-            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 7], a_tmp);
-            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 8], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 7], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 8], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[8], a_q12_tmp[9]);
-            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 9], a_tmp);
-            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 10], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 9], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 10], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[10], a_q12_tmp[11]);
-            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 11], a_tmp);
-            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 12], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 11], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 12], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[12], a_q12_tmp[13]);
-            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 13], a_tmp);
-            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 14], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 13], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 14], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[14], a_q12_tmp[15]);
-            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 15], a_tmp);
-            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 16], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 15], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 16], a_tmp);
 
             /* Add prediction to LPC residual */
             vec_q10[i] = p_res_q10[i] + lpc_pred_q10;
 
             /* Update states */
-            s_lpc_q14[MAX_lpc_order + i] = skp_l_shift!(vec_q10[i], 4);
+            s_lpc_q14[MAX_LPC_ORDER + i] = skp_l_shift!(vec_q10[i], 4);
         }
     } else {
         for i in 0..subfr_length {
             /* unrolled */
             let a_tmp = i16_to_i32!(a_q12_tmp[0], a_q12_tmp[1]);
-            let mut lpc_pred_q10 = skp_s_mul_w_b!(s_lpc_q14[MAX_lpc_order + i - 1], a_tmp);
-            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 2], a_tmp);
+            let mut lpc_pred_q10 = skp_s_mul_w_b!(s_lpc_q14[MAX_LPC_ORDER + i - 1], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 2], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[2], a_q12_tmp[3]);
-            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 3], a_tmp);
-            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 4], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 3], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 4], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[4], a_q12_tmp[5]);
-            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 5], a_tmp);
-            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 6], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 5], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 6], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[6], a_q12_tmp[7]);
-            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 7], a_tmp);
-            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 8], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 7], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 8], a_tmp);
             let a_tmp = i16_to_i32!(a_q12_tmp[8], a_q12_tmp[9]);
-            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 9], a_tmp);
-            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_lpc_order + i - 10], a_tmp);
-
-            /* Add prediction to LPC residual */
+            lpc_pred_q10 = skp_s_mla_w_b!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 9], a_tmp);
+            lpc_pred_q10 = skp_s_mla_w_t!(lpc_pred_q10, s_lpc_q14[MAX_LPC_ORDER + i - 10], a_tmp);
             vec_q10[i] = p_res_q10[i] + lpc_pred_q10;
-
-            /* Update states */
-            s_lpc_q14[MAX_lpc_order + i] = skp_l_shift!(vec_q10[i], 4);
+            s_lpc_q14[MAX_LPC_ORDER + i] = skp_l_shift!(vec_q10[i], 4);
         }
     };
 }
