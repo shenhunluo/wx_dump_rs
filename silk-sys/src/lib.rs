@@ -1,11 +1,13 @@
 pub mod skp_silk_dec_api;
+
+
 pub mod SKP_Silk_range_coder;
 pub mod SKP_Silk_gain_quant;
 pub mod SKP_Silk_lin2log;
-
-
 pub mod SKP_Silk_code_signs;
 pub mod SKP_Silk_MA;
+pub mod SKP_Silk_sort;
+
 
 pub mod skp_silk_resampler;
 pub mod skp_silk_resampler_up2;
@@ -39,7 +41,6 @@ pub mod skp_silk_decode_pulses;
 pub mod skp_silk_nlsf_stabilize;
 pub mod skp_silk_bwexpander;
 pub mod skp_silk_nlsf_msvq_decode;
-pub mod SKP_Silk_sort;
 pub mod skp_silk_bwexpander_32;
 pub mod skp_silk_resampler_rom;
 pub mod skp_silk_tables_other;
