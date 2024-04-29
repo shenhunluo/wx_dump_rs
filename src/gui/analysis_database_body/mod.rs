@@ -544,7 +544,7 @@ impl AnalysisDatabaseBody {
                     .count_by_user_top_start
                     .parse::<usize>()
                     .unwrap_or(1)
-                    .min(self.report_info.count_by_user.len() - 1)
+                    .min(self.report_info.count_by_user.len())
                     .max(1);
                 let end = self
                     .report_info
@@ -653,7 +653,7 @@ impl AnalysisDatabaseBody {
                     .count_by_date_top_start
                     .parse::<usize>()
                     .unwrap_or(1)
-                    .min(count_by_date_order_by_count.len() - 1)
+                    .min(count_by_date_order_by_count.len())
                     .max(1);
                 let end = self
                     .report_info
