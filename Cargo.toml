@@ -14,36 +14,65 @@ required-features = ["gui"]
 
 [features]
 default = ["shell"]
-shell = ["windows","futures"]
-gui = ["iced","iced_runtime","diesel/sqlite","diesel/chrono","tokio","windows/Win32_System_Com","windows/Win32_UI_Shell","silk-sys","cpal",]
-
+shell = ["windows", "futures"]
+gui = [
+    "iced",
+    "iced_runtime",
+    "iced_aw",
+    "diesel/sqlite",
+    "diesel/chrono",
+    "chrono",
+    "tokio",
+    "windows/Win32_System_Com",
+    "windows/Win32_UI_Shell",
+    "silk-sys",
+    "cpal",
+    "plotters",
+]
+dev = []
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-windows = {version = "*", features = [
+windows = { version = "*", features = [
     "Win32_Foundation",
     "Win32_System_Threading",
     "Win32_System_Memory",
     "Win32_System_Diagnostics_ToolHelp",
     "Win32_System_LibraryLoader",
     "Win32_UI_WindowsAndMessaging",
-    "Win32_Storage_FileSystem"], optional = true }
-anyhow = { version = "*", features = ["backtrace"]}
+    "Win32_Storage_FileSystem",
+], optional = true }
+anyhow = { version = "*", features = ["backtrace"] }
 serde_json = "*"
-clap = { version = "*", features = ["derive"]}
+clap = { version = "*", features = ["derive"] }
 base64 = "*"
 dirs = "*"
-pbkdf2 = { version = "*", features = ["hmac"]}
+pbkdf2 = { version = "*", features = ["hmac"] }
 sha1 = "*"
 hmac = "*"
 cbc = "*"
-aes ="*"
+aes = "*"
 byteorder = "*"
-iced = {version = "*", features = ["tokio", "debug","default","qr_code","image","canvas","system"], optional = true}
-iced_runtime = {version = "*", optional = true}
-tokio = {version = "*", features = ["sync"],optional = true}
-futures = {version = "*", optional = true}
-diesel = {version = "*", optional = true}
-silk-sys = {path = "silk-sys", optional = true}
-cpal = {version = "*", optional = true}
+iced = { version = "*", features = [
+    "tokio",
+    "debug",
+    "default",
+    "qr_code",
+    "image",
+    "canvas",
+    "system",
+    "multi-window",
+], optional = true }
+iced_aw = { version = "*", features = [
+    "date_picker",
+    "icons",
+], optional = true }
+iced_runtime = { version = "*", optional = true }
+tokio = { version = "*", features = ["sync"], optional = true }
+futures = { version = "*", optional = true }
+diesel = { version = "*", optional = true }
+silk-sys = { path = "silk-sys", optional = true }
+cpal = { version = "*", optional = true }
+chrono = { version = "*", optional = true }
+plotters = { version = "*", optional = true }

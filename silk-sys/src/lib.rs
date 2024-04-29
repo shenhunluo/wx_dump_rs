@@ -66,32 +66,19 @@ use bytes::Buf;
 use crate::{error::SilkError, skp_silk_dec_api::{SkpSilkSdkDecControlStruct, skp_silk_sdk_decode, SkpSilkDecoderStruct }};
 
 pub fn decode_silk(src: impl AsRef<[u8]>, sample_rate: u32) -> Result<Vec<i16>, SilkError> {
-    unsafe { _decode_silk(src.as_ref(), sample_rate as i32) }
-}
-
-unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, SilkError> {
-
+    let mut src = src.as_ref();
     const SILK_HEADER: &[u8] = b"#!SILK_V3";
     if src.starts_with(SILK_HEADER) {
         src.advance(SILK_HEADER.len());
     } else {
         return Err(SilkError::Invalid);
     };
-
-    let mut dec_control = SkpSilkSdkDecControlStruct {
-        api_sample_rate: sample_rate,
-        frame_size: 0,
-        frames_per_packet: 1,
-        more_internal_decoder_frames: 0,
-        in_band_fec_offset: 0,
-    };
-
+    let mut dec_control = SkpSilkSdkDecControlStruct::get_control_by_api_sample_rate(sample_rate as i32);
     let mut decoder = SkpSilkDecoderStruct::default();
     decoder.init();
     let mut result = vec![];
     let frame_size = 960;
     let mut buf = vec![0i16; frame_size];
-//    let mut aaa = 0;
     loop {
         if src.remaining() < 2 {
             break;
@@ -103,7 +90,6 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
         if src.remaining() < input_size as usize {
             return Err(SilkError::Invalid);
         }
-
         let input;
         (input, src) = src.split_at(input_size as usize);
 
@@ -117,9 +103,6 @@ unsafe fn _decode_silk(mut src: &[u8], sample_rate: i32) -> Result<Vec<i16>, Sil
             &mut buf,
             &mut output_size,
         );
-        //println!("data: {aaa} \n{:?}", buf);
-        //aaa += 1;
-        // println!("output_size : {}, buf : {:?}", output_size, &buf[..i16::min(50,output_size) as usize]);
         if r != 0 {
             return Err(r.into());
         }

@@ -59,3 +59,24 @@ diesel::table! {
         bytesXml -> Nullable<Binary>,
     }
 }
+
+diesel::table! {
+    ChatRoom (ChatRoomName) {
+        ChatRoomName -> Nullable<Text>,
+        UserNameList -> Nullable<Text>,
+        DisplayNameList -> Nullable<Text>,
+        ChatRoomFlag -> Nullable<Integer>,
+        Owner -> Nullable<Integer>,
+        IsShowName -> Nullable<Integer>,
+        SelfDisplayName -> Nullable<Text>,
+        Reserved1 -> Nullable<Integer>,
+        Reserved2 -> Nullable<Text>,
+        Reserved3 -> Nullable<Integer>,
+        Reserved4 -> Nullable<Text>,
+        Reserved5 -> Nullable<Integer>,
+        Reserved6 -> Nullable<Text>,
+        RoomData -> Nullable<Binary>,
+        Reserved7 -> Nullable<Integer>,
+        Reserved8 -> Nullable<Text>,
+    }
+}

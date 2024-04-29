@@ -1,6 +1,9 @@
 use crate::{util::u8_to_string, wx_util::WeChatInfo};
 
-pub fn show_user_info<FPI>(wechat_info: &WeChatInfo, print_info: FPI) -> anyhow::Result<()> where FPI: Fn(String) -> () {
+pub fn show_user_info<FPI>(wechat_info: &WeChatInfo, print_info: FPI) -> anyhow::Result<()>
+where
+    FPI: Fn(String) -> (),
+{
     print_info(format!("微信版本：\n\t{}", wechat_info.version));
     print_info(format!("用户昵称：\n\t{}", wechat_info.nick_name));
     print_info(format!("用户名：\n\t{}", wechat_info.account));

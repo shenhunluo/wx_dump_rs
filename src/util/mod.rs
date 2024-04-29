@@ -174,7 +174,16 @@ pub fn get_process_by_name(process_name: &str) -> anyhow::Result<PROCESSENTRY32>
         let process_snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)?;
         loop {
             Process32Next(process_snapshot, &mut process)?;
-            if process.szExeFile.split(|n| *n == 0).next().unwrap() == process_name.as_bytes() {
+            if process
+                .szExeFile
+                .split(|n| *n == 0)
+                .next()
+                .unwrap()
+                .iter()
+                .map(|i| *i as u8)
+                .collect::<Vec<_>>()
+                == process_name.as_bytes()
+            {
                 return Ok(process);
             }
         }
@@ -205,7 +214,16 @@ pub fn get_module_by_name(
         let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, process.th32ProcessID)?;
         loop {
             Module32Next(snapshot, &mut module)?;
-            if module.szModule.split(|n| *n == 0).next().unwrap() == module_name.as_bytes() {
+            if module
+                .szModule
+                .split(|n| *n == 0)
+                .next()
+                .unwrap()
+                .iter()
+                .map(|i| *i as u8)
+                .collect::<Vec<_>>()
+                == module_name.as_bytes()
+            {
                 return Ok(module);
             }
         }
@@ -233,7 +251,7 @@ pub fn get_modules(process: &PROCESSENTRY32) -> anyhow::Result<Vec<MODULEENTRY32
 pub fn get_version(module: &MODULEENTRY32) -> anyhow::Result<String> {
     unsafe {
         let image = LoadLibraryExA(
-            PCSTR::from_raw(module.szExePath.as_ptr()),
+            PCSTR::from_raw(module.szExePath.as_ptr() as *const u8),
             HANDLE::default(),
             LOAD_LIBRARY_AS_DATAFILE,
         )?;
@@ -251,7 +269,7 @@ pub fn get_version(module: &MODULEENTRY32) -> anyhow::Result<String> {
         let info_ref = info_ref as *mut VS_FIXEDFILEINFO;
         info = *info_ref;
         if b.0 == 0 {
-            GetLastError()?;
+            GetLastError().ok()?;
         }
         return Ok(format!(
             "{}.{}.{}.{}",
@@ -282,7 +300,7 @@ pub fn get_data_by_real_addr(
                     &mut numberofbytesread,
                 );
                 if b.0 == 0 {
-                    GetLastError()?;
+                    GetLastError().ok()?;
                 }
                 vec.append(&mut buffer.to_vec());
                 len = len - 4096;
@@ -295,7 +313,7 @@ pub fn get_data_by_real_addr(
                     &mut numberofbytesread,
                 );
                 if b.0 == 0 {
-                    GetLastError()?;
+                    GetLastError().ok()?;
                 }
                 vec.append(&mut buffer[0..len].to_vec());
                 break;
@@ -336,10 +354,17 @@ pub fn get_all_memory_by_handle(handle: &HANDLE) -> anyhow::Result<Vec<(usize, u
 }
 
 #[cfg(feature = "gui")]
-pub fn get_file_dialog() -> Result<String,anyhow::Error> {
-    use windows::Win32::{System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER}, UI::Shell::{IFileDialog, SIGDN_FILESYSPATH}};
+pub fn get_file_dialog() -> Result<String, anyhow::Error> {
+    use windows::Win32::{
+        System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER},
+        UI::Shell::{IFileDialog, SIGDN_FILESYSPATH},
+    };
     unsafe {
-        let file_dialog : IFileDialog = CoCreateInstance(&windows::core::GUID::from_u128(0xdc1c5a9ce88a4ddea5a160f82a20aef7), None, CLSCTX_INPROC_SERVER)?; 
+        let file_dialog: IFileDialog = CoCreateInstance(
+            &windows::core::GUID::from_u128(0xdc1c5a9ce88a4ddea5a160f82a20aef7),
+            None,
+            CLSCTX_INPROC_SERVER,
+        )?;
         file_dialog.Show(None)?;
         let result = file_dialog.GetResult()?;
         let result = result.GetDisplayName(SIGDN_FILESYSPATH)?.to_string()?;
@@ -348,10 +373,17 @@ pub fn get_file_dialog() -> Result<String,anyhow::Error> {
 }
 
 #[cfg(feature = "gui")]
-pub fn get_folder_dialog() -> Result<String,anyhow::Error> {
-    use windows::Win32::{System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER}, UI::Shell::{IFileDialog, SIGDN_FILESYSPATH, FOS_PICKFOLDERS}};
+pub fn get_folder_dialog() -> Result<String, anyhow::Error> {
+    use windows::Win32::{
+        System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER},
+        UI::Shell::{IFileDialog, FOS_PICKFOLDERS, SIGDN_FILESYSPATH},
+    };
     unsafe {
-        let file_dialog : IFileDialog = CoCreateInstance(&windows::core::GUID::from_u128(0xdc1c5a9ce88a4ddea5a160f82a20aef7), None, CLSCTX_INPROC_SERVER)?; 
+        let file_dialog: IFileDialog = CoCreateInstance(
+            &windows::core::GUID::from_u128(0xdc1c5a9ce88a4ddea5a160f82a20aef7),
+            None,
+            CLSCTX_INPROC_SERVER,
+        )?;
         file_dialog.SetOptions(FOS_PICKFOLDERS)?;
         file_dialog.Show(None)?;
         let result = file_dialog.GetResult()?;

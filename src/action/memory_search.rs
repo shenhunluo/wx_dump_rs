@@ -58,13 +58,20 @@ pub fn memory_search_from_wechat_all_modules(
                     println!(
                         "module: {}",
                         String::from_utf8(
-                            module.szModule.split(|n| *n == 0).next().unwrap().to_vec()
+                            module
+                                .szModule
+                                .split(|n| *n == 0)
+                                .next()
+                                .unwrap()
+                                .iter()
+                                .map(|i| *i as u8)
+                                .collect()
                         )?
                     );
                     println!("{:?}", r);
                 } else {
                     if show_no_found_info {
-                        println!("在 {} 中未找到想要搜索的数据。开始位置：{},结束位置：{}, 长度：{}, vec 长度：{}",String::from_utf8(module.szModule.split(|n| *n == 0).next().unwrap().to_vec())?,module.modBaseAddr as usize,module.modBaseAddr as usize + module.modBaseSize as usize, module.modBaseSize, vec.len());
+                        println!("在 {} 中未找到想要搜索的数据。开始位置：{},结束位置：{}, 长度：{}, vec 长度：{}",String::from_utf8(module.szModule.split(|n| *n == 0).next().unwrap().iter().map(|i| *i as u8).collect())?,module.modBaseAddr as usize,module.modBaseAddr as usize + module.modBaseSize as usize, module.modBaseSize, vec.len());
                     }
                 }
             }
@@ -73,7 +80,14 @@ pub fn memory_search_from_wechat_all_modules(
                     println!(
                         "获取内存失败。module: {}。err: {err:?}",
                         String::from_utf8(
-                            module.szModule.split(|n| *n == 0).next().unwrap().to_vec()
+                            module
+                                .szModule
+                                .split(|n| *n == 0)
+                                .next()
+                                .unwrap()
+                                .iter()
+                                .map(|i| *i as u8)
+                                .collect()
                         )?
                     );
                     println!(

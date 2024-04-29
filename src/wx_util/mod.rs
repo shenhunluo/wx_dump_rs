@@ -54,9 +54,9 @@ pub fn open_wechat_process(
     } else {
         get_process_by_name(&process_name)?
     });
-    wechat_info.set_handle(get_process_handle( wechat_info.get_process().th32ProcessID)?);
+    wechat_info.set_handle(get_process_handle(wechat_info.get_process().th32ProcessID)?);
 
-    wechat_info.set_module(get_module_by_name( wechat_info.get_process(), &module_name)?);
+    wechat_info.set_module(get_module_by_name(wechat_info.get_process(), &module_name)?);
     get_wechat_info(wechat_info)?;
     let mut offset_map_file = File::open(&offset_map)?;
     let mut buf = String::new();
@@ -68,8 +68,10 @@ pub fn open_wechat_process(
             "微信版本为：{}，{}文件中并未找到该版本的偏移量",
             wechat_info.version, offset_map
         )))?;
-    wechat_info.nick_name = get_wechat_data(wechat_info, offsets[0]).unwrap_or_else(|e| e.to_string());
-    wechat_info.account = get_wechat_data(wechat_info, offsets[1]).unwrap_or_else(|e| e.to_string());
+    wechat_info.nick_name =
+        get_wechat_data(wechat_info, offsets[0]).unwrap_or_else(|e| e.to_string());
+    wechat_info.account =
+        get_wechat_data(wechat_info, offsets[1]).unwrap_or_else(|e| e.to_string());
     wechat_info.mobile = get_wechat_data(wechat_info, offsets[2]).unwrap_or_else(|e| e.to_string());
     wechat_info.key = get_wechat_key(wechat_info, offsets[4])?;
     Ok(())

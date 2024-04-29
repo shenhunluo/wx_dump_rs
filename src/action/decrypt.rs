@@ -19,7 +19,7 @@ pub fn decrypt(
     decrypt_path_str: &String,
     key: &[u8],
     need_check_hmac: bool,
-    print_info: impl Fn(String)
+    print_info: impl Fn(String),
 ) -> Result<()> {
     let save_path = Path::new(save_path_str);
     if !save_path.exists() || !save_path.is_dir() {
@@ -178,7 +178,10 @@ pub fn decrypt(
                             decrypted_wal_file.write_all(&decrypt_buf)?;
                         }
                     }
-                    print_info(format!("文件{:?}解密成功", saved_wal_file_path.file_name().unwrap()));
+                    print_info(format!(
+                        "文件{:?}解密成功",
+                        saved_wal_file_path.file_name().unwrap()
+                    ));
                 }
 
                 let saved_shm_file_str = save_path_str.to_owned()

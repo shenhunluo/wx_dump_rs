@@ -1,8 +1,8 @@
-use iced::widget::{Container, Column};
+use iced::widget::{Column, Container};
 
 use crate::util::{get_file_dialog, get_folder_dialog};
 
-use super::{Message, gui_util::set_col_with_text_input};
+use super::{gui_util::set_col_with_text_input, Message};
 
 #[derive(Debug, Clone)]
 pub struct ConfigBody {
@@ -40,16 +40,14 @@ impl ConfigBody {
             ConfigMessage::InputOffsetMap(s) => {
                 self.offset_map = s;
                 self.offset_msg = None;
-            },
-            ConfigMessage::ButtonOffsetMap => {
-                match get_file_dialog() {
-                    Ok(s) => {
-                        self.offset_map = s;
-                        self.offset_msg = None;
-                    },
-                    Err(e) => {
-                        self.offset_msg = Some(e.to_string());
-                    },
+            }
+            ConfigMessage::ButtonOffsetMap => match get_file_dialog() {
+                Ok(s) => {
+                    self.offset_map = s;
+                    self.offset_msg = None;
+                }
+                Err(e) => {
+                    self.offset_msg = Some(e.to_string());
                 }
             },
             ConfigMessage::InputWeChatDir(s) => {
@@ -60,46 +58,40 @@ impl ConfigBody {
                     self.wechat_dir = Some(s);
                 }
                 self.wechat_dir_msg = None;
-            },
-            ConfigMessage::ButtonWeChatDir => {
-                match get_folder_dialog() {
-                    Ok(folder) => {
-                        self.wechat_dir = Some(folder);
-                        self.wechat_dir_msg = None;
-                    },
-                    Err(err) => {
-                        self.wechat_dir_msg = Some(err.to_string());
-                    }
+            }
+            ConfigMessage::ButtonWeChatDir => match get_folder_dialog() {
+                Ok(folder) => {
+                    self.wechat_dir = Some(folder);
+                    self.wechat_dir_msg = None;
+                }
+                Err(err) => {
+                    self.wechat_dir_msg = Some(err.to_string());
                 }
             },
             ConfigMessage::InputSavePath(s) => {
                 self.save_path = s;
                 self.save_path_msg = None;
-            },
-            ConfigMessage::ButtonSavePath => {
-                match get_folder_dialog() {
-                    Ok(folder) => {
-                        self.save_path = folder;
-                        self.save_path_msg = None;
-                    },
-                    Err(err) => {
-                        self.save_path_msg = Some(err.to_string());
-                    }
+            }
+            ConfigMessage::ButtonSavePath => match get_folder_dialog() {
+                Ok(folder) => {
+                    self.save_path = folder;
+                    self.save_path_msg = None;
+                }
+                Err(err) => {
+                    self.save_path_msg = Some(err.to_string());
                 }
             },
             ConfigMessage::InputDecryptPath(s) => {
                 self.decrypt_path = s;
                 self.decrypt_path_msg = None;
-            },
-            ConfigMessage::ButtonDecryptPath => {
-                match get_folder_dialog() {
-                    Ok(folder) => {
-                        self.decrypt_path = folder;
-                        self.decrypt_path_msg = None;
-                    },
-                    Err(err) => {
-                        self.decrypt_path_msg = Some(err.to_string());
-                    }
+            }
+            ConfigMessage::ButtonDecryptPath => match get_folder_dialog() {
+                Ok(folder) => {
+                    self.decrypt_path = folder;
+                    self.decrypt_path_msg = None;
+                }
+                Err(err) => {
+                    self.decrypt_path_msg = Some(err.to_string());
                 }
             },
             ConfigMessage::InputProcessId(s) => {
@@ -110,30 +102,87 @@ impl ConfigBody {
                         self.process_id = Some(s);
                     }
                 }
-            },
+            }
             ConfigMessage::InputProcessName(s) => {
                 self.process_name = s;
-            },
+            }
             ConfigMessage::InputModuleName(s) => {
                 self.module_name = s;
-            },
-        }
-    } 
-    pub fn draw(&self) -> Container<Message> {
-        Container::new(
-            {
-                let mut col = Column::new()
-                .spacing(5);
-                col = set_col_with_text_input(col, "偏移量文件", |s| ConfigMessage::InputOffsetMap(s), Some(ConfigMessage::ButtonOffsetMap), &self.offset_map, "...", &self.offset_msg);
-                col = set_col_with_text_input(col, "微信文件夹（空值为默认文件夹）", |s| ConfigMessage::InputWeChatDir(s), Some(ConfigMessage::ButtonWeChatDir), &self.wechat_dir.as_ref().unwrap_or(&"".to_string()), "...", &self.wechat_dir_msg);
-                col = set_col_with_text_input(col, "数据库备份文件夹", |s| ConfigMessage::InputSavePath(s), Some(ConfigMessage::ButtonSavePath), &&self.save_path, "...", &self.save_path_msg);
-                col = set_col_with_text_input(col, "数据库解密文件夹", |s| ConfigMessage::InputDecryptPath(s), Some(ConfigMessage::ButtonDecryptPath), &self.decrypt_path, "...", &self.decrypt_path_msg);
-                col = set_col_with_text_input(col, "微信进程号（可为空）", |s| ConfigMessage::InputProcessId(s), None, &self.process_id.as_ref().map(|p| p.to_string()).unwrap_or("".to_string()), "...", &None::<String>);
-                col = set_col_with_text_input(col, "微信进程名", |s| ConfigMessage::InputProcessName(s), None, &self.process_name, "...", &None::<String>);
-                col = set_col_with_text_input(col, "微信模块名", |s| ConfigMessage::InputModuleName(s), None, &self.module_name, "...", &None::<String>);
-                col
             }
-        )
+        }
+    }
+    pub fn draw(&self) -> Container<Message> {
+        Container::new({
+            let mut col = Column::new().spacing(5);
+            col = set_col_with_text_input(
+                col,
+                "偏移量文件",
+                |s| ConfigMessage::InputOffsetMap(s),
+                Some(ConfigMessage::ButtonOffsetMap),
+                &self.offset_map,
+                "...",
+                &self.offset_msg,
+            );
+            col = set_col_with_text_input(
+                col,
+                "微信文件夹（空值为默认文件夹）",
+                |s| ConfigMessage::InputWeChatDir(s),
+                Some(ConfigMessage::ButtonWeChatDir),
+                &self.wechat_dir.as_ref().unwrap_or(&"".to_string()),
+                "...",
+                &self.wechat_dir_msg,
+            );
+            col = set_col_with_text_input(
+                col,
+                "数据库备份文件夹",
+                |s| ConfigMessage::InputSavePath(s),
+                Some(ConfigMessage::ButtonSavePath),
+                &&self.save_path,
+                "...",
+                &self.save_path_msg,
+            );
+            col = set_col_with_text_input(
+                col,
+                "数据库解密文件夹",
+                |s| ConfigMessage::InputDecryptPath(s),
+                Some(ConfigMessage::ButtonDecryptPath),
+                &self.decrypt_path,
+                "...",
+                &self.decrypt_path_msg,
+            );
+            col = set_col_with_text_input(
+                col,
+                "微信进程号（可为空）",
+                |s| ConfigMessage::InputProcessId(s),
+                None,
+                &self
+                    .process_id
+                    .as_ref()
+                    .map(|p| p.to_string())
+                    .unwrap_or("".to_string()),
+                "...",
+                &None::<String>,
+            );
+            col = set_col_with_text_input(
+                col,
+                "微信进程名",
+                |s| ConfigMessage::InputProcessName(s),
+                None,
+                &self.process_name,
+                "...",
+                &None::<String>,
+            );
+            col = set_col_with_text_input(
+                col,
+                "微信模块名",
+                |s| ConfigMessage::InputModuleName(s),
+                None,
+                &self.module_name,
+                "...",
+                &None::<String>,
+            );
+            col
+        })
     }
 }
 

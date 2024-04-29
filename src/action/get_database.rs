@@ -1,12 +1,13 @@
 use std::{
     collections::HashMap,
     fs::{create_dir, read_dir, File},
-    path::{Path, PathBuf}, future::Future,
+    future::Future,
+    path::{Path, PathBuf},
 };
 
 use anyhow::anyhow;
 
-pub async fn get_database<FPI,FSI,R,E>(
+pub async fn get_database<FPI, FSI, R, E>(
     wechat_path: &Option<String>,
     save_dir: &String,
     account: &String,
@@ -16,8 +17,8 @@ pub async fn get_database<FPI,FSI,R,E>(
 where
     FPI: Fn(String) -> (),
     FSI: Fn(Vec<usize>) -> R,
-    R: Future<Output = Result<usize,E>>,
-    E: Into<anyhow::Error>
+    R: Future<Output = Result<usize, E>>,
+    E: Into<anyhow::Error>,
 {
     let mut map = HashMap::new();
     let mut wechat_path_buf;
@@ -75,23 +76,23 @@ where
                 print_info(format!("[{}]:{}", index + 1, file_name));
             }
         }
-            // let mut input = String::new();
-            // stdin().read_line(&mut input)?;
-            // let index = input.trim().parse::<usize>();
-            // if let Ok(index) = index {
-            //     if let Some(file_name) = index_map.get(&index) {
-            //         break *file_name;
-            //     } else {
-            //         print_info(format!("请输入正确的编号"));
-            //     }
-            // } else {
-            //     print_info(format!("输入的不是数字，请输入数字编号"));
-            //     continue;
-            // }
+        // let mut input = String::new();
+        // stdin().read_line(&mut input)?;
+        // let index = input.trim().parse::<usize>();
+        // if let Ok(index) = index {
+        //     if let Some(file_name) = index_map.get(&index) {
+        //         break *file_name;
+        //     } else {
+        //         print_info(format!("请输入正确的编号"));
+        //     }
+        // } else {
+        //     print_info(format!("输入的不是数字，请输入数字编号"));
+        //     continue;
+        // }
         let keys = index_map.keys().map(|k| *k).collect::<Vec<_>>();
-        let key = index_map.get(&set_index(keys).await.map_err(|e| e.into())?)
-                .ok_or(anyhow::Error::msg("错误的编号"))?
-        ;
+        let key = index_map
+            .get(&set_index(keys).await.map_err(|e| e.into())?)
+            .ok_or(anyhow::Error::msg("错误的编号"))?;
         let mut path_buf = map.get(*key).ok_or(anyhow!("路径获取失败"))?.clone();
         path_buf.push("Msg");
         path_buf.push("Multi");
@@ -106,9 +107,9 @@ where
         ));
     }
     if save_path.exists() {
-        print_info(format!("开始清空文件夹：{}",save_path.display()));
+        print_info(format!("开始清空文件夹：{}", save_path.display()));
         std::fs::remove_dir_all(save_path)?;
-        print_info(format!("已清空文件夹：{}",save_path.display()));
+        print_info(format!("已清空文件夹：{}", save_path.display()));
     }
     create_dir(save_path)?;
 
@@ -128,9 +129,9 @@ where
             let mut save_path_buf = PathBuf::from(save_path);
             save_path_buf.push(&file_name);
             let mut out_file = File::create(save_path_buf)?;
-            print_info(format!("开始复制{}文件",file_name));
+            print_info(format!("开始复制{}文件", file_name));
             std::io::copy(&mut in_file, &mut out_file)?;
-            print_info(format!("{}文件复制完成",file_name));
+            print_info(format!("{}文件复制完成", file_name));
         }
     }
     path_buf.pop();

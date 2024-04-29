@@ -109,6 +109,19 @@ pub struct SkpSilkSdkDecControlStruct {
     pub more_internal_decoder_frames: i32,
     pub in_band_fec_offset: i32,
 }
+
+impl SkpSilkSdkDecControlStruct {
+    pub fn get_control_by_api_sample_rate(sample_rate: i32) -> Self {
+        Self {
+            api_sample_rate: sample_rate.into(),
+            frame_size: 0,
+            frames_per_packet: 1,
+            more_internal_decoder_frames: 0,
+            in_band_fec_offset: 0,
+        }
+    }
+}
+
 #[derive(Clone, Default)]
 pub struct SkpSilkTocStruct {
     pub frames_in_packet: i32,
