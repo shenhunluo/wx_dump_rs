@@ -917,7 +917,7 @@ impl AnalysisDatabaseBody {
                     &d,
                 )));
                 iced::Command::none()
-            },
+            }
             AnalysisDatabaseMessage::ButtonReportCountByYearTable => {
                 let d = self
                     .report_info
@@ -948,7 +948,7 @@ impl AnalysisDatabaseBody {
                     &d,
                 )));
                 iced::Command::none()
-            },
+            }
         }
     }
 
