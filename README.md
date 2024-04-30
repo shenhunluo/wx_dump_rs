@@ -44,10 +44,16 @@ target\release\wx_dump_rs.exe search -s "地址(例如当前例子中的24890218
 [63488256]
 
 ## GUI
-### 查看聊天记录
+### 编译
+```
+cargo build --bin wx_dump_rs_gui --features="gui" --release
+```
+
+### 截图
+#### 查看聊天记录
 ![查看微信消息](.\image\查看微信消息.png) 
 
-### 查看统计图表
+#### 查看统计图表
 ![数据图表](.\image\数据图表.png) 
 
 ## 免责声明
