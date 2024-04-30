@@ -833,7 +833,7 @@ impl AnalysisDatabaseBody {
                     .map(|(month, count)| (format!("{}月", month), *count))
                     .collect::<Vec<_>>();
                 self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
-                    "以月份为纬度统计总数",
+                    "以月份为维度统计总数",
                     "月份",
                     |index| match index {
                         SegmentValue::Exact(index) => {
@@ -864,7 +864,7 @@ impl AnalysisDatabaseBody {
                     .map(|(day, count)| (format!("{}日", day), *count))
                     .collect::<Vec<_>>();
                 self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
-                    "以日期为纬度统计总数",
+                    "以日期为维度统计总数",
                     "日期",
                     |index| match index {
                         SegmentValue::Exact(index) => {
@@ -895,7 +895,7 @@ impl AnalysisDatabaseBody {
                     .map(|(weekday, count)| (weekday.to_string(), *count))
                     .collect::<Vec<_>>();
                 self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
-                    "以星期为纬度统计总数",
+                    "以星期为维度统计总数",
                     "星期",
                     |index| match index {
                         SegmentValue::Exact(index) => {
@@ -926,7 +926,7 @@ impl AnalysisDatabaseBody {
                     .map(|(year, count)| (format!("{}年", year), *count))
                     .collect::<Vec<_>>();
                 self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
-                    "以年份为纬度统计总数",
+                    "以年份为维度统计总数",
                     "年份",
                     |index| match index {
                         SegmentValue::Exact(index) => {
@@ -1436,7 +1436,7 @@ impl AnalysisDatabaseBody {
                             )),
                     ).push(
                         Row::new().push(
-                            Text::new("不同时间纬度")
+                            Text::new("不同时间维度")
                         ).push(
                             Button::new("年份").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByYearTable))
                         ).push(
