@@ -44,6 +44,10 @@ target\release\wx_dump_rs.exe search -s "地址(例如当前例子中的24890218
 [63488256]
 
 ## GUI
+使用iced框架制作的gui程序，添加了查看消息的功能，目前可以解析文本、语音、图片消息
+
+使用plotters库生成统计图表
+
 ### 编译
 ```
 cargo build --bin wx_dump_rs_gui --features="gui" --release
