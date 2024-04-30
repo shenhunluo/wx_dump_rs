@@ -55,10 +55,10 @@ cargo build --bin wx_dump_rs_gui --features="gui" --release
 
 ### 截图
 #### 查看聊天记录
-![查看微信消息](.\image\查看微信消息.png) 
+![查看微信消息](image\查看微信消息.png) 
 
 #### 查看统计图表
-![数据图表](.\image\数据图表.png) 
+![数据图表](image\数据图表.png) 
 
 ## 免责声明
 本项目指在技术验证
