@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use chrono::{DateTime, Datelike, NaiveDate, Timelike, Utc};
+use chrono::{DateTime, Datelike, NaiveDate, Timelike, Utc, Weekday};
 use cpal::Stream;
 use diesel::SqliteConnection;
 use iced::{
@@ -19,7 +19,7 @@ use iced_runtime::core::{image::Handle, text::Shaping};
 use plotters::{
     backend::BitMapBackend,
     chart::ChartBuilder,
-    coord::ranged1d::IntoSegmentedCoord,
+    coord::ranged1d::{IntoSegmentedCoord, SegmentValue},
     drawing::IntoDrawingArea,
     element::PathElement,
     series::{Histogram, LineSeries},
@@ -54,6 +54,9 @@ pub struct AnalysisDatabaseBody {
     prev_body: LinkedList<PrevBody>,
     report_image: Option<Vec<u8>>,
 }
+
+const REPORT_IMAGE_WIDTH: u32 = 1024;
+const REPORT_IMAGE_HEIGHT: u32 = 768;
 
 #[derive(Clone)]
 struct SessionInfo {
@@ -132,6 +135,8 @@ struct ReportInfo {
     count_by_day_user: Vec<(u32, String, usize)>,
     count_by_month_user: Vec<(u32, String, usize)>,
     count_by_year_user: Vec<(i32, String, usize)>,
+    count_by_weekday: Vec<(Weekday, usize)>,
+    count_by_weekday_user: Vec<(Weekday, String, usize)>,
     err_info: Option<String>,
 }
 
@@ -265,13 +270,17 @@ impl AnalysisDatabaseBody {
                 }
             }
             AnalysisDatabaseMessage::ButtonMsgPrev => {
-                self.msg_info.msg_page -= 1;
-                self.msg_info.msg_page_input = (self.msg_info.msg_page + 1).to_string();
+                if self.msg_info.msg_page > 0 {
+                    self.msg_info.msg_page -= 1;
+                    self.msg_info.msg_page_input = (self.msg_info.msg_page + 1).to_string();
+                }
                 iced::Command::none()
             }
             AnalysisDatabaseMessage::ButtonMsgNext => {
-                self.msg_info.msg_page += 1;
-                self.msg_info.msg_page_input = (self.msg_info.msg_page + 1).to_string();
+                if self.msg_info.msg_page < self.msg_info.msg_list.len() / 100 {
+                    self.msg_info.msg_page += 1;
+                    self.msg_info.msg_page_input = (self.msg_info.msg_page + 1).to_string();
+                }
                 iced::Command::none()
             }
             AnalysisDatabaseMessage::InputMsgPage(s) => {
@@ -443,7 +452,7 @@ impl AnalysisDatabaseBody {
                                 ),(
                                     |(k,v)| (*k,*v)
                                 ),(
-                                    |a,b| b.1.cmp(&a.1))
+                                    |a,b| a.0.cmp(&b.0))
                             ],[
                             count_by_day_user => (
                                     |user:&Option<String>,date:&DateTime<Utc>| (date.day(),user.clone())
@@ -457,7 +466,7 @@ impl AnalysisDatabaseBody {
                                 ),(
                                     |(k,v)| (*k,*v)
                                 ),(
-                                    |a,b| b.1.cmp(&a.1))
+                                    |a,b| a.0.cmp(&b.0))
                             ],[
                             count_by_month_user => (
                                     |user:&Option<String>,date:&DateTime<Utc>| (date.month(),user.clone())
@@ -471,7 +480,7 @@ impl AnalysisDatabaseBody {
                                 ),(
                                     |(k,v)| (*k,*v)
                                 ),(
-                                    |a,b| b.1.cmp(&a.1))
+                                    |a,b| a.0.cmp(&b.0))
                             ],[
                             count_by_year_user => (
                                     |user:&Option<String>,date:&DateTime<Utc>| (date.year(),user.clone())
@@ -479,7 +488,21 @@ impl AnalysisDatabaseBody {
                                     |((k1,k2),v)| (*k1,self.get_user_name(k2),*v)
                                 ),(
                                     |a,b| b.2.cmp(&a.2))
-                            ],
+                            ],[
+                                count_by_weekday => (
+                                        |_user,date:&DateTime<Utc>| date.weekday()
+                                    ),(
+                                        |(k,v)| (*k,*v)
+                                    ),(
+                                        |a,b| a.0.number_from_monday().cmp(&b.0.number_from_monday()))
+                                ],[
+                                count_by_weekday_user => (
+                                        |user:&Option<String>,date:&DateTime<Utc>| (date.weekday(),user.clone())
+                                    ),(
+                                        |((k1,k2),v)| (*k1,self.get_user_name(k2),*v)
+                                    ),(
+                                        |a,b| b.2.cmp(&a.2))
+                                ],
                         );
                         if self.report_info.count_by_date_order_by_date.len() != 0 {
                             self.report_info.count_by_date_start = self
@@ -557,9 +580,16 @@ impl AnalysisDatabaseBody {
                 self.report_info.count_by_user_top_start = start.to_string();
                 self.report_info.count_by_user_top_end = end.to_string();
 
-                self.report_image = Some(Self::rgb_to_rgba(
-                    &Self::get_report_histogram_image_order_by_count("不同用户的聊天记录总数", d),
-                ));
+                self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
+                    "不同用户的聊天记录总数",
+                    "总数",
+                    |index| match index {
+                        SegmentValue::Exact(index) => index.to_string(),
+                        SegmentValue::CenterOf(index) => index.to_string(),
+                        SegmentValue::Last => "".to_string(),
+                    },
+                    d,
+                )));
                 iced::Command::none()
             }
             AnalysisDatabaseMessage::DatePickerReportCountByDateStartUnderlay => {
@@ -666,9 +696,16 @@ impl AnalysisDatabaseBody {
                 self.report_info.count_by_date_top_start = start.to_string();
                 self.report_info.count_by_date_top_end = end.to_string();
 
-                self.report_image = Some(Self::rgb_to_rgba(
-                    &Self::get_report_histogram_image_order_by_count("不同用户的聊天记录总数", d),
-                ));
+                self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
+                    "不同用户的聊天记录总数",
+                    "总数",
+                    |index| match index {
+                        SegmentValue::Exact(index) => index.to_string(),
+                        SegmentValue::CenterOf(index) => index.to_string(),
+                        SegmentValue::Last => "".to_string(),
+                    },
+                    d,
+                )));
                 iced::Command::none()
             }
             AnalysisDatabaseMessage::DatePickerReportCountByDateTopStartUnderlay => {
@@ -788,6 +825,130 @@ impl AnalysisDatabaseBody {
                 self.session_info.search_session = input;
                 iced::Command::none()
             }
+            AnalysisDatabaseMessage::ButtonReportCountByMonthTable => {
+                let d = self
+                    .report_info
+                    .count_by_month
+                    .iter()
+                    .map(|(month, count)| (format!("{}月", month), *count))
+                    .collect::<Vec<_>>();
+                self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
+                    "以月份为纬度统计总数",
+                    "月份",
+                    |index| match index {
+                        SegmentValue::Exact(index) => {
+                            if *index > d.len() {
+                                "".to_string()
+                            } else {
+                                d[*index - 1].0.clone()
+                            }
+                        }
+                        SegmentValue::CenterOf(index) => {
+                            if *index > d.len() {
+                                "".to_string()
+                            } else {
+                                d[*index - 1].0.clone()
+                            }
+                        }
+                        SegmentValue::Last => "".to_string(),
+                    },
+                    &d,
+                )));
+                iced::Command::none()
+            }
+            AnalysisDatabaseMessage::ButtonReportCountByDayTable => {
+                let d = self
+                    .report_info
+                    .count_by_day
+                    .iter()
+                    .map(|(day, count)| (format!("{}日", day), *count))
+                    .collect::<Vec<_>>();
+                self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
+                    "以日期为纬度统计总数",
+                    "日期",
+                    |index| match index {
+                        SegmentValue::Exact(index) => {
+                            if *index > d.len() {
+                                "".to_string()
+                            } else {
+                                d[*index - 1].0.clone()
+                            }
+                        }
+                        SegmentValue::CenterOf(index) => {
+                            if *index > d.len() {
+                                "".to_string()
+                            } else {
+                                d[*index - 1].0.clone()
+                            }
+                        }
+                        SegmentValue::Last => "".to_string(),
+                    },
+                    &d,
+                )));
+                iced::Command::none()
+            }
+            AnalysisDatabaseMessage::ButtonReportCountByWeekdayTable => {
+                let d = self
+                    .report_info
+                    .count_by_weekday
+                    .iter()
+                    .map(|(weekday, count)| (weekday.to_string(), *count))
+                    .collect::<Vec<_>>();
+                self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
+                    "以星期为纬度统计总数",
+                    "星期",
+                    |index| match index {
+                        SegmentValue::Exact(index) => {
+                            if *index > d.len() {
+                                "".to_string()
+                            } else {
+                                d[*index - 1].0.clone()
+                            }
+                        }
+                        SegmentValue::CenterOf(index) => {
+                            if *index > d.len() {
+                                "".to_string()
+                            } else {
+                                d[*index - 1].0.clone()
+                            }
+                        }
+                        SegmentValue::Last => "".to_string(),
+                    },
+                    &d,
+                )));
+                iced::Command::none()
+            },
+            AnalysisDatabaseMessage::ButtonReportCountByYearTable => {
+                let d = self
+                    .report_info
+                    .count_by_year
+                    .iter()
+                    .map(|(year, count)| (format!("{}年", year), *count))
+                    .collect::<Vec<_>>();
+                self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
+                    "以年份为纬度统计总数",
+                    "年份",
+                    |index| match index {
+                        SegmentValue::Exact(index) => {
+                            if *index > d.len() {
+                                "".to_string()
+                            } else {
+                                d[*index - 1].0.clone()
+                            }
+                        }
+                        SegmentValue::CenterOf(index) => {
+                            if *index > d.len() {
+                                "".to_string()
+                            } else {
+                                d[*index - 1].0.clone()
+                            }
+                        }
+                        SegmentValue::Last => "".to_string(),
+                    },
+                    &d,
+                )));
+                iced::Command::none()
+            },
         }
     }
 
@@ -795,9 +956,11 @@ impl AnalysisDatabaseBody {
         title: &str,
         d: &[(NaiveDate, String, usize)],
     ) -> Vec<u8> {
-        let mut vec = vec![0u8; 1024 * 768 * 3];
+        let mut vec = vec![0u8; REPORT_IMAGE_WIDTH as usize * REPORT_IMAGE_HEIGHT as usize * 3];
         {
-            let root = BitMapBackend::with_buffer(vec.as_mut(), (1024, 768)).into_drawing_area();
+            let root =
+                BitMapBackend::with_buffer(vec.as_mut(), (REPORT_IMAGE_WIDTH, REPORT_IMAGE_HEIGHT))
+                    .into_drawing_area();
             root.fill(&plotters::style::WHITE).unwrap();
             let mut chart = ChartBuilder::on(&root)
                 .x_label_area_size(35)
@@ -872,36 +1035,57 @@ impl AnalysisDatabaseBody {
         vec
     }
 
-    fn get_report_histogram_image_order_by_count(title: &str, d: &[(String, usize)]) -> Vec<u8> {
-        let mut vec = vec![0u8; 1024 * 768 * 3];
+    fn get_report_histogram_image<F>(
+        title: &str,
+        x_desc: &str,
+        x_formatter: F,
+        d: &[(String, usize)],
+    ) -> Vec<u8>
+    where
+        F: Fn(&SegmentValue<usize>) -> String,
+    {
+        let mut vec = vec![0u8; REPORT_IMAGE_WIDTH as usize * REPORT_IMAGE_HEIGHT as usize * 3];
         {
-            let root = BitMapBackend::with_buffer(vec.as_mut(), (1024, 768)).into_drawing_area();
+            let root =
+                BitMapBackend::with_buffer(vec.as_mut(), (REPORT_IMAGE_WIDTH, REPORT_IMAGE_HEIGHT))
+                    .into_drawing_area();
             root.fill(&plotters::style::WHITE).unwrap();
             let mut chart = ChartBuilder::on(&root)
                 .x_label_area_size(35)
                 .y_label_area_size(40)
                 .margin(5)
                 .caption(title, ("楷体", 50.0))
-                .build_cartesian_2d((1..d.len()).into_segmented(), 0..d[0].1)
+                .build_cartesian_2d(
+                    (1..d.len()).into_segmented(),
+                    0..d.iter().map(|(_, count)| *count).max().unwrap_or(0),
+                )
                 .unwrap();
             chart
                 .configure_mesh()
+                .x_label_formatter(&x_formatter)
                 .disable_x_mesh()
                 .bold_line_style(plotters::style::WHITE.mix(0.3))
                 .y_desc("总数")
-                .x_desc("排名")
+                .x_desc(x_desc)
                 .axis_desc_style(("楷体", 15))
                 .draw()
                 .unwrap();
+            let mut color_map = HashMap::new();
+            let mut d_order_by_count = d.to_vec();
+            d_order_by_count.sort_by(|a, b| b.1.cmp(&a.1));
+            for (index, (name, _)) in d_order_by_count.iter().enumerate() {
+                color_map.insert(
+                    name,
+                    plotters::style::RED
+                        .mix(0.3 + index as f64 * (0.5 / d.len() as f64))
+                        .filled(),
+                );
+            }
             for (index, (name, count)) in d.iter().enumerate() {
                 chart
                     .draw_series(
                         Histogram::vertical(&chart)
-                            .style(
-                                plotters::style::RED
-                                    .mix(0.3 + index as f64 * (0.5 / d.len() as f64))
-                                    .filled(),
-                            )
+                            .style(*color_map.get(&name).unwrap())
                             .margin(20)
                             .data(vec![(index + 1, *count)]),
                     )
@@ -915,7 +1099,7 @@ impl AnalysisDatabaseBody {
                     filled: false,
                     stroke_width: 0,
                 })
-                .label_font(("楷体", 20))
+                .label_font(("楷体", 17))
                 .draw()
                 .unwrap();
             root.present().unwrap();
@@ -1250,9 +1434,25 @@ impl AnalysisDatabaseBody {
                                     AnalysisDatabaseMessage::ButtonReportCountByDateTable,
                                 ),
                             )),
+                    ).push(
+                        Row::new().push(
+                            Text::new("不同时间纬度")
+                        ).push(
+                            Button::new("年份").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByYearTable))
+                        ).push(
+                            Button::new("月份").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByMonthTable))
+                        ).push(
+                            Button::new("日期").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByDayTable))
+                        ).push(
+                            Button::new("星期").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByWeekdayTable))
+                        ).spacing(5)
                     );
                 if let Some(image) = &self.report_image {
-                    col = col.push(Image::new(Handle::from_pixels(1024, 768, image.clone())));
+                    col = col.push(Image::new(Handle::from_pixels(
+                        REPORT_IMAGE_WIDTH,
+                        REPORT_IMAGE_HEIGHT,
+                        image.clone(),
+                    )));
                 }
                 col
             })
@@ -1511,6 +1711,10 @@ pub enum AnalysisDatabaseMessage {
     InputReportCountByDateTopStart(String),
     InputReportCountByDateTopEnd(String),
     ButtonReportCountByDateTable,
+    ButtonReportCountByYearTable,
+    ButtonReportCountByMonthTable,
+    ButtonReportCountByDayTable,
+    ButtonReportCountByWeekdayTable,
 }
 
 impl Into<Message> for AnalysisDatabaseMessage {
