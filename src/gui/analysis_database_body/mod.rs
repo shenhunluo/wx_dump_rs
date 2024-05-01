@@ -978,11 +978,10 @@ impl AnalysisDatabaseBody {
                 iced::Command::none()
             }
             AnalysisDatabaseMessage::ReqwestGetEmotion((url, result)) => {
-                println!("{}", url);
                 let result = match result {
                     Ok(vec) => match iced_gif::Frames::from_bytes(vec.clone()) {
                         Ok(frames) => Ok(ImageData::Gif(frames)),
-                        Err(e) => Ok(ImageData::Image(vec)),
+                        Err(_) => Ok(ImageData::Image(vec)),
                     },
                     Err(e) => Err(e),
                 };
