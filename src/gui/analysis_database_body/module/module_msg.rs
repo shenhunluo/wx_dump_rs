@@ -4,6 +4,7 @@ use diesel::{
     backend::Backend, deserialize::FromSql, sql_types::Binary, sqlite::Sqlite, ExpressionMethods,
     QueryDsl, Queryable, RunQueryDsl, SqliteConnection,
 };
+use xml::EventReader;
 
 use crate::gui::analysis_database_body::schema::schema_msg;
 
@@ -58,7 +59,40 @@ impl Msg {
                     .map(|v| v[0].clone()),
             )),
             34 => MsgData::Audio(self.msg_svr_id.unwrap()),
+            47 => MsgData::Emotion(Self::load_emotion_data(&self.str_content)),
             _ => MsgData::Other(self.str_content.clone().unwrap_or("".to_string())),
+        }
+    }
+
+    fn load_emotion_data(str_content: &Option<String>) -> Option<String> {
+        match str_content {
+            Some(str_content) => {
+                let read = EventReader::new(str_content.as_bytes());
+                for r in read {
+                    match r {
+                        Ok(xml::reader::XmlEvent::StartElement {
+                            name,
+                            attributes,
+                            namespace: _,
+                        }) => {
+                            if name.local_name == "emoji" {
+                                for attr in attributes.iter() {
+                                    if attr.name.local_name == "cdnurl" {
+                                        return if attr.value.is_empty() {
+                                            None
+                                        } else {
+                                            Some(attr.value.clone())
+                                        };
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                None
+            }
+            None => None,
         }
     }
 
@@ -117,6 +151,7 @@ pub enum MsgData {
     Text(String),
     Image(Result<Vec<u8>, anyhow::Error>),
     Audio(i64),
+    Emotion(Option<String>),
     Other(String),
 }
 

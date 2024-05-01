@@ -28,6 +28,9 @@ gui = [
     "silk-sys",
     "cpal",
     "plotters",
+    "xml",
+    "reqwest",
+    "iced_gif",
 ]
 dev = []
 
@@ -76,3 +79,6 @@ silk-sys = { path = "silk-sys", optional = true }
 cpal = { version = "*", optional = true }
 chrono = { version = "*", optional = true }
 plotters = { version = "*", optional = true }
+xml = { version = "*", optional = true }
+reqwest = { version = "*", optional = true }
+iced_gif = { version = "*", path = "iced_gif", optional = true }

@@ -135,7 +135,13 @@ where
         }
     }
     path_buf.pop();
-    let file_name_list = ["MicroMsg", "PublicMsg", "Emotion"];
+    let file_name_list = [
+        "MicroMsg",
+        "PublicMsg",
+        "Emotion",
+        "StoreEmotion",
+        "HardLinkImage",
+    ];
     let mut full_file_name_list = vec![];
     for filename in file_name_list {
         full_file_name_list.push(filename.to_owned() + ".db");

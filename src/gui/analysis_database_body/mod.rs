@@ -26,7 +26,10 @@ use plotters::{
     style::{Color as pColor, ShapeStyle},
 };
 
-use self::module::module_macro_msg::{Contact, Session};
+use self::module::{
+    module_emotion::EmotionItem,
+    module_macro_msg::{Contact, Session},
+};
 
 use super::{
     config_body::ConfigBody,
@@ -47,6 +50,7 @@ pub struct AnalysisDatabaseBody {
     audio_stream: Option<(Stream, i64)>,
     body: Body,
     contact: HashMap<Option<String>, Contact>,
+    emotion_map: HashMap<String, Result<ImageData, String>>,
     chat_room_user_list: HashMap<Option<String>, Vec<String>>,
     analysis_running: bool,
     msg_getting: bool,
@@ -106,6 +110,11 @@ impl Default for MsgInfo {
     }
 }
 
+enum ImageData {
+    Image(Vec<u8>),
+    Gif(iced_gif::Frames),
+}
+
 #[derive(Default)]
 struct ReportInfo {
     all_msg_count: usize,
@@ -153,6 +162,7 @@ impl AnalysisDatabaseBody {
             conn: None,
             body: Body::Session,
             contact: HashMap::new(),
+            emotion_map: HashMap::new(),
             analysis_running: false,
             msg_getting: false,
             wechat_path: None,
@@ -194,13 +204,29 @@ impl AnalysisDatabaseBody {
                                     &mut conn.macro_msg_conn,
                                 ) {
                                     Ok(map) => self.contact = map,
-                                    Err(e) => self.analysis_database_err_msg = Some(e.to_string()),
+                                    Err(e) => {
+                                        self.analysis_database_err_msg = Some(
+                                            self.analysis_database_err_msg
+                                                .as_ref()
+                                                .map_or(e.to_string(), |s| {
+                                                    format!("{};{}", s, e.to_string())
+                                                }),
+                                        )
+                                    }
                                 }
                                 match module::module_macro_msg::get_chat_room_users_map(
                                     &mut conn.macro_msg_conn,
                                 ) {
                                     Ok(map) => self.chat_room_user_list = map,
-                                    Err(e) => self.analysis_database_err_msg = Some(e.to_string()),
+                                    Err(e) => {
+                                        self.analysis_database_err_msg = Some(
+                                            self.analysis_database_err_msg
+                                                .as_ref()
+                                                .map_or(e.to_string(), |s| {
+                                                    format!("{};{}", s, e.to_string())
+                                                }),
+                                        )
+                                    }
                                 }
                             }
                             Err(e) => self.analysis_database_err_msg = Some(e.to_string()),
@@ -235,10 +261,12 @@ impl AnalysisDatabaseBody {
                         self.body = Body::Msg;
                         self.prev_body
                             .push_back(PrevBody::Session(self.session_info.clone()));
-                        return iced::widget::scrollable::snap_to::<Message>(
+                        let mut command_vec = self.get_msg_command_by_msg_page();
+                        command_vec.push(iced::widget::scrollable::snap_to::<Message>(
                             self.msg_info.message_scroll_id.clone(),
                             iced::widget::scrollable::RelativeOffset { x: 0.0, y: 1.0 },
-                        );
+                        ));
+                        return iced::command::Command::batch(command_vec);
                     }
                     Err(e) => self.analysis_database_err_msg = Some(e.to_string()),
                 }
@@ -274,14 +302,14 @@ impl AnalysisDatabaseBody {
                     self.msg_info.msg_page -= 1;
                     self.msg_info.msg_page_input = (self.msg_info.msg_page + 1).to_string();
                 }
-                iced::Command::none()
+                iced::Command::batch(self.get_msg_command_by_msg_page())
             }
             AnalysisDatabaseMessage::ButtonMsgNext => {
                 if self.msg_info.msg_page < self.msg_info.msg_list.len() / 100 {
                     self.msg_info.msg_page += 1;
                     self.msg_info.msg_page_input = (self.msg_info.msg_page + 1).to_string();
                 }
-                iced::Command::none()
+                iced::Command::batch(self.get_msg_command_by_msg_page())
             }
             AnalysisDatabaseMessage::InputMsgPage(s) => {
                 self.msg_info.msg_page_input = s;
@@ -290,7 +318,7 @@ impl AnalysisDatabaseBody {
             AnalysisDatabaseMessage::ButtonMsgJumpTo(p) => {
                 self.msg_info.msg_page = p;
                 self.msg_info.msg_page_input = (self.msg_info.msg_page + 1).to_string();
-                iced::Command::none()
+                iced::Command::batch(self.get_msg_command_by_msg_page())
             }
             AnalysisDatabaseMessage::ButtonMsgPlayAudio(id, key) => {
                 if let Some(conn) = self.conn.as_mut().unwrap().media_msg_conn_map.get_mut(&key) {
@@ -949,6 +977,18 @@ impl AnalysisDatabaseBody {
                 )));
                 iced::Command::none()
             }
+            AnalysisDatabaseMessage::ReqwestGetEmotion((url, result)) => {
+                println!("{}", url);
+                let result = match result {
+                    Ok(vec) => match iced_gif::Frames::from_bytes(vec.clone()) {
+                        Ok(frames) => Ok(ImageData::Gif(frames)),
+                        Err(e) => Ok(ImageData::Image(vec)),
+                    },
+                    Err(e) => Err(e),
+                };
+                self.emotion_map.insert(url, result);
+                iced::Command::none()
+            }
         }
     }
 
@@ -1150,6 +1190,7 @@ impl AnalysisDatabaseBody {
         let mut msg_conn_map = HashMap::new();
         let mut media_msg_conn_map = HashMap::new();
         let mut macro_msg_conn = None;
+        let mut emotion_conn = None;
         for entry in read_dir(decrypted_path)? {
             let entry = entry?;
             if entry.path().is_file() {
@@ -1175,6 +1216,8 @@ impl AnalysisDatabaseBody {
                         }
                     } else if filename == "decrypted_MicroMsg.db" {
                         macro_msg_conn = Some(module::get_conn(entry.path().display())?);
+                    } else if filename == "decrypted_Emotion.db" {
+                        emotion_conn = Some(module::get_conn(entry.path().display())?);
                     }
                 }
             }
@@ -1183,17 +1226,60 @@ impl AnalysisDatabaseBody {
             msg_conn_map,
             media_msg_conn_map,
             macro_msg_conn: macro_msg_conn.ok_or(anyhow::anyhow!("未找到MicroMsg数据库"))?,
+            emotion_conn: emotion_conn.ok_or(anyhow::anyhow!("未找到Emotion数据库"))?,
         })
+    }
+
+    fn get_msg_by_msg_page(&self) -> &[(usize, module::module_msg::Msg)] {
+        if (self.msg_info.msg_page + 1) * 100 > self.msg_info.msg_list.len() {
+            &self.msg_info.msg_list[self.msg_info.msg_page * 100..]
+        } else {
+            &self.msg_info.msg_list
+                [self.msg_info.msg_page * 100..(self.msg_info.msg_page + 1) * 100]
+        }
+    }
+
+    fn get_msg_command_by_msg_page(&self) -> Vec<iced::Command<Message>> {
+        let mut emotion_vec = vec![];
+        for (_, msg) in self.get_msg_by_msg_page() {
+            match msg.load_msg_data(&self.wechat_path) {
+                module::module_msg::MsgData::Emotion(url) => {
+                    if let Some(url) = url {
+                        if self.emotion_map.get(&url).is_none() {
+                            emotion_vec.push(url);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+        let command_vec = emotion_vec
+            .iter()
+            .map(|url| {
+                let url1 = url.clone();
+                let url2 = url.clone();
+                iced::Command::<Message>::perform(
+                    async move {
+                        let r = reqwest::get(url1).await?;
+                        r.bytes().await.map(|byte| byte.to_vec())
+                    },
+                    move |r| {
+                        Message::AnalysisDatabaseMessage(
+                            AnalysisDatabaseMessage::ReqwestGetEmotion((
+                                url2,
+                                r.map_err(|e| e.to_string()),
+                            )),
+                        )
+                    },
+                )
+            })
+            .collect::<Vec<_>>();
+        command_vec
     }
     fn draw_message(&self) -> Container<Message> {
         Container::new({
             let mut col = Column::new().spacing(10);
-            let list = if (self.msg_info.msg_page + 1) * 100 > self.msg_info.msg_list.len() {
-                &self.msg_info.msg_list[self.msg_info.msg_page * 100..]
-            } else {
-                &self.msg_info.msg_list
-                    [self.msg_info.msg_page * 100..(self.msg_info.msg_page + 1) * 100]
-            };
+            let list = self.get_msg_by_msg_page();
             for (index, msg) in list {
                 col = col.push({
                     let mut row = Row::new();
@@ -1276,6 +1362,37 @@ impl AnalysisDatabaseBody {
                                                 col
                                             }
                                         )
+                                    },
+                                    module::module_msg::MsgData::Emotion(url) => {
+                                        if let Some(url) = url {
+                                            if let Some(data) = self.emotion_map.get(&url) {
+                                                match data {
+                                                    Ok(image_data) => {
+                                                        match image_data {
+                                                            ImageData::Image(image) => {
+                                                                Container::new(Image::new(Handle::from_memory(image.clone())))
+                                                            },
+                                                            ImageData::Gif(frames) => {
+                                                                Container::new(iced_gif::Gif::new(frames))
+                                                            },
+                                                        }
+                                                    },
+                                                    Err(e) => {
+                                                        Container::new(
+                                                            Text::new(format!("表情包加载失败，错误原因：{}",e))
+                                                        )
+                                                    },
+                                                }
+                                            } else {
+                                                Container::new(
+                                                    Text::new("表情包加载中")
+                                                )
+                                            }
+                                        } else {
+                                            Container::new(
+                                                Text::new("未找到表情包的地址")
+                                            )
+                                        }
                                     },
                                 }
                             ).push(
@@ -1715,6 +1832,7 @@ pub enum AnalysisDatabaseMessage {
     ButtonReportCountByMonthTable,
     ButtonReportCountByDayTable,
     ButtonReportCountByWeekdayTable,
+    ReqwestGetEmotion((String, Result<Vec<u8>, String>)),
 }
 
 impl Into<Message> for AnalysisDatabaseMessage {
@@ -1727,6 +1845,7 @@ struct Conn {
     msg_conn_map: HashMap<usize, SqliteConnection>,
     macro_msg_conn: SqliteConnection,
     media_msg_conn_map: HashMap<usize, SqliteConnection>,
+    emotion_conn: SqliteConnection,
 }
 
 #[derive(PartialEq, Eq)]
