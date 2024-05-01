@@ -2,7 +2,6 @@
 # will have compiled files and executables
 debug/
 target/
-iced_gif/
 /decrypted_wechat_database
 /wechat_database_for_decrypt
 

@@ -1,0 +1,3 @@
+[submodule "iced_gif"]
+	path = iced_gif
+	url = git@github.com:shenhunluo/iced_gif.git
