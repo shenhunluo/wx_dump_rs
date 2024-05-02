@@ -26,10 +26,7 @@ use plotters::{
     style::{Color as pColor, ShapeStyle},
 };
 
-use self::module::{
-    module_emotion::EmotionItem,
-    module_macro_msg::{Contact, Session},
-};
+use self::module::module_macro_msg::{Contact, Session};
 
 use super::{
     config_body::ConfigBody,
