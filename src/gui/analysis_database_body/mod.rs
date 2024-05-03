@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use chrono::{DateTime, Datelike, NaiveDate, Timelike, Utc, Weekday};
+use chrono::{DateTime, Datelike, Local, NaiveDate, NaiveDateTime, Timelike, Utc, Weekday};
 use cpal::Stream;
 use diesel::SqliteConnection;
 use iced::{
@@ -1398,7 +1398,17 @@ impl AnalysisDatabaseBody {
                     }).width(700);
                     if msg.is_sender == Some(1) {
                         row = row
-                            .push(Space::with_width(Length::Fill))
+                            .push(Container::new(
+                                {
+                                    let mut col = Column::new();
+                                    if let Some(create_time) = msg.create_time {
+                                        col = col.push(
+                                            Text::new(Into::<DateTime<Local>>::into(DateTime::from_timestamp(create_time as i64, 0).unwrap()).to_string())
+                                        );
+                                    }
+                                    col
+                                }
+                            ).width(Length::Fill).align_x(iced::alignment::Horizontal::Right))
                             .push(container.align_x(iced::alignment::Horizontal::Right).style(iced::theme::Container::Custom(Box::new(MsgContainerTheme::Right))))
                             .push(Space::with_width(20))
                         ;
@@ -1406,7 +1416,17 @@ impl AnalysisDatabaseBody {
                         row = row
                             .push(Space::with_width(10))
                             .push(container.align_x(iced::alignment::Horizontal::Left).style(iced::theme::Container::Custom(Box::new(MsgContainerTheme::Left))))
-                            .push(Space::with_width(Length::Fill))
+                            .push(Container::new(
+                                {
+                                    let mut col = Column::new();
+                                    if let Some(create_time) = msg.create_time {
+                                        col = col.push(
+                                            Text::new(Into::<DateTime<Local>>::into(DateTime::from_timestamp(create_time as i64, 0).unwrap()).to_string())
+                                        );
+                                    }
+                                    col
+                                }
+                            ).width(Length::Fill).align_x(iced::alignment::Horizontal::Left))
                         ;
                     }
                     row.width(Length::Fill)
