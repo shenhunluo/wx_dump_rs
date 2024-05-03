@@ -1390,6 +1390,9 @@ impl AnalysisDatabaseBody {
                                             )
                                         }
                                     },
+                                    module::module_msg::MsgData::Voip(str) => {
+                                        Container::new(Text::new(str).shaping(Shaping::Advanced))
+                                    },
                                 }
                             ).push(
                                 Space::with_height(3)

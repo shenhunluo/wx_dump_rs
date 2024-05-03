@@ -60,8 +60,67 @@ impl Msg {
             )),
             34 => MsgData::Audio(self.msg_svr_id.unwrap()),
             47 => MsgData::Emotion(Self::load_emotion_data(&self.str_content)),
+            50 => MsgData::Voip(Self::load_voip_msg_data(&self.str_content)),
             _ => MsgData::Other(self.str_content.clone().unwrap_or("".to_string())),
         }
+    }
+
+    fn load_voip_msg_data(str_content: &Option<String>) -> String {
+        let mut r_str = String::new();
+        if let Some(str_content) = str_content {
+            let mut read = EventReader::new(str_content.as_bytes());
+            loop {
+                let r = read.next();
+                match r {
+                    Ok(xml::reader::XmlEvent::StartElement {
+                        name,
+                        attributes:_,
+                        namespace:_,
+                    }) => {
+                        if name.local_name == "msg" {
+                            loop {
+                                let r = read.next();
+                                match r {
+                                    Ok(xml::reader::XmlEvent::CData(data)) => {
+                                        r_str.push_str(&data);
+                                    }
+                                    Ok(xml::reader::XmlEvent::EndElement { name }) => {
+                                        if name.local_name == "msg" {
+                                            break;
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                            }
+                        }
+
+                        if name.local_name == "msg_type" {
+                            loop {
+                                let r = read.next();
+                                match r {
+                                    Ok(xml::reader::XmlEvent::Characters(data)) => {
+                                        match data.as_str() {
+                                            "100" => r_str = format!("{} {}",iced_aw::BootstrapIcon::Telephone, r_str),
+                                            "101" => r_str = format!("{} {}",iced_aw::BootstrapIcon::Camera, r_str),
+                                            _ => {}
+                                        }
+                                    }
+                                    Ok(xml::reader::XmlEvent::EndElement { name }) => {
+                                        if name.local_name == "msg_type" {
+                                            break;
+                                        }
+                                    }
+                                    _ => {}
+                                }
+                            }
+                        }
+                    }
+                    Ok(xml::reader::XmlEvent::EndDocument) => break,
+                    _ => {}
+                }
+            }
+        }
+        r_str
     }
 
     fn load_emotion_data(str_content: &Option<String>) -> Option<String> {
@@ -152,6 +211,7 @@ pub enum MsgData {
     Image(Result<Vec<u8>, anyhow::Error>),
     Audio(i64),
     Emotion(Option<String>),
+    Voip(String),
     Other(String),
 }
 
