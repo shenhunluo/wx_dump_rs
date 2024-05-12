@@ -7,6 +7,8 @@ use std::{
 
 use anyhow::anyhow;
 
+use crate::util::get_wechat_path;
+
 pub async fn get_database<FPI, FSI, R, E>(
     wechat_path: &Option<String>,
     save_dir: &String,
@@ -21,22 +23,15 @@ where
     E: Into<anyhow::Error>,
 {
     let mut map = HashMap::new();
-    let mut wechat_path_buf;
-    let path = if let Some(wechat_path) = wechat_path {
-        Path::new(wechat_path)
-    } else {
-        wechat_path_buf = dirs::document_dir().ok_or(anyhow!("fail to get document directory"))?;
-        wechat_path_buf.push("WeChat Files");
-        wechat_path_buf.as_path()
-    };
+    let wechat_path_buf = get_wechat_path(wechat_path)?;
 
-    if !path.exists() || !path.is_dir() {
+    if !wechat_path_buf.exists() || !wechat_path_buf.is_dir() {
         return Err(anyhow!(format!(
             "指定的微信主目录不存在或者不是文件夹，请检查。{:?}",
-            path.display()
+            wechat_path_buf.display()
         )));
     }
-    for entity in read_dir(path)? {
+    for entity in read_dir(wechat_path_buf)? {
         let entity = entity?;
         if entity.file_name() == "All Users"
             || entity.file_name() == "Applet"

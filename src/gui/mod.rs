@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 
 use self::{
     analysis_database_body::{AnalysisDatabaseBody, AnalysisDatabaseMessage},
@@ -7,7 +7,7 @@ use self::{
     get_database_body::{GetDatabaseBody, GetDatabaseMessage},
     show_user_info_body::{ShowUserInfoBody, ShowUserInfoMessage},
 };
-use iced::multi_window::Application;
+use iced::{multi_window::Application, widget::Text};
 use iced::{
     widget::{Button, Column, Container, Image, Row, Space},
     Length, Subscription,
@@ -28,6 +28,7 @@ pub struct WxDumpGui {
     decrypt_body: DecryptBody,
     analysis_database_body: AnalysisDatabaseBody,
     image_id: HashMap<iced::window::Id, Vec<u8>>,
+    video_id: HashMap<iced::window::Id, Result<std::option::Option<()>, String>>,
 }
 
 impl Application for WxDumpGui {
@@ -49,6 +50,7 @@ impl Application for WxDumpGui {
                 decrypt_body: DecryptBody::new(),
                 analysis_database_body: AnalysisDatabaseBody::new(),
                 image_id: HashMap::new(),
+                video_id: HashMap::new(),
             },
             iced::Command::<Message>::batch(vec![
                 iced::font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(|_| Message::FontLoaded),
@@ -60,6 +62,9 @@ impl Application for WxDumpGui {
     fn title(&self, id: iced::window::Id) -> String {
         if self.image_id.keys().find(|k| k == &&id).is_some() {
             return "查看图片".to_owned();
+        }
+        if self.video_id.keys().find(|k| k == &&id).is_some() {
+            return "查看视频".to_owned();
         }
         "微信记录解密查看器".to_owned()
     }
@@ -134,8 +139,15 @@ impl Application for WxDumpGui {
             }
             Message::CloseWindow(id) => {
                 self.image_id.remove(&id);
+                self.video_id.remove(&id);
             }
             Message::FontLoaded => {}
+            Message::OpenVideo(video) => {
+                let (id, command) =
+                iced::window::spawn(iced::window::settings::Settings::default());
+                self.video_id.insert(id, video.map(|video| video.map(|video| ())));
+                return command;
+            },
         }
         iced::Command::<Message>::none()
     }
@@ -184,11 +196,11 @@ impl Application for WxDumpGui {
         &self,
         id: iced::window::Id,
     ) -> iced::Element<'_, Self::Message, Self::Theme, iced::Renderer> {
-        if self.image_id.keys().find(|k| k == &&id).is_some() {
+        if let Some(image) = self.image_id.get(&id) {
             return Container::new(
                 iced::widget::scrollable::Scrollable::new(Image::new(
                     iced::widget::image::Handle::from_memory(
-                        self.image_id.get(&id).unwrap().clone(),
+                        image.clone(),
                     ),
                 ))
                 .direction(iced::widget::scrollable::Direction::Both {
@@ -199,6 +211,21 @@ impl Application for WxDumpGui {
                 .height(Length::Fill),
             )
             .into();
+        }
+        if let Some(video_result) = self.video_id.get(&id) {
+            return match video_result {
+                Ok(Some(_video)) => {
+                    Container::new(
+                        "视频支持开发中"
+                    )
+                },
+                Ok(None) => {
+                    Container::new(Text::new("未找到该视频文件"))
+                },
+                Err(e) => {
+                    Container::new(Text::new(format!("获取视频失败，失败原因：{}",e)))
+                }
+            }.into();
         }
         let col = Column::new()
             .push(Space::with_height(10))
@@ -275,6 +302,7 @@ pub enum Message {
     ButtonAnalysisDatabase,
     AnalysisDatabaseMessage(AnalysisDatabaseMessage),
     OpenImage(Vec<u8>),
+    OpenVideo(Result<std::option::Option<PathBuf>, String>),
     CloseWindow(iced::window::Id),
     FontLoaded,
 }

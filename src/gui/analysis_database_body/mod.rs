@@ -1393,6 +1393,19 @@ impl AnalysisDatabaseBody {
                                     module::module_msg::MsgData::Voip(str) => {
                                         Container::new(Text::new(str).shaping(Shaping::Advanced))
                                     },
+                                    module::module_msg::MsgData::Video((image, video_path)) => {
+                                        match image {
+                                            Ok(image) => {
+                                                Container::new(
+                                                    Button::new(
+                                                        Image::new(Handle::from_memory(image))
+                                                    ).padding(0)
+                                                    .on_press(Message::OpenVideo(video_path.map_err(|e| e.to_string())))
+                                                )
+                                            },
+                                            Err(e) => Container::new(Text::new(format!("视频预览获取失败：{}",e.to_string()))),
+                                        }
+                                    },
                                 }
                             ).push(
                                 Space::with_height(3)

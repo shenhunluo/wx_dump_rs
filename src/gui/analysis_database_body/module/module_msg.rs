@@ -6,7 +6,7 @@ use diesel::{
 };
 use xml::EventReader;
 
-use crate::gui::analysis_database_body::schema::schema_msg;
+use crate::{gui::analysis_database_body::schema::schema_msg, util::get_wechat_path};
 
 #[derive(Queryable, Debug)]
 pub struct Dbinfo {
@@ -57,8 +57,27 @@ impl Msg {
                     .map
                     .get(&4)
                     .map(|v| v[0].clone()),
+                true,
             )),
             34 => MsgData::Audio(self.msg_svr_id.unwrap()),
+            43 => MsgData::Video((
+                Self::load_image_data(
+                    wechat_path,
+                    self.bytes_extra
+                        .as_ref()
+                        .unwrap()
+                        .map
+                        .get(&3)
+                        .map(|v| v[0].clone()),
+                    false,
+                ),
+                get_wechat_path(wechat_path).map(|mut wechat_path| {
+                    self.bytes_extra.as_ref().unwrap().map.get(&4).map(|v| {
+                        wechat_path.push(&v[0]);
+                        wechat_path
+                    })
+                }),
+            )),
             47 => MsgData::Emotion(Self::load_emotion_data(&self.str_content)),
             50 => MsgData::Voip(Self::load_voip_msg_data(&self.str_content)),
             _ => MsgData::Other(self.str_content.clone().unwrap_or("".to_string())),
@@ -74,8 +93,8 @@ impl Msg {
                 match r {
                     Ok(xml::reader::XmlEvent::StartElement {
                         name,
-                        attributes:_,
-                        namespace:_,
+                        attributes: _,
+                        namespace: _,
                     }) => {
                         if name.local_name == "msg" {
                             loop {
@@ -100,8 +119,20 @@ impl Msg {
                                 match r {
                                     Ok(xml::reader::XmlEvent::Characters(data)) => {
                                         match data.as_str() {
-                                            "100" => r_str = format!("{} {}",iced_aw::BootstrapIcon::Telephone, r_str),
-                                            "101" => r_str = format!("{} {}",iced_aw::BootstrapIcon::Camera, r_str),
+                                            "100" => {
+                                                r_str = format!(
+                                                    "{} {}",
+                                                    iced_aw::Bootstrap::Telephone,
+                                                    r_str
+                                                )
+                                            }
+                                            "101" => {
+                                                r_str = format!(
+                                                    "{} {}",
+                                                    iced_aw::Bootstrap::Camera,
+                                                    r_str
+                                                )
+                                            }
                                             _ => {}
                                         }
                                     }
@@ -116,7 +147,8 @@ impl Msg {
                         }
                     }
                     Ok(xml::reader::XmlEvent::EndDocument) => break,
-                    _ => {}
+                    Err(_e) => return format!("{} 音视频通话，旧版数据无法解析", iced_aw::Bootstrap::Telephone),
+                    _ => {},
                 }
             }
         }
@@ -158,36 +190,32 @@ impl Msg {
     fn load_image_data(
         wechat_path: &Option<String>,
         image_path: Option<String>,
+        decrypt: bool,
     ) -> Result<Vec<u8>, anyhow::Error> {
         if let Some(image_path) = image_path {
-            let mut path = if let Some(wechat_path) = wechat_path {
-                let mut wechat_path_buf = PathBuf::new();
-                wechat_path_buf.push(wechat_path);
-                wechat_path_buf
-            } else {
-                let mut wechat_path_buf = dirs::document_dir()
-                    .ok_or(anyhow::anyhow!("fail to get document directory"))?;
-                wechat_path_buf.push("WeChat Files");
-                wechat_path_buf
-            };
+            let mut path = get_wechat_path(wechat_path)?;
             path.push(image_path);
             let mut file = File::open(path)?;
             let mut buf = vec![];
             file.read_to_end(&mut buf)?;
-            let mut xor_key = 0;
-            for header in IMAGE_HEADER {
-                let v = header
-                    .1
-                    .iter()
-                    .zip(&buf[..header.1.len()])
-                    .map(|(a, b)| a ^ b)
-                    .collect::<Vec<_>>();
-                if v.iter().map(|a| *a == v[0]).fold(true, |a, b| a && b) {
-                    xor_key = v[0];
-                    break;
+            let r = if decrypt {
+                let mut xor_key = 0;
+                for header in IMAGE_HEADER {
+                    let v = header
+                        .1
+                        .iter()
+                        .zip(&buf[..header.1.len()])
+                        .map(|(a, b)| a ^ b)
+                        .collect::<Vec<_>>();
+                    if v.iter().map(|a| *a == v[0]).fold(true, |a, b| a && b) {
+                        xor_key = v[0];
+                        break;
+                    }
                 }
-            }
-            let r = buf.iter().map(|u| *u ^ xor_key).collect();
+                buf.iter().map(|u| *u ^ xor_key).collect()
+            } else {
+                buf
+            };
             Ok(r)
         } else {
             Err(anyhow::anyhow!("未找到图片路径"))
@@ -210,6 +238,12 @@ pub enum MsgData {
     Text(String),
     Image(Result<Vec<u8>, anyhow::Error>),
     Audio(i64),
+    Video(
+        (
+            Result<Vec<u8>, anyhow::Error>,
+            Result<std::option::Option<PathBuf>, anyhow::Error>,
+        ),
+    ),
     Emotion(Option<String>),
     Voip(String),
     Other(String),

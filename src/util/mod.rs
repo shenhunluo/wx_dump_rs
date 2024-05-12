@@ -1,4 +1,4 @@
-use std::ffi::c_void;
+use std::{ffi::c_void, path::PathBuf};
 
 use anyhow::anyhow;
 use base64::Engine;
@@ -22,6 +22,21 @@ use windows::{
         UI::WindowsAndMessaging::RT_VERSION,
     },
 };
+
+pub fn get_wechat_path(wechat_path: &Option<String>) -> Result<PathBuf, anyhow::Error> {
+    let path = if let Some(wechat_path) = wechat_path {
+        let mut wechat_path_buf = PathBuf::new();
+        wechat_path_buf.push(wechat_path);
+        wechat_path_buf
+    } else {
+        let mut wechat_path_buf =
+            dirs::document_dir().ok_or(anyhow::anyhow!("fail to get document directory"))?;
+        wechat_path_buf.push("WeChat Files");
+        wechat_path_buf
+    };
+    Ok(path)
+}
+
 pub fn string_to_u8_vec(data: &String, encode: &String) -> anyhow::Result<Vec<u8>> {
     let mut buffer = vec![];
     match encode.to_ascii_lowercase().as_str() {
