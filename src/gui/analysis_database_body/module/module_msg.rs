@@ -147,8 +147,13 @@ impl Msg {
                         }
                     }
                     Ok(xml::reader::XmlEvent::EndDocument) => break,
-                    Err(_e) => return format!("{} 音视频通话，旧版数据无法解析", iced_aw::Bootstrap::Telephone),
-                    _ => {},
+                    Err(_e) => {
+                        return format!(
+                            "{} 音视频通话，旧版数据无法解析",
+                            iced_aw::Bootstrap::Telephone
+                        )
+                    }
+                    _ => {}
                 }
             }
         }

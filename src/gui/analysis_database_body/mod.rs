@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use chrono::{DateTime, Datelike, Local, NaiveDate, NaiveDateTime, Timelike, Utc, Weekday};
+use chrono::{DateTime, Datelike, Local, NaiveDate, Timelike, Utc, Weekday};
 use cpal::Stream;
 use diesel::SqliteConnection;
 use iced::{
@@ -985,6 +985,10 @@ impl AnalysisDatabaseBody {
                 self.emotion_map.insert(url, result);
                 iced::Command::none()
             }
+            AnalysisDatabaseMessage::OpenFile(path) => {
+                crate::util::open_file(path).ok();
+                iced::Command::none()
+            }
         }
     }
 
@@ -1400,7 +1404,17 @@ impl AnalysisDatabaseBody {
                                                     Button::new(
                                                         Image::new(Handle::from_memory(image))
                                                     ).padding(0)
-                                                    .on_press(Message::OpenVideo(video_path.map_err(|e| e.to_string())))
+                                                    .on_press_maybe(
+                                                        if let Ok(Some(video_path)) = video_path {
+                                                            if video_path.exists() || video_path.is_file() {
+                                                                Some(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::OpenFile(video_path.to_str().unwrap().to_string())))
+                                                            } else {
+                                                                None
+                                                            }
+                                                        } else {
+                                                            None
+                                                        }
+                                                    )
                                                 )
                                             },
                                             Err(e) => Container::new(Text::new(format!("视频预览获取失败：{}",e.to_string()))),
@@ -1865,6 +1879,7 @@ pub enum AnalysisDatabaseMessage {
     ButtonReportCountByDayTable,
     ButtonReportCountByWeekdayTable,
     ReqwestGetEmotion((String, Result<Vec<u8>, String>)),
+    OpenFile(String),
 }
 
 impl Into<Message> for AnalysisDatabaseMessage {
