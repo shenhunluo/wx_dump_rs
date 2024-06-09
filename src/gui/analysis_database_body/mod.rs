@@ -1,7 +1,5 @@
 use std::{
-    collections::{HashMap, LinkedList},
-    fs::read_dir,
-    path::Path,
+    collections::{HashMap, LinkedList}, fs::read_dir, hash::Hash, path::Path
 };
 
 use chrono::{DateTime, Datelike, Local, NaiveDate, Timelike, Utc, Weekday};
@@ -9,8 +7,7 @@ use cpal::Stream;
 use diesel::SqliteConnection;
 use iced::{
     widget::{
-        scrollable::{AbsoluteOffset, Viewport},
-        Button, Column, Container, Image, Row, Scrollable, Space, Text, TextInput,
+        scrollable::{AbsoluteOffset, Viewport}, Button, Column, Container, Image, PickList, Row, Scrollable, Space, Text, TextInput
     },
     Color, Length,
 };
@@ -112,10 +109,38 @@ enum ImageData {
     Gif(iced_gif::Frames),
 }
 
+#[derive(Clone,Eq,Hash,Debug)]
+struct UserForSelect {
+    id:Option<String>,
+    name:String,
+}
+
+impl UserForSelect {
+    fn new(id: Option<String>, name: String) -> Self {
+        Self {
+            id,name
+        }
+    }
+}
+
+impl ToString for UserForSelect {
+    fn to_string(&self) -> String {
+        self.name.clone()
+    }
+}
+
+impl PartialEq for UserForSelect {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
 #[derive(Default)]
 struct ReportInfo {
     all_msg_count: usize,
-    count_by_user: Vec<(String, usize)>,
+    user_select_options: Vec<UserForSelect>,
+    user_select_selected: Option<UserForSelect>,
+    count_by_user: Vec<(UserForSelect, usize)>,
     count_by_user_top_start: String,
     count_by_user_top_end: String,
     count_by_date_order_by_date: Vec<(NaiveDate, usize)>,
@@ -130,19 +155,19 @@ struct ReportInfo {
     count_by_date_top_end_date: NaiveDate,
     count_by_date_top_start: String,
     count_by_date_top_end: String,
-    count_by_date_user: Vec<(NaiveDate, String, usize)>,
+    count_by_date_user: Vec<(NaiveDate, UserForSelect, usize)>,
     count_by_date_month: Vec<(NaiveDate, usize)>,
-    count_by_date_month_user: Vec<(NaiveDate, String, usize)>,
+    count_by_date_month_user: Vec<(NaiveDate, UserForSelect, usize)>,
     count_by_hour: Vec<(u32, usize)>,
-    count_by_hour_user: Vec<(u32, String, usize)>,
+    count_by_hour_user: Vec<(u32, UserForSelect, usize)>,
     count_by_day: Vec<(u32, usize)>,
     count_by_month: Vec<(u32, usize)>,
     count_by_year: Vec<(i32, usize)>,
-    count_by_day_user: Vec<(u32, String, usize)>,
-    count_by_month_user: Vec<(u32, String, usize)>,
-    count_by_year_user: Vec<(i32, String, usize)>,
+    count_by_day_user: Vec<(u32, UserForSelect, usize)>,
+    count_by_month_user: Vec<(u32, UserForSelect, usize)>,
+    count_by_year_user: Vec<(i32, UserForSelect, usize)>,
     count_by_weekday: Vec<(Weekday, usize)>,
-    count_by_weekday_user: Vec<(Weekday, String, usize)>,
+    count_by_weekday_user: Vec<(Weekday, UserForSelect, usize)>,
     err_info: Option<String>,
 }
 
@@ -382,151 +407,151 @@ impl AnalysisDatabaseBody {
                             ($([$ident:ident => ($x:expr),($y:expr),($z:expr)]),+ $(,)? ) => {
                                 $(let mut $ident = HashMap::new();)*
                                 for data in vec {
-                            let user = if data.is_sender.unwrap() == 1 {
-                                None
-                            } else {
-                                if let Some(data_extra) = data.bytes_extra {
-                                    if let Some(user_name) = data_extra.map.get(&1) {
-                                        Some(user_name[0].clone())
+                                    let user = if data.is_sender.unwrap() == 1 {
+                                        None
                                     } else {
-                                        Some(data.str_talker.unwrap())
-                                    }
-                                } else {
-                                    Some(data.str_talker.unwrap())
+                                        if let Some(data_extra) = data.bytes_extra {
+                                            if let Some(user_name) = data_extra.map.get(&1) {
+                                                Some(user_name[0].clone())
+                                            } else {
+                                                Some(data.str_talker.unwrap())
+                                            }
+                                        } else {
+                                            Some(data.str_talker.unwrap())
+                                        }
+                                    };
+                                    let date = DateTime::from_timestamp(data.create_time.unwrap() as i64, 0).unwrap();
+                                    $(
+                                        let f = $x;
+                                        let key = f(&user,&date.into());
+                                        if let Some(count) = $ident.get_mut(&key) {
+                                            *count += 1;
+                                        } else {
+                                            $ident.insert(key, 1);
+                                        }
+                                    )*
                                 }
-                            };
-                            let date = DateTime::from_timestamp(data.create_time.unwrap() as i64, 0).unwrap();
-                            $(
-                                let f = $x;
-                                let key = f(&user,&date);
-                                if let Some(count) = $ident.get_mut(&key) {
-                                    *count += 1;
-                                } else {
-                                    $ident.insert(key, 1);
-                                }
-                            )*
-                        }
-                            $(
-                                self.report_info.$ident = $ident.iter()
-                            .map($y)
-                            .collect();
-                        self.report_info.$ident.sort_by($z);
-                            )*
+                                $(
+                                    self.report_info.$ident = $ident.iter()
+                                        .map($y)
+                                        .collect();
+                                    self.report_info.$ident.sort_by($z);
+                                )*
                             };
                         }
 
                         build_report_data!([
                             count_by_user => (
-                                |user:&Option<String>,_date| user.clone()
+                                |user:&Option<String>,_date:&DateTime<Local>| user.clone()
                             ),(
                                 |(k,v)| (self.get_user_name(k),*v)
                             ),(
                                 |a,b| b.1.cmp(&a.1))
                             ],[
                             count_by_date_order_by_count => (
-                                |_user,date:&DateTime<Utc>| date.date_naive()
+                                |_user,date:&DateTime<Local>| date.date_naive()
                             ),(
                                 |(k,v)| (*k,*v)
                             ),(
                                 |a,b| b.1.cmp(&a.1))
                             ],[
                                 count_by_date_order_by_date => (
-                                    |_user,date:&DateTime<Utc>| date.date_naive()
+                                    |_user,date:&DateTime<Local>| date.date_naive()
                                 ),(
                                     |(k,v)| (*k,*v)
                                 ),(
                                     |a,b| a.0.cmp(&b.0))
                             ],[
                             count_by_date_user => (
-                                    |user:&Option<String>,date:&DateTime<Utc>| (date.date_naive(),user.clone())
+                                    |user:&Option<String>,date:&DateTime<Local>| (date.date_naive(),user.clone())
                                 ),(
                                     |((k1,k2),v)| (*k1,self.get_user_name(k2),*v)
                                 ),(
                                     |a,b| b.2.cmp(&a.2))
                             ],[
                             count_by_date_month => (
-                                    |_user,date:&DateTime<Utc>| date.with_day(1).unwrap().date_naive()
+                                    |_user,date:&DateTime<Local>| date.with_day(1).unwrap().date_naive()
                                 ),(
                                     |(k,v)| (*k,*v)
                                 ),(
                                     |a,b| b.1.cmp(&a.1))
                             ],[
                             count_by_date_month_user => (
-                                    |user:&Option<String>,date:&DateTime<Utc>| (date.with_day(1).unwrap().date_naive(),user.clone())
+                                    |user:&Option<String>,date:&DateTime<Local>| (date.with_day(1).unwrap().date_naive(),user.clone())
                                 ),(
                                     |((k1,k2),v)| (*k1,self.get_user_name(k2),*v)
                                 ),(
                                     |a,b| b.2.cmp(&a.2))
                             ],[
                             count_by_hour => (
-                                    |_user,date:&DateTime<Utc>| date.hour()
+                                    |_user,date:&DateTime<Local>| date.hour()
                                 ),(
                                     |(k,v)| (*k,*v)
                                 ),(
-                                    |a,b| b.1.cmp(&a.1))
+                                    |a,b| a.0.cmp(&b.0))
                             ],[
                             count_by_hour_user => (
-                                    |user:&Option<String>,date:&DateTime<Utc>| (date.hour(),user.clone())
+                                    |user:&Option<String>,date:&DateTime<Local>| (date.hour(),user.clone())
                                 ),(
                                     |((k1,k2),v)| (*k1,self.get_user_name(k2),*v)
                                 ),(
-                                    |a,b| b.2.cmp(&a.2))
+                                    |a,b| a.0.cmp(&b.0))
                             ],[
                             count_by_day => (
-                                    |_user,date:&DateTime<Utc>| date.day()
+                                    |_user,date:&DateTime<Local>| date.day()
                                 ),(
                                     |(k,v)| (*k,*v)
                                 ),(
                                     |a,b| a.0.cmp(&b.0))
                             ],[
                             count_by_day_user => (
-                                    |user:&Option<String>,date:&DateTime<Utc>| (date.day(),user.clone())
+                                    |user:&Option<String>,date:&DateTime<Local>| (date.day(),user.clone())
                                 ),(
                                     |((k1,k2),v)| (*k1,self.get_user_name(k2),*v)
                                 ),(
-                                    |a,b| b.2.cmp(&a.2))
+                                    |a,b| a.0.cmp(&b.0))
                             ],[
                             count_by_month => (
-                                    |_user,date:&DateTime<Utc>| date.month()
+                                    |_user,date:&DateTime<Local>| date.month()
                                 ),(
                                     |(k,v)| (*k,*v)
                                 ),(
                                     |a,b| a.0.cmp(&b.0))
                             ],[
                             count_by_month_user => (
-                                    |user:&Option<String>,date:&DateTime<Utc>| (date.month(),user.clone())
+                                    |user:&Option<String>,date:&DateTime<Local>| (date.month(),user.clone())
                                 ),(
                                     |((k1,k2),v)| (*k1,self.get_user_name(k2),*v)
                                 ),(
-                                    |a,b| b.2.cmp(&a.2))
+                                    |a,b| a.0.cmp(&b.0))
                             ],[
                             count_by_year => (
-                                    |_user,date:&DateTime<Utc>| date.year()
+                                    |_user,date:&DateTime<Local>| date.year()
                                 ),(
                                     |(k,v)| (*k,*v)
                                 ),(
                                     |a,b| a.0.cmp(&b.0))
                             ],[
                             count_by_year_user => (
-                                    |user:&Option<String>,date:&DateTime<Utc>| (date.year(),user.clone())
+                                    |user:&Option<String>,date:&DateTime<Local>| (date.year(),user.clone())
                                 ),(
                                     |((k1,k2),v)| (*k1,self.get_user_name(k2),*v)
                                 ),(
-                                    |a,b| b.2.cmp(&a.2))
+                                    |a,b| a.0.cmp(&b.0))
                             ],[
                                 count_by_weekday => (
-                                        |_user,date:&DateTime<Utc>| date.weekday()
+                                        |_user,date:&DateTime<Local>| date.weekday()
                                     ),(
                                         |(k,v)| (*k,*v)
                                     ),(
                                         |a,b| a.0.number_from_monday().cmp(&b.0.number_from_monday()))
                                 ],[
                                 count_by_weekday_user => (
-                                        |user:&Option<String>,date:&DateTime<Utc>| (date.weekday(),user.clone())
+                                        |user:&Option<String>,date:&DateTime<Local>| (date.weekday(),user.clone())
                                     ),(
                                         |((k1,k2),v)| (*k1,self.get_user_name(k2),*v)
                                     ),(
-                                        |a,b| b.2.cmp(&a.2))
+                                        |a,b| a.0.number_from_monday().cmp(&b.0.number_from_monday()))
                                 ],
                         );
                         if self.report_info.count_by_date_order_by_date.len() != 0 {
@@ -558,6 +583,9 @@ impl AnalysisDatabaseBody {
                                 .unwrap()
                                 .0
                                 .clone();
+                        }
+                        for (user,_) in self.report_info.count_by_user.iter() {
+                            self.report_info.user_select_options.push(user.clone());
                         }
                         self.report_info.err_info = None;
                     }
@@ -851,11 +879,15 @@ impl AnalysisDatabaseBody {
                 iced::Command::none()
             }
             AnalysisDatabaseMessage::ButtonReportCountByMonthTable => {
-                let d = self
-                    .report_info
-                    .count_by_month
-                    .iter()
-                    .map(|(month, count)| (format!("{}月", month), *count))
+                let mut d = vec![];
+                if let Some(user) = &self.report_info.user_select_selected {
+                        d = self.report_info.count_by_month_user.iter().filter(|(_,u,_)| u == user).map(|(m,_,c)| (*m,*c)).collect()
+                };
+                let d = if self.report_info.user_select_selected.is_some() {
+                    d.iter()
+                } else {
+                    self.report_info.count_by_month.iter()
+                }.map(|(month, count)| (format!("{}月", month), *count))
                     .collect::<Vec<_>>();
                 self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
                     "以月份为维度统计总数",
@@ -882,11 +914,15 @@ impl AnalysisDatabaseBody {
                 iced::Command::none()
             }
             AnalysisDatabaseMessage::ButtonReportCountByDayTable => {
-                let d = self
-                    .report_info
-                    .count_by_day
-                    .iter()
-                    .map(|(day, count)| (format!("{}日", day), *count))
+                let mut d = vec![];
+                if let Some(user) = &self.report_info.user_select_selected {
+                        d = self.report_info.count_by_day_user.iter().filter(|(_,u,_)| u == user).map(|(d,_,c)| (*d,*c)).collect()
+                };
+                let d = if self.report_info.user_select_selected.is_some() {
+                    d.iter()
+                } else {
+                    self.report_info.count_by_day.iter()
+                }.map(|(day, count)| (format!("{}日", day), *count))
                     .collect::<Vec<_>>();
                 self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
                     "以日期为维度统计总数",
@@ -913,11 +949,15 @@ impl AnalysisDatabaseBody {
                 iced::Command::none()
             }
             AnalysisDatabaseMessage::ButtonReportCountByWeekdayTable => {
-                let d = self
-                    .report_info
-                    .count_by_weekday
-                    .iter()
-                    .map(|(weekday, count)| (weekday.to_string(), *count))
+                let mut d = vec![];
+                if let Some(user) = &self.report_info.user_select_selected {
+                        d = self.report_info.count_by_weekday_user.iter().filter(|(_,u,_)| u == user).map(|(w,_,c)| (*w,*c)).collect()
+                };
+                let d = if self.report_info.user_select_selected.is_some() {
+                    d.iter()
+                } else {
+                    self.report_info.count_by_weekday.iter()
+                }.map(|(weekday, count)| (weekday.to_string(), *count))
                     .collect::<Vec<_>>();
                 self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
                     "以星期为维度统计总数",
@@ -943,12 +983,51 @@ impl AnalysisDatabaseBody {
                 )));
                 iced::Command::none()
             }
+            AnalysisDatabaseMessage::ButtonReportCountByHourTable => {
+                let mut d = vec![];
+                if let Some(user) = &self.report_info.user_select_selected {
+                        d = self.report_info.count_by_hour_user.iter().filter(|(_,u,_)| u == user).map(|(h,_,c)| (*h,*c)).collect()
+                };
+                let d = if self.report_info.user_select_selected.is_some() {
+                    d.iter()
+                } else {
+                    self.report_info.count_by_hour.iter()
+                }.map(|(hour, count)| (format!("{}时",hour), *count))
+                    .collect::<Vec<_>>();
+                self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
+                    "以小时为维度统计总数",
+                    "小时",
+                    |index| match index {
+                        SegmentValue::Exact(index) => {
+                            if *index > d.len() {
+                                "".to_string()
+                            } else {
+                                d[*index - 1].0.clone()
+                            }
+                        }
+                        SegmentValue::CenterOf(index) => {
+                            if *index > d.len() {
+                                "".to_string()
+                            } else {
+                                d[*index - 1].0.clone()
+                            }
+                        }
+                        SegmentValue::Last => "".to_string(),
+                    },
+                    &d,
+                )));
+                iced::Command::none()
+            }
             AnalysisDatabaseMessage::ButtonReportCountByYearTable => {
-                let d = self
-                    .report_info
-                    .count_by_year
-                    .iter()
-                    .map(|(year, count)| (format!("{}年", year), *count))
+                let mut d = vec![];
+                if let Some(user) = &self.report_info.user_select_selected {
+                        d = self.report_info.count_by_year_user.iter().filter(|(_,u,_)| u == user).map(|(y,_,c)| (*y,*c)).collect()
+                };
+                let d = if self.report_info.user_select_selected.is_some() {
+                    d.iter()
+                } else {
+                    self.report_info.count_by_year.iter()
+                }.map(|(year, count)| (format!("{}年", year), *count))
                     .collect::<Vec<_>>();
                 self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
                     "以年份为维度统计总数",
@@ -989,6 +1068,14 @@ impl AnalysisDatabaseBody {
                 crate::util::open_file(path).ok();
                 iced::Command::none()
             }
+            AnalysisDatabaseMessage::SelectionListUserList( t) => {
+                self.report_info.user_select_selected = Some(t);
+                iced::Command::none()
+            },
+            AnalysisDatabaseMessage::ButtonReportClearUserSelected => {
+                self.report_info.user_select_selected = None;
+                iced::Command::none()
+            },
         }
     }
 
@@ -1079,7 +1166,7 @@ impl AnalysisDatabaseBody {
         title: &str,
         x_desc: &str,
         x_formatter: F,
-        d: &[(String, usize)],
+        d: &[(impl ToString + Clone + Eq + Hash, usize)],
     ) -> Vec<u8>
     where
         F: Fn(&SegmentValue<usize>) -> String,
@@ -1130,7 +1217,7 @@ impl AnalysisDatabaseBody {
                             .data(vec![(index + 1, *count)]),
                     )
                     .unwrap()
-                    .label(format!("{} {}", name, count));
+                    .label(format!("{} {}", name.to_string(), count));
             }
             chart
                 .configure_series_labels()
@@ -1162,7 +1249,7 @@ impl AnalysisDatabaseBody {
         vec
     }
 
-    fn get_user_name(&self, user: &Option<String>) -> String {
+    fn get_user_name(&self, user: &Option<String>) -> UserForSelect {
         let user = if let Some(user) = user {
             if let Some(contact) = self.contact.get(&Some(user.to_owned())) {
                 let mut text = contact
@@ -1175,12 +1262,12 @@ impl AnalysisDatabaseBody {
                         text = format!("{}({})", text, remark);
                     }
                 }
-                text
+                UserForSelect::new(contact.user_name.clone(),text)
             } else {
-                "未知用户".to_string()
+                UserForSelect::new(Some("未知用户".to_string()),"未知用户".to_string())
             }
         } else {
-            "本人".to_string()
+            UserForSelect::new(Some("本人".to_string()),"本人".to_string())
         };
         user
     }
@@ -1601,6 +1688,11 @@ impl AnalysisDatabaseBody {
                         Row::new().push(
                             Text::new("不同时间维度")
                         ).push(
+                            PickList::new(self.report_info.user_select_options.clone(),self.report_info.user_select_selected.clone(), |t| Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::SelectionListUserList(t)))
+                        ).push(
+                            Button::new("清除用户选择").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportClearUserSelected))
+                        )
+                        .push(
                             Button::new("年份").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByYearTable))
                         ).push(
                             Button::new("月份").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByMonthTable))
@@ -1608,7 +1700,10 @@ impl AnalysisDatabaseBody {
                             Button::new("日期").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByDayTable))
                         ).push(
                             Button::new("星期").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByWeekdayTable))
-                        ).spacing(5)
+                        ).push(
+                            Button::new("小时").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByHourTable))
+                        )
+                        .spacing(5)
                     );
                 if let Some(image) = &self.report_image {
                     col = col.push(Image::new(Handle::from_pixels(
@@ -1874,10 +1969,13 @@ pub enum AnalysisDatabaseMessage {
     InputReportCountByDateTopStart(String),
     InputReportCountByDateTopEnd(String),
     ButtonReportCountByDateTable,
+    ButtonReportClearUserSelected,
     ButtonReportCountByYearTable,
     ButtonReportCountByMonthTable,
     ButtonReportCountByDayTable,
     ButtonReportCountByWeekdayTable,
+    ButtonReportCountByHourTable,
+    SelectionListUserList(UserForSelect),
     ReqwestGetEmotion((String, Result<Vec<u8>, String>)),
     OpenFile(String),
 }
