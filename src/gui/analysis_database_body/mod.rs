@@ -1,27 +1,21 @@
 use std::{
-    collections::{HashMap, LinkedList}, fs::read_dir, hash::Hash, path::Path
+    collections::{HashMap, LinkedList},
+    fs::read_dir,
+    path::Path,
 };
 
-use chrono::{DateTime, Datelike, Local, NaiveDate, Timelike, Utc, Weekday};
+use chrono::{DateTime, Datelike, Local, Timelike};
 use cpal::Stream;
 use diesel::SqliteConnection;
 use iced::{
     widget::{
-        scrollable::{AbsoluteOffset, Viewport}, Button, Column, Container, Image, PickList, Row, Scrollable, Space, Text, TextInput
+        scrollable::{AbsoluteOffset, Viewport},
+        Button, Column, Container, Image, Row, Scrollable, Space, Text, TextInput,
     },
     Color, Length,
 };
-use iced_aw::DatePicker;
 use iced_runtime::core::{image::Handle, text::Shaping};
-use plotters::{
-    backend::BitMapBackend,
-    chart::ChartBuilder,
-    coord::ranged1d::{IntoSegmentedCoord, SegmentValue},
-    drawing::IntoDrawingArea,
-    element::PathElement,
-    series::{Histogram, LineSeries},
-    style::{Color as pColor, ShapeStyle},
-};
+use report_view::{AnalysisDatabaseReportMessage, ReportInfo, UserForSelect};
 
 use self::module::module_macro_msg::{Contact, Session};
 
@@ -32,6 +26,7 @@ use super::{
 };
 
 mod module;
+mod report_view;
 mod schema;
 
 pub struct AnalysisDatabaseBody {
@@ -50,11 +45,7 @@ pub struct AnalysisDatabaseBody {
     msg_getting: bool,
     wechat_path: Option<String>,
     prev_body: LinkedList<PrevBody>,
-    report_image: Option<Vec<u8>>,
 }
-
-const REPORT_IMAGE_WIDTH: u32 = 1024;
-const REPORT_IMAGE_HEIGHT: u32 = 768;
 
 #[derive(Clone)]
 struct SessionInfo {
@@ -109,68 +100,6 @@ enum ImageData {
     Gif(iced_gif::Frames),
 }
 
-#[derive(Clone,Eq,Hash,Debug)]
-struct UserForSelect {
-    id:Option<String>,
-    name:String,
-}
-
-impl UserForSelect {
-    fn new(id: Option<String>, name: String) -> Self {
-        Self {
-            id,name
-        }
-    }
-}
-
-impl ToString for UserForSelect {
-    fn to_string(&self) -> String {
-        self.name.clone()
-    }
-}
-
-impl PartialEq for UserForSelect {
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
-    }
-}
-
-#[derive(Default)]
-struct ReportInfo {
-    all_msg_count: usize,
-    user_select_options: Vec<UserForSelect>,
-    user_select_selected: Option<UserForSelect>,
-    count_by_user: Vec<(UserForSelect, usize)>,
-    count_by_user_top_start: String,
-    count_by_user_top_end: String,
-    count_by_date_order_by_date: Vec<(NaiveDate, usize)>,
-    count_by_date_order_by_count: Vec<(NaiveDate, usize)>,
-    count_by_date_start_show_picker: bool,
-    count_by_date_start: NaiveDate,
-    count_by_date_end_show_picker: bool,
-    count_by_date_end: NaiveDate,
-    count_by_date_top_start_show_picker: bool,
-    count_by_date_top_start_date: NaiveDate,
-    count_by_date_top_end_show_picker: bool,
-    count_by_date_top_end_date: NaiveDate,
-    count_by_date_top_start: String,
-    count_by_date_top_end: String,
-    count_by_date_user: Vec<(NaiveDate, UserForSelect, usize)>,
-    count_by_date_month: Vec<(NaiveDate, usize)>,
-    count_by_date_month_user: Vec<(NaiveDate, UserForSelect, usize)>,
-    count_by_hour: Vec<(u32, usize)>,
-    count_by_hour_user: Vec<(u32, UserForSelect, usize)>,
-    count_by_day: Vec<(u32, usize)>,
-    count_by_month: Vec<(u32, usize)>,
-    count_by_year: Vec<(i32, usize)>,
-    count_by_day_user: Vec<(u32, UserForSelect, usize)>,
-    count_by_month_user: Vec<(u32, UserForSelect, usize)>,
-    count_by_year_user: Vec<(i32, UserForSelect, usize)>,
-    count_by_weekday: Vec<(Weekday, usize)>,
-    count_by_weekday_user: Vec<(Weekday, UserForSelect, usize)>,
-    err_info: Option<String>,
-}
-
 enum PrevBody {
     Session(SessionInfo),
     Msg(MsgInfo),
@@ -193,11 +122,12 @@ impl AnalysisDatabaseBody {
             audio_stream: None,
             prev_body: LinkedList::new(),
             report_info: ReportInfo::default(),
-            report_image: None,
             chat_room_user_list: HashMap::new(),
         }
     }
-
+    fn get_user_name(&self, user: &Option<String>) -> UserForSelect {
+        self.report_info.get_user_name(user, &self.contact)
+    }
     pub fn update(
         &mut self,
         msg: AnalysisDatabaseMessage,
@@ -379,7 +309,7 @@ impl AnalysisDatabaseBody {
             }
             AnalysisDatabaseMessage::ButtonAnalyzeReport => {
                 self.report_info = ReportInfo::default();
-                self.report_image = None;
+                self.report_info.report_image = None;
                 let report_data = match self.body {
                     Body::Session => {
                         self.prev_body
@@ -584,8 +514,13 @@ impl AnalysisDatabaseBody {
                                 .0
                                 .clone();
                         }
-                        for (user,_) in self.report_info.count_by_user.iter() {
-                            self.report_info.user_select_options.push(user.clone());
+                        for (user, _) in self.report_info.count_by_user.iter() {
+                            self.report_info
+                                .user_select_for_date_options
+                                .push(user.clone());
+                            self.report_info
+                                .user_select_for_jieba_options
+                                .push(user.clone());
                         }
                         self.report_info.err_info = None;
                     }
@@ -600,215 +535,6 @@ impl AnalysisDatabaseBody {
             }
             AnalysisDatabaseMessage::ScrollMsg(viewport) => {
                 self.msg_info.absolute_offset = viewport.absolute_offset();
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::InputReportCountByUserTopStart(input) => {
-                if input.trim().parse::<usize>().is_ok() || input.trim().len() == 0 {
-                    self.report_info.count_by_user_top_start = input;
-                }
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::InputReportCountByUserTopEnd(input) => {
-                if input.trim().parse::<usize>().is_ok() || input.trim().len() == 0 {
-                    self.report_info.count_by_user_top_end = input;
-                }
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::ButtonReportCountByUserTable => {
-                let start = self
-                    .report_info
-                    .count_by_user_top_start
-                    .parse::<usize>()
-                    .unwrap_or(1)
-                    .min(self.report_info.count_by_user.len())
-                    .max(1);
-                let end = self
-                    .report_info
-                    .count_by_user_top_end
-                    .parse::<usize>()
-                    .unwrap_or(self.report_info.count_by_user.len())
-                    .min(self.report_info.count_by_user.len())
-                    .max(start);
-                let d = &self.report_info.count_by_user[(start - 1)..end];
-                self.report_info.count_by_user_top_start = start.to_string();
-                self.report_info.count_by_user_top_end = end.to_string();
-
-                self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
-                    "不同用户的聊天记录总数",
-                    "总数",
-                    |index| match index {
-                        SegmentValue::Exact(index) => index.to_string(),
-                        SegmentValue::CenterOf(index) => index.to_string(),
-                        SegmentValue::Last => "".to_string(),
-                    },
-                    d,
-                )));
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::DatePickerReportCountByDateStartUnderlay => {
-                self.report_info.count_by_date_start_show_picker =
-                    !self.report_info.count_by_date_start_show_picker;
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::DatePickerReportCountByDateStartCancel => {
-                if self.report_info.count_by_date_order_by_date.len() != 0 {
-                    self.report_info.count_by_date_start = self
-                        .report_info
-                        .count_by_date_order_by_date
-                        .first()
-                        .unwrap()
-                        .0
-                        .clone()
-                        .min(self.report_info.count_by_date_end);
-                }
-                self.report_info.count_by_date_start_show_picker = false;
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::DatePickerReportCountByDateStartSubmit(date) => {
-                self.report_info.count_by_date_start = date.min(self.report_info.count_by_date_end);
-                self.report_info.count_by_date_start_show_picker = false;
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::DatePickerReportCountByDateEndUnderlay => {
-                self.report_info.count_by_date_end_show_picker =
-                    !self.report_info.count_by_date_end_show_picker;
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::DatePickerReportCountByDateEndCancel => {
-                if self.report_info.count_by_date_order_by_date.len() != 0 {
-                    self.report_info.count_by_date_end = self
-                        .report_info
-                        .count_by_date_order_by_date
-                        .last()
-                        .unwrap()
-                        .0
-                        .clone()
-                        .max(self.report_info.count_by_date_start);
-                }
-                self.report_info.count_by_date_end_show_picker = false;
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::DatePickerReportCountByDateEndSubmit(date) => {
-                self.report_info.count_by_date_end = date.max(self.report_info.count_by_date_start);
-                self.report_info.count_by_date_end_show_picker = false;
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::ButtonReportCountByDateOrderByDateTable => {
-                let mut data = vec![];
-                for (date, count) in &self.report_info.count_by_date_order_by_date {
-                    if date >= &self.report_info.count_by_date_start
-                        && date <= &self.report_info.count_by_date_end
-                    {
-                        data.push((date.clone(), "总数".to_owned(), *count))
-                    }
-                }
-                self.report_image = Some(Self::rgb_to_rgba(
-                    &Self::get_report_line_series_image_order_by_date(
-                        "不同时间的聊天记录总数",
-                        &data,
-                    ),
-                ));
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::InputReportCountByDateTopStart(input) => {
-                if input.trim().parse::<usize>().is_ok() || input.trim().len() == 0 {
-                    self.report_info.count_by_date_top_start = input;
-                }
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::InputReportCountByDateTopEnd(input) => {
-                if input.trim().parse::<usize>().is_ok() || input.trim().len() == 0 {
-                    self.report_info.count_by_date_top_end = input;
-                }
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::ButtonReportCountByDateTable => {
-                let mut count_by_date_order_by_count = vec![];
-                for (date, count) in &self.report_info.count_by_date_order_by_count {
-                    if date >= &self.report_info.count_by_date_top_start_date
-                        && date <= &self.report_info.count_by_date_top_end_date
-                    {
-                        count_by_date_order_by_count.push((date.to_string(), *count))
-                    }
-                }
-                let start = self
-                    .report_info
-                    .count_by_date_top_start
-                    .parse::<usize>()
-                    .unwrap_or(1)
-                    .min(count_by_date_order_by_count.len())
-                    .max(1);
-                let end = self
-                    .report_info
-                    .count_by_date_top_end
-                    .parse::<usize>()
-                    .unwrap_or(count_by_date_order_by_count.len())
-                    .min(count_by_date_order_by_count.len())
-                    .max(start);
-                let d = &count_by_date_order_by_count[(start - 1)..end];
-                self.report_info.count_by_date_top_start = start.to_string();
-                self.report_info.count_by_date_top_end = end.to_string();
-
-                self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
-                    "不同用户的聊天记录总数",
-                    "总数",
-                    |index| match index {
-                        SegmentValue::Exact(index) => index.to_string(),
-                        SegmentValue::CenterOf(index) => index.to_string(),
-                        SegmentValue::Last => "".to_string(),
-                    },
-                    d,
-                )));
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::DatePickerReportCountByDateTopStartUnderlay => {
-                self.report_info.count_by_date_top_start_show_picker =
-                    !self.report_info.count_by_date_top_start_show_picker;
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::DatePickerReportCountByDateTopStartCancel => {
-                if self.report_info.count_by_date_order_by_date.len() != 0 {
-                    self.report_info.count_by_date_top_start_date = self
-                        .report_info
-                        .count_by_date_order_by_date
-                        .first()
-                        .unwrap()
-                        .0
-                        .clone()
-                        .min(self.report_info.count_by_date_top_end_date);
-                }
-                self.report_info.count_by_date_top_start_show_picker = false;
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::DatePickerReportCountByDateTopStartSubmit(date) => {
-                self.report_info.count_by_date_top_start_date =
-                    date.min(self.report_info.count_by_date_top_end_date);
-                self.report_info.count_by_date_top_start_show_picker = false;
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::DatePickerReportCountByDateTopEndUnderlay => {
-                self.report_info.count_by_date_top_end_show_picker =
-                    !self.report_info.count_by_date_top_end_show_picker;
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::DatePickerReportCountByDateTopEndCancel => {
-                if self.report_info.count_by_date_order_by_date.len() != 0 {
-                    self.report_info.count_by_date_top_end_date = self
-                        .report_info
-                        .count_by_date_order_by_date
-                        .last()
-                        .unwrap()
-                        .0
-                        .clone()
-                        .max(self.report_info.count_by_date_top_start_date);
-                }
-                self.report_info.count_by_date_top_end_show_picker = false;
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::DatePickerReportCountByDateTopEndSubmit(date) => {
-                self.report_info.count_by_date_top_end_date =
-                    date.max(self.report_info.count_by_date_top_start_date);
-                self.report_info.count_by_date_top_end_show_picker = false;
                 iced::Command::none()
             }
             AnalysisDatabaseMessage::ButtonSearchSession => {
@@ -878,181 +604,6 @@ impl AnalysisDatabaseBody {
                 self.session_info.search_session = input;
                 iced::Command::none()
             }
-            AnalysisDatabaseMessage::ButtonReportCountByMonthTable => {
-                let mut d = vec![];
-                if let Some(user) = &self.report_info.user_select_selected {
-                        d = self.report_info.count_by_month_user.iter().filter(|(_,u,_)| u == user).map(|(m,_,c)| (*m,*c)).collect()
-                };
-                let d = if self.report_info.user_select_selected.is_some() {
-                    d.iter()
-                } else {
-                    self.report_info.count_by_month.iter()
-                }.map(|(month, count)| (format!("{}月", month), *count))
-                    .collect::<Vec<_>>();
-                self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
-                    "以月份为维度统计总数",
-                    "月份",
-                    |index| match index {
-                        SegmentValue::Exact(index) => {
-                            if *index > d.len() {
-                                "".to_string()
-                            } else {
-                                d[*index - 1].0.clone()
-                            }
-                        }
-                        SegmentValue::CenterOf(index) => {
-                            if *index > d.len() {
-                                "".to_string()
-                            } else {
-                                d[*index - 1].0.clone()
-                            }
-                        }
-                        SegmentValue::Last => "".to_string(),
-                    },
-                    &d,
-                )));
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::ButtonReportCountByDayTable => {
-                let mut d = vec![];
-                if let Some(user) = &self.report_info.user_select_selected {
-                        d = self.report_info.count_by_day_user.iter().filter(|(_,u,_)| u == user).map(|(d,_,c)| (*d,*c)).collect()
-                };
-                let d = if self.report_info.user_select_selected.is_some() {
-                    d.iter()
-                } else {
-                    self.report_info.count_by_day.iter()
-                }.map(|(day, count)| (format!("{}日", day), *count))
-                    .collect::<Vec<_>>();
-                self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
-                    "以日期为维度统计总数",
-                    "日期",
-                    |index| match index {
-                        SegmentValue::Exact(index) => {
-                            if *index > d.len() {
-                                "".to_string()
-                            } else {
-                                d[*index - 1].0.clone()
-                            }
-                        }
-                        SegmentValue::CenterOf(index) => {
-                            if *index > d.len() {
-                                "".to_string()
-                            } else {
-                                d[*index - 1].0.clone()
-                            }
-                        }
-                        SegmentValue::Last => "".to_string(),
-                    },
-                    &d,
-                )));
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::ButtonReportCountByWeekdayTable => {
-                let mut d = vec![];
-                if let Some(user) = &self.report_info.user_select_selected {
-                        d = self.report_info.count_by_weekday_user.iter().filter(|(_,u,_)| u == user).map(|(w,_,c)| (*w,*c)).collect()
-                };
-                let d = if self.report_info.user_select_selected.is_some() {
-                    d.iter()
-                } else {
-                    self.report_info.count_by_weekday.iter()
-                }.map(|(weekday, count)| (weekday.to_string(), *count))
-                    .collect::<Vec<_>>();
-                self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
-                    "以星期为维度统计总数",
-                    "星期",
-                    |index| match index {
-                        SegmentValue::Exact(index) => {
-                            if *index > d.len() {
-                                "".to_string()
-                            } else {
-                                d[*index - 1].0.clone()
-                            }
-                        }
-                        SegmentValue::CenterOf(index) => {
-                            if *index > d.len() {
-                                "".to_string()
-                            } else {
-                                d[*index - 1].0.clone()
-                            }
-                        }
-                        SegmentValue::Last => "".to_string(),
-                    },
-                    &d,
-                )));
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::ButtonReportCountByHourTable => {
-                let mut d = vec![];
-                if let Some(user) = &self.report_info.user_select_selected {
-                        d = self.report_info.count_by_hour_user.iter().filter(|(_,u,_)| u == user).map(|(h,_,c)| (*h,*c)).collect()
-                };
-                let d = if self.report_info.user_select_selected.is_some() {
-                    d.iter()
-                } else {
-                    self.report_info.count_by_hour.iter()
-                }.map(|(hour, count)| (format!("{}时",hour), *count))
-                    .collect::<Vec<_>>();
-                self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
-                    "以小时为维度统计总数",
-                    "小时",
-                    |index| match index {
-                        SegmentValue::Exact(index) => {
-                            if *index > d.len() {
-                                "".to_string()
-                            } else {
-                                d[*index - 1].0.clone()
-                            }
-                        }
-                        SegmentValue::CenterOf(index) => {
-                            if *index > d.len() {
-                                "".to_string()
-                            } else {
-                                d[*index - 1].0.clone()
-                            }
-                        }
-                        SegmentValue::Last => "".to_string(),
-                    },
-                    &d,
-                )));
-                iced::Command::none()
-            }
-            AnalysisDatabaseMessage::ButtonReportCountByYearTable => {
-                let mut d = vec![];
-                if let Some(user) = &self.report_info.user_select_selected {
-                        d = self.report_info.count_by_year_user.iter().filter(|(_,u,_)| u == user).map(|(y,_,c)| (*y,*c)).collect()
-                };
-                let d = if self.report_info.user_select_selected.is_some() {
-                    d.iter()
-                } else {
-                    self.report_info.count_by_year.iter()
-                }.map(|(year, count)| (format!("{}年", year), *count))
-                    .collect::<Vec<_>>();
-                self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
-                    "以年份为维度统计总数",
-                    "年份",
-                    |index| match index {
-                        SegmentValue::Exact(index) => {
-                            if *index > d.len() {
-                                "".to_string()
-                            } else {
-                                d[*index - 1].0.clone()
-                            }
-                        }
-                        SegmentValue::CenterOf(index) => {
-                            if *index > d.len() {
-                                "".to_string()
-                            } else {
-                                d[*index - 1].0.clone()
-                            }
-                        }
-                        SegmentValue::Last => "".to_string(),
-                    },
-                    &d,
-                )));
-                iced::Command::none()
-            }
             AnalysisDatabaseMessage::ReqwestGetEmotion((url, result)) => {
                 let result = match result {
                     Ok(vec) => match iced_gif::Frames::from_bytes(vec.clone()) {
@@ -1068,208 +619,10 @@ impl AnalysisDatabaseBody {
                 crate::util::open_file(path).ok();
                 iced::Command::none()
             }
-            AnalysisDatabaseMessage::SelectionListUserList( t) => {
-                self.report_info.user_select_selected = Some(t);
-                iced::Command::none()
-            },
-            AnalysisDatabaseMessage::ButtonReportClearUserSelected => {
-                self.report_info.user_select_selected = None;
-                iced::Command::none()
-            },
-        }
-    }
-
-    fn get_report_line_series_image_order_by_date(
-        title: &str,
-        d: &[(NaiveDate, String, usize)],
-    ) -> Vec<u8> {
-        let mut vec = vec![0u8; REPORT_IMAGE_WIDTH as usize * REPORT_IMAGE_HEIGHT as usize * 3];
-        {
-            let root =
-                BitMapBackend::with_buffer(vec.as_mut(), (REPORT_IMAGE_WIDTH, REPORT_IMAGE_HEIGHT))
-                    .into_drawing_area();
-            root.fill(&plotters::style::WHITE).unwrap();
-            let mut chart = ChartBuilder::on(&root)
-                .x_label_area_size(35)
-                .y_label_area_size(40)
-                .margin(5)
-                .caption(title, ("楷体", 50.0))
-                .build_cartesian_2d(
-                    d.first()
-                        .unwrap_or(&(NaiveDate::default(), String::default(), usize::default()))
-                        .0
-                        ..d.last()
-                            .unwrap_or(&(NaiveDate::default(), String::default(), usize::default()))
-                            .0,
-                    0..d.iter().map(|(_, _, count)| *count).max().unwrap_or(0),
-                )
-                .unwrap();
-            chart
-                .configure_mesh()
-                .disable_x_mesh()
-                .bold_line_style(plotters::style::WHITE.mix(0.3))
-                .y_desc("总数")
-                .x_desc("排名")
-                .axis_desc_style(("楷体", 15))
-                .draw()
-                .unwrap();
-            let mut map: HashMap<String, Vec<(NaiveDate, usize)>> = HashMap::new();
-            for (date, name, count) in d.iter() {
-                if let Some(v) = map.get_mut(name) {
-                    v.push((date.clone(), *count));
-                } else {
-                    map.insert(name.clone(), vec![(date.clone(), *count)]);
-                }
-            }
-            let mut order_vec = vec![];
-            for (name, vec) in &map {
-                let a: usize = vec.iter().map(|(_, count)| *count).sum();
-                order_vec.push((name.clone(), a));
-            }
-            order_vec.sort_by(|a, b| a.1.cmp(&b.1));
-            for (index, (name, count)) in order_vec.iter().enumerate() {
-                chart
-                    .draw_series(LineSeries::new(
-                        map.get(name)
-                            .unwrap()
-                            .iter()
-                            .map(|(date, count)| (date.clone(), *count)),
-                        plotters::style::RED
-                            .mix(0.3 + index as f64 * (0.5 / d.len() as f64))
-                            .filled(),
-                    ))
-                    .unwrap()
-                    .label(format!("{} {}", name, count))
-                    .legend(move |(x, y)| {
-                        PathElement::new(
-                            vec![(x, y), (x + 20, y)],
-                            &plotters::style::RED.mix(0.3 + index as f64 * (0.5 / d.len() as f64)),
-                        )
-                    });
-            }
-            chart
-                .configure_series_labels()
-                .border_style(ShapeStyle {
-                    color: plotters::style::BLACK.into(),
-                    filled: false,
-                    stroke_width: 0,
-                })
-                .label_font(("楷体", 20))
-                .draw()
-                .unwrap();
-            root.present().unwrap();
-        }
-        vec
-    }
-
-    fn get_report_histogram_image<F>(
-        title: &str,
-        x_desc: &str,
-        x_formatter: F,
-        d: &[(impl ToString + Clone + Eq + Hash, usize)],
-    ) -> Vec<u8>
-    where
-        F: Fn(&SegmentValue<usize>) -> String,
-    {
-        let mut vec = vec![0u8; REPORT_IMAGE_WIDTH as usize * REPORT_IMAGE_HEIGHT as usize * 3];
-        {
-            let root =
-                BitMapBackend::with_buffer(vec.as_mut(), (REPORT_IMAGE_WIDTH, REPORT_IMAGE_HEIGHT))
-                    .into_drawing_area();
-            root.fill(&plotters::style::WHITE).unwrap();
-            let mut chart = ChartBuilder::on(&root)
-                .x_label_area_size(35)
-                .y_label_area_size(40)
-                .margin(5)
-                .caption(title, ("楷体", 50.0))
-                .build_cartesian_2d(
-                    (1..d.len()).into_segmented(),
-                    0..d.iter().map(|(_, count)| *count).max().unwrap_or(0),
-                )
-                .unwrap();
-            chart
-                .configure_mesh()
-                .x_label_formatter(&x_formatter)
-                .disable_x_mesh()
-                .bold_line_style(plotters::style::WHITE.mix(0.3))
-                .y_desc("总数")
-                .x_desc(x_desc)
-                .axis_desc_style(("楷体", 15))
-                .draw()
-                .unwrap();
-            let mut color_map = HashMap::new();
-            let mut d_order_by_count = d.to_vec();
-            d_order_by_count.sort_by(|a, b| b.1.cmp(&a.1));
-            for (index, (name, _)) in d_order_by_count.iter().enumerate() {
-                color_map.insert(
-                    name,
-                    plotters::style::RED
-                        .mix(0.3 + index as f64 * (0.5 / d.len() as f64))
-                        .filled(),
-                );
-            }
-            for (index, (name, count)) in d.iter().enumerate() {
-                chart
-                    .draw_series(
-                        Histogram::vertical(&chart)
-                            .style(*color_map.get(&name).unwrap())
-                            .margin(20)
-                            .data(vec![(index + 1, *count)]),
-                    )
-                    .unwrap()
-                    .label(format!("{} {}", name.to_string(), count));
-            }
-            chart
-                .configure_series_labels()
-                .border_style(ShapeStyle {
-                    color: plotters::style::BLACK.into(),
-                    filled: false,
-                    stroke_width: 0,
-                })
-                .label_font(("楷体", 17))
-                .draw()
-                .unwrap();
-            root.present().unwrap();
-        }
-        vec
-    }
-
-    fn rgb_to_rgba(mut data: &[u8]) -> Vec<u8> {
-        let mut vec = vec![];
-        loop {
-            let (l, r) = data.split_at(3);
-            vec.append(&mut l.to_vec());
-            vec.push(255);
-            if r.len() == 0 {
-                break;
-            } else {
-                data = r;
+            AnalysisDatabaseMessage::AnalysisDatabaseReportMessage(msg) => {
+                self.report_info.update(msg, &self.msg_info, &self.contact)
             }
         }
-        vec
-    }
-
-    fn get_user_name(&self, user: &Option<String>) -> UserForSelect {
-        let user = if let Some(user) = user {
-            if let Some(contact) = self.contact.get(&Some(user.to_owned())) {
-                let mut text = contact
-                    .nick_name
-                    .as_ref()
-                    .cloned()
-                    .unwrap_or("".to_string());
-                if let Some(remark) = &contact.remark {
-                    if remark.len() > 0 {
-                        text = format!("{}({})", text, remark);
-                    }
-                }
-                UserForSelect::new(contact.user_name.clone(),text)
-            } else {
-                UserForSelect::new(Some("未知用户".to_string()),"未知用户".to_string())
-            }
-        } else {
-            UserForSelect::new(Some("本人".to_string()),"本人".to_string())
-        };
-        user
     }
 
     fn get_conn(&self) -> Result<Conn, anyhow::Error> {
@@ -1553,170 +906,6 @@ impl AnalysisDatabaseBody {
         })
     }
 
-    fn draw_report(&self) -> Container<Message> {
-        if let Some(err) = self.report_info.err_info.as_ref() {
-            Container::new(
-                Text::new(err).style(iced::theme::Text::Color(Color::from_rgb(1.0, 0.0, 0.0))),
-            )
-        } else {
-            Container::new({
-                let mut col = Column::new();
-                col = col.push(Text::new(format!(
-                    "总数：{}",
-                    self.report_info.all_msg_count
-                )));
-                col =
-                    col.push(
-                        Row::new()
-                            .push(Text::new("不同用户的聊天记录总数"))
-                            .push(Text::new("前"))
-                            .push(
-                                TextInput::new("", &self.report_info.count_by_user_top_start)
-                                    .on_input(|input| {
-                                        Message::AnalysisDatabaseMessage(
-                                            AnalysisDatabaseMessage::InputReportCountByUserTopStart(
-                                                input,
-                                            ),
-                                        )
-                                    }),
-                            )
-                            .push(Text::new("-"))
-                            .push(
-                                TextInput::new("", &self.report_info.count_by_user_top_end)
-                                    .on_input(|input| {
-                                        Message::AnalysisDatabaseMessage(
-                                            AnalysisDatabaseMessage::InputReportCountByUserTopEnd(
-                                                input,
-                                            ),
-                                        )
-                                    }),
-                            )
-                            .push(Button::new("生成图表").on_press(
-                                Message::AnalysisDatabaseMessage(
-                                    AnalysisDatabaseMessage::ButtonReportCountByUserTable,
-                                ),
-                            )),
-                    ).push(
-                        Row::new()
-                            .push(Text::new("不同时间的聊天记录总数"))
-                            .push(Text::new("日期"))
-                            .push(
-                                Container::new(
-                                    Row::new()
-                                    .push(
-                                        DatePicker::new(
-                                            self.report_info.count_by_date_start_show_picker,
-                                            self.report_info.count_by_date_start,
-                                            Button::new(Text::new(self.report_info.count_by_date_start.to_string())).on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::DatePickerReportCountByDateStartUnderlay)),
-                                            Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::DatePickerReportCountByDateStartCancel),
-                                            |date| Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::DatePickerReportCountByDateStartSubmit(date.into())),
-                                        )
-                                    )
-                                    .push(Text::new("-"))
-                                    .push(
-                                        DatePicker::new(
-                                            self.report_info.count_by_date_end_show_picker,
-                                            self.report_info.count_by_date_end,
-                                            Button::new(Text::new(self.report_info.count_by_date_end.to_string())).on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::DatePickerReportCountByDateEndUnderlay)),
-                                            Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::DatePickerReportCountByDateEndCancel),
-                                            |date| Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::DatePickerReportCountByDateEndSubmit(date.into())),
-                                        )
-                                    )
-                                ).width(Length::Fill)
-                            )
-                            .push(Button::new("生成图表").on_press(
-                                Message::AnalysisDatabaseMessage(
-                                    AnalysisDatabaseMessage::ButtonReportCountByDateOrderByDateTable,
-                                ),
-                            )),
-                    ).push(
-                        Row::new()
-                            .push(Text::new("不同时间的聊天记录总数"))
-
-                            .push(Text::new("日期"))
-                            .push(
-                                Container::new(
-                                    Row::new()
-                                    .push(
-                                        DatePicker::new(
-                                            self.report_info.count_by_date_top_start_show_picker,
-                                            self.report_info.count_by_date_top_start_date,
-                                            Button::new(Text::new(self.report_info.count_by_date_top_start_date.to_string())).on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::DatePickerReportCountByDateTopStartUnderlay)),
-                                            Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::DatePickerReportCountByDateTopStartCancel),
-                                            |date| Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::DatePickerReportCountByDateTopStartSubmit(date.into())),
-                                        )
-                                    )
-                                    .push(Text::new("-"))
-                                    .push(
-                                        DatePicker::new(
-                                            self.report_info.count_by_date_top_end_show_picker,
-                                            self.report_info.count_by_date_top_end_date,
-                                            Button::new(Text::new(self.report_info.count_by_date_top_end_date.to_string())).on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::DatePickerReportCountByDateTopEndUnderlay)),
-                                            Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::DatePickerReportCountByDateTopEndCancel),
-                                            |date| Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::DatePickerReportCountByDateTopEndSubmit(date.into()))
-                                        )
-                                    )
-                                )
-                            ).push(Text::new("前"))
-                            .push(
-                                TextInput::new("", &self.report_info.count_by_date_top_start)
-                                    .on_input(|input| {
-                                        Message::AnalysisDatabaseMessage(
-                                            AnalysisDatabaseMessage::InputReportCountByDateTopStart(
-                                                input,
-                                            ),
-                                        )
-                                    }),
-                            )
-                            .push(Text::new("-"))
-                            .push(
-                                TextInput::new("", &self.report_info.count_by_date_top_end)
-                                    .on_input(|input| {
-                                        Message::AnalysisDatabaseMessage(
-                                            AnalysisDatabaseMessage::InputReportCountByDateTopEnd(
-                                                input,
-                                            ),
-                                        )
-                                    }),
-                            )
-                            .push(Button::new("生成图表").on_press(
-                                Message::AnalysisDatabaseMessage(
-                                    AnalysisDatabaseMessage::ButtonReportCountByDateTable,
-                                ),
-                            )),
-                    ).push(
-                        Row::new().push(
-                            Text::new("不同时间维度")
-                        ).push(
-                            PickList::new(self.report_info.user_select_options.clone(),self.report_info.user_select_selected.clone(), |t| Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::SelectionListUserList(t)))
-                        ).push(
-                            Button::new("清除用户选择").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportClearUserSelected))
-                        )
-                        .push(
-                            Button::new("年份").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByYearTable))
-                        ).push(
-                            Button::new("月份").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByMonthTable))
-                        ).push(
-                            Button::new("日期").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByDayTable))
-                        ).push(
-                            Button::new("星期").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByWeekdayTable))
-                        ).push(
-                            Button::new("小时").on_press(Message::AnalysisDatabaseMessage(AnalysisDatabaseMessage::ButtonReportCountByHourTable))
-                        )
-                        .spacing(5)
-                    );
-                if let Some(image) = &self.report_image {
-                    col = col.push(Image::new(Handle::from_pixels(
-                        REPORT_IMAGE_WIDTH,
-                        REPORT_IMAGE_HEIGHT,
-                        image.clone(),
-                    )));
-                }
-                col
-            })
-        }
-    }
-
     fn draw_session(&self) -> Container<Message> {
         Container::new({
             let mut col = Column::new();
@@ -1898,7 +1087,7 @@ impl AnalysisDatabaseBody {
                 }
                 Body::Report => {
                     col = col.push(
-                        Scrollable::new(self.draw_report().width(Length::Fill))
+                        Scrollable::new(self.report_info.draw().width(Length::Fill))
                             .height(Length::Fill),
                     );
 
@@ -1934,6 +1123,7 @@ impl AnalysisDatabaseBody {
 
 #[derive(Debug, Clone)]
 pub enum AnalysisDatabaseMessage {
+    AnalysisDatabaseReportMessage(AnalysisDatabaseReportMessage),
     UpdateAnalysisDatabase,
     ButtonAnalysis,
     ButtonSession(usize, String),
@@ -1950,32 +1140,6 @@ pub enum AnalysisDatabaseMessage {
     InputSearchSession(String),
     ScrollSession(Viewport),
     ScrollMsg(Viewport),
-    InputReportCountByUserTopStart(String),
-    InputReportCountByUserTopEnd(String),
-    ButtonReportCountByUserTable,
-    DatePickerReportCountByDateStartUnderlay,
-    DatePickerReportCountByDateStartCancel,
-    DatePickerReportCountByDateStartSubmit(NaiveDate),
-    DatePickerReportCountByDateEndUnderlay,
-    DatePickerReportCountByDateEndCancel,
-    DatePickerReportCountByDateEndSubmit(NaiveDate),
-    ButtonReportCountByDateOrderByDateTable,
-    DatePickerReportCountByDateTopStartUnderlay,
-    DatePickerReportCountByDateTopStartCancel,
-    DatePickerReportCountByDateTopStartSubmit(NaiveDate),
-    DatePickerReportCountByDateTopEndUnderlay,
-    DatePickerReportCountByDateTopEndCancel,
-    DatePickerReportCountByDateTopEndSubmit(NaiveDate),
-    InputReportCountByDateTopStart(String),
-    InputReportCountByDateTopEnd(String),
-    ButtonReportCountByDateTable,
-    ButtonReportClearUserSelected,
-    ButtonReportCountByYearTable,
-    ButtonReportCountByMonthTable,
-    ButtonReportCountByDayTable,
-    ButtonReportCountByWeekdayTable,
-    ButtonReportCountByHourTable,
-    SelectionListUserList(UserForSelect),
     ReqwestGetEmotion((String, Result<Vec<u8>, String>)),
     OpenFile(String),
 }

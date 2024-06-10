@@ -20,6 +20,7 @@
         "Inband",
         "INPROC",
         "interp",
+        "jieba",
         "lbrr",
         "lpstr",
         "MODULEENTRY",

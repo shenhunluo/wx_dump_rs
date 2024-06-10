@@ -31,6 +31,7 @@ gui = [
     "xml",
     "reqwest",
     "iced_gif",
+    "jieba-rs",
 ]
 dev = []
 
@@ -82,3 +83,4 @@ plotters = { version = "*", optional = true }
 xml = { version = "*", optional = true }
 reqwest = { version = "*", optional = true }
 iced_gif = { version = "*", path = "iced_gif", optional = true }
+jieba-rs ={ version = "*", optional = true , features = ["textrank","tfidf"]}
