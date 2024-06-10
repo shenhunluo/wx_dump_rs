@@ -15,7 +15,7 @@ use iced::{
     Color, Length,
 };
 use iced_runtime::core::{image::Handle, text::Shaping};
-use report_view::{AnalysisDatabaseReportMessage, ReportInfo, UserForSelect};
+use report_body::{AnalysisDatabaseReportMessage, ReportInfo, UserForSelect};
 
 use self::module::module_macro_msg::{Contact, Session};
 
@@ -26,7 +26,7 @@ use super::{
 };
 
 mod module;
-mod report_view;
+mod report_body;
 mod schema;
 
 pub struct AnalysisDatabaseBody {
