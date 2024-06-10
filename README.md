@@ -50,6 +50,8 @@ target\release\wx_dump_rs.exe search -s "地址(例如当前例子中的24890218
 
 使用plotters库生成统计图表
 
+使用jieba-rs库进行分词，并统计词频
+
 ### 编译
 ```
 cargo build --bin wx_dump_rs_gui --features="gui" --release
