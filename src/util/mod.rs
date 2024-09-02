@@ -409,9 +409,10 @@ pub fn get_folder_dialog() -> Result<String, anyhow::Error> {
 
 #[cfg(feature = "gui")]
 pub fn open_file(path: String) -> Result<(), anyhow::Error> {
+    use anyhow::Ok;
     use windows::Win32::UI::{Shell::ShellExecuteA, WindowsAndMessaging::SW_SHOWNORMAL};
     unsafe {
-        let h_inst = ShellExecuteA(
+        ShellExecuteA(
             None,
             PCSTR::from_raw("open\0".as_bytes().as_ptr()),
             PCSTR::from_raw(format!("{}\0", path).as_bytes().as_ptr()),
@@ -419,9 +420,17 @@ pub fn open_file(path: String) -> Result<(), anyhow::Error> {
             None,
             SW_SHOWNORMAL,
         );
-        if h_inst.0 <= 32 {
-            GetLastError().ok()?;
-        }
+        GetLastError().ok()?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+pub mod test {
+    use super::open_file;
+
+    #[test]
+    pub fn test_open_file(){
+        println!("result : {:?}",open_file("abcd".to_string()));
+    }
 }
