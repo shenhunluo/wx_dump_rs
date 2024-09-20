@@ -7,7 +7,6 @@ use iced::{
     widget::{Button, Column, Container, Row, Scrollable, Space, Text, TextInput},
     Color, Length,
 };
-use iced_runtime::Command;
 use std::sync::RwLock;
 
 use super::Message;
@@ -38,9 +37,9 @@ where
             .spacing(5)
             .push(
                 Text::new(text)
-                    .vertical_alignment(Vertical::Center)
+                    .align_y(Vertical::Center)
                     .width(240)
-                    .horizontal_alignment(Horizontal::Left)
+                    .align_x(Horizontal::Left)
                     .height(30),
             )
             .push(
@@ -59,19 +58,21 @@ where
             .push(if let Some(btm_msg) = btm_msg {
                 Container::new(
                     Button::new(
-                        Text::new(btm_data.to_string()).horizontal_alignment(Horizontal::Center),
+                        Text::new(btm_data.to_string()).align_x(Horizontal::Center),
                     )
                     .on_press(Into::<Message>::into(btm_msg))
-                    .width(50),
+                    .width(60),
                 )
             } else {
-                Container::new(Space::with_width(50))
+                Container::new(Space::with_width(60))
             }),
     );
     if let Some(msg) = err_msg {
         col = col.push(
             Text::new(msg.to_string())
-                .style(iced::theme::Text::Color(Color::from_rgb(1.0, 0.0, 0.0))),
+                .style(|_| iced::widget::text::Style{
+                    color: Some(Color::from_rgb(1.0, 0.0, 0.0))
+                }),
         )
     }
     col
@@ -130,7 +131,7 @@ where
 }
 
 pub struct PrintInfoText {
-    data: RwLock<Vec<(String, Color)>>,
+    data: RwLock<Vec<(String, Option<Color>)>>,
     last_len: RwLock<usize>,
     scroll_id: iced::widget::scrollable::Id,
 }
@@ -147,20 +148,20 @@ impl PrintInfoText {
         self.data
             .write()
             .unwrap()
-            .push((str.to_string(), Color::BLACK));
+            .push((str.to_string(), None));
     }
     pub fn push_new_err_len(&self, str: impl ToString) {
         self.data
             .write()
             .unwrap()
-            .push((str.to_string(), Color::from_rgb(1.0, 0.0, 0.0)));
+            .push((str.to_string(), Some(Color::from_rgb(1.0, 0.0, 0.0))));
     }
     pub fn push_to_last(&self, str: impl ToString) {
         let mut data = self.data.write().unwrap();
         let len = data.len();
         data.get_mut(len - 1).unwrap().0.push_str(&str.to_string());
     }
-    pub fn check_scroll(&self) -> Command<Message> {
+    pub fn check_scroll(&self) -> iced::Task<Message> {
         let mut last_len = self.last_len.write().unwrap();
         let data_last_len = self.data.read().unwrap().len();
         if *last_len != data_last_len {
@@ -170,7 +171,7 @@ impl PrintInfoText {
                 iced::widget::scrollable::RelativeOffset { x: 0.0, y: 1.0 },
             )
         } else {
-            Command::none()
+            iced::Task::none()
         }
     }
     pub fn draw(&self) -> Container<Message> {
@@ -178,9 +179,12 @@ impl PrintInfoText {
             Scrollable::new({
                 let mut col = Column::new().width(Length::Fill);
                 for (s, c) in self.data.read().unwrap().iter() {
+                    let c= c.clone();
                     col = col.push(
                         Text::new(s.replace('\t', "    ").to_owned())
-                            .style(iced::theme::Text::Color(c.clone())),
+                            .style(move |_| iced::widget::text::Style{
+                                color: c
+                            }),
                     )
                 }
                 col

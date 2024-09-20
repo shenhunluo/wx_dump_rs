@@ -4,7 +4,6 @@ use iced::{
     widget::{Button, Column, Container, Row, Space},
     Length,
 };
-use iced_runtime::core::clipboard::Kind;
 
 use crate::{action::show_info::show_user_info, util::u8_to_string, wx_util};
 
@@ -37,20 +36,20 @@ impl ShowUserInfoBody {
     pub fn check_command_running(&self) -> bool {
         self.command_running
     }
-    pub fn check_scroll(&self) -> iced::Command<Message> {
+    pub fn check_scroll(&self) -> iced::Task<Message> {
         self.print_info_text.check_scroll()
     }
     pub fn update(
         &mut self,
         msg: ShowUserInfoMessage,
         config: &ConfigBody,
-    ) -> iced::Command<Message> {
+    ) -> iced::Task<Message> {
         match msg {
             ShowUserInfoMessage::UpdateWeChatInfo => {
                 self.command_running = true;
                 let print_info_text = self.print_info_text.clone();
                 let config = config.clone();
-                iced::Command::<Message>::perform(
+                iced::Task::<Message>::perform(
                     async move {
                         let mut wechat_info = wx_util::WeChatInfo::default();
                         let wechat_info = wx_util::open_wechat_process(
@@ -95,22 +94,16 @@ impl ShowUserInfoBody {
                     }
                     Err(r) => {
                         self.print_info_text.push_new_err_len(r);
-                        iced::Command::none()
+                        iced::Task::none()
                     }
                 }
             }
-            ShowUserInfoMessage::ButtonCopyKeyHex => iced::Command::single(
-                iced_runtime::command::Action::Clipboard(iced_runtime::clipboard::Action::Write(
-                    u8_to_string(&self.key.unwrap(), &"hex".to_string()).unwrap(),
-                    Kind::Standard,
-                )),
-            ),
-            ShowUserInfoMessage::ButtonCopyKeyBase64 => iced::Command::single(
-                iced_runtime::command::Action::Clipboard(iced_runtime::clipboard::Action::Write(
-                    u8_to_string(&self.key.unwrap(), &"base64".to_string()).unwrap(),
-                    Kind::Standard,
-                )),
-            ),
+            ShowUserInfoMessage::ButtonCopyKeyHex => 
+                iced::clipboard::write(u8_to_string(&self.key.unwrap(), &"hex".to_string()).unwrap())
+            ,
+            ShowUserInfoMessage::ButtonCopyKeyBase64 => 
+                iced::clipboard::write(u8_to_string(&self.key.unwrap(), &"base64".to_string()).unwrap())
+            ,
         }
     }
     pub fn draw(&self) -> Container<Message> {

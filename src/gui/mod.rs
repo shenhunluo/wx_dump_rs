@@ -7,10 +7,8 @@ use self::{
     get_database_body::{GetDatabaseBody, GetDatabaseMessage},
     show_user_info_body::{ShowUserInfoBody, ShowUserInfoMessage},
 };
-use iced::multi_window::Application;
 use iced::{
-    widget::{Button, Column, Container, Image, Row, Space},
-    Length, Subscription,
+    widget::{Button, Column, Container, Image, Row, Space}, Length, Subscription
 };
 
 mod analysis_database_body;
@@ -21,8 +19,10 @@ mod gui_util;
 mod show_user_info_body;
 
 pub struct WxDumpGui {
+    id: iced::window::Id,
     body: Body,
     config_body: ConfigBody,
+    theme: iced::theme::Theme,
     show_user_info_body: ShowUserInfoBody,
     get_database_body: GetDatabaseBody,
     decrypt_body: DecryptBody,
@@ -30,41 +30,53 @@ pub struct WxDumpGui {
     image_id: HashMap<iced::window::Id, Vec<u8>>,
 }
 
-impl Application for WxDumpGui {
-    type Executor = iced::executor::Default;
+impl WxDumpGui {
+    // type Executor = iced::executor::Default;
 
-    type Message = Message;
+    // type Message = Message;
 
-    type Theme = iced::theme::Theme;
+    // type Theme = iced::theme::Theme;
 
-    type Flags = super::Flags;
+    // type Flags = super::Flags;
 
-    fn new(_flags: Self::Flags) -> (Self, iced::Command<Self::Message>) {
+    pub fn new() -> (Self, iced::Task<Message>) {
+        let icon: &[u8] = include_bytes!("../image/icon.png");
+        let (id,task) = iced::window::open(iced::window::Settings { 
+            icon: iced::window::icon::from_file_data(icon, None).ok(),
+            ..iced::window::Settings::default()
+        });
         (
             WxDumpGui {
+                id,
                 body: Body::Config,
                 config_body: ConfigBody::new(),
+                theme: iced::theme::Theme::default(),
                 show_user_info_body: ShowUserInfoBody::new(),
                 get_database_body: GetDatabaseBody::new(),
                 decrypt_body: DecryptBody::new(),
                 analysis_database_body: AnalysisDatabaseBody::new(),
                 image_id: HashMap::new(),
             },
-            iced::Command::<Message>::batch(vec![
+            iced::Task::<Message>::batch(vec![
                 iced::font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(|_| Message::FontLoaded),
                 iced::font::load(iced_aw::NERD_FONT_BYTES).map(|_| Message::FontLoaded),
+                task.map(Message::OptionWindow)
             ]),
         )
     }
 
-    fn title(&self, id: iced::window::Id) -> String {
+    pub fn title(&self, id: iced::window::Id) -> String {
         if self.image_id.keys().find(|k| k == &&id).is_some() {
             return "查看图片".to_owned();
         }
         "微信记录解密查看器".to_owned()
     }
 
-    fn update(&mut self, message: Self::Message) -> iced::Command<Self::Message> {
+    pub fn theme(&self, _id: iced::window::Id) -> iced::theme::Theme {
+        self.theme.clone()
+    }
+
+    pub fn update(&mut self, message: Message) -> iced::Task<Message> {
         match message {
             Message::ConfigMessage(msg) => self.config_body.update(msg),
             Message::ButtonConfig => self.body = Body::Config,
@@ -119,37 +131,49 @@ impl Application for WxDumpGui {
                 let r = self.analysis_database_body.update(
                     AnalysisDatabaseMessage::UpdateAnalysisDatabase,
                     &self.config_body,
+                    &self.theme
                 );
                 self.body = Body::AnalysisDatabase;
                 return r;
             }
             Message::AnalysisDatabaseMessage(msg) => {
-                return self.analysis_database_body.update(msg, &self.config_body)
+                return self.analysis_database_body.update(msg, &self.config_body,&self.theme)
             }
             Message::OpenImage(image) => {
                 let (id, command) =
-                    iced::window::spawn(iced::window::settings::Settings::default());
+                    iced::window::open(iced::window::settings::Settings::default());
                 self.image_id.insert(id, image);
-                return command;
+                return command.map(Message::OptionWindow);
             }
+            Message::OptionWindow(_) => {}
             Message::CloseWindow(id) => {
+                if id == self.id {
+                    return iced::exit();
+                }
                 self.image_id.remove(&id);
             }
-            Message::FontLoaded => {}
+            Message::FontLoaded => {},
+            Message::ButtonChangeTheme => {
+                self.theme = match self.theme {
+                    iced::theme::Theme::Light => iced::theme::Theme::Dark,
+                    iced::theme::Theme::Dark => iced::theme::Theme::Light,
+                    _ => todo!()
+                }
+            }
         }
-        iced::Command::<Message>::none()
+        iced::Task::<Message>::none()
     }
 
-    fn subscription(&self) -> Subscription<Self::Message> {
-        let event = iced::event::listen_with(|event, _| match event {
-            iced::Event::Window(id, event) => match event {
-                iced::window::Event::Closed => Some(Message::CloseWindow(id)),
-                _ => None,
-            },
-            _ => None,
-        });
+    pub fn subscription(&self) -> Subscription<Message> {
+        // let event = iced::window::close_events(|event, _| match event {
+        //     iced::Event::Window(id, event) => match event {
+        //         iced::window::Event::Closed => Some(Message::CloseWindow(id)),
+        //         _ => None,
+        //     },
+        //     _ => None,
+        // });
         iced::Subscription::batch(vec![
-            event,
+            iced::window::close_events().map(Message::CloseWindow),
             match self.body {
                 Body::Config => iced::Subscription::none(),
                 Body::ShowUserInfo => {
@@ -180,18 +204,18 @@ impl Application for WxDumpGui {
             },
         ])
     }
-    fn view(
+    pub fn view(
         &self,
         id: iced::window::Id,
-    ) -> iced::Element<'_, Self::Message, Self::Theme, iced::Renderer> {
+    ) -> iced::Element<'_, Message, iced::theme::Theme, iced::Renderer> {
         if let Some(image) = self.image_id.get(&id) {
             return Container::new(
                 iced::widget::scrollable::Scrollable::new(Image::new(
-                    iced::widget::image::Handle::from_memory(image.clone()),
+                    iced::widget::image::Handle::from_bytes(image.clone()),
                 ))
                 .direction(iced::widget::scrollable::Direction::Both {
-                    vertical: iced::widget::scrollable::Properties::new(),
-                    horizontal: iced::widget::scrollable::Properties::new(),
+                    vertical: iced::widget::scrollable::Scrollbar::new(),
+                    horizontal: iced::widget::scrollable::Scrollbar::new(),
                 })
                 .width(Length::Fill)
                 .height(Length::Fill),
@@ -253,7 +277,10 @@ impl Application for WxDumpGui {
                         } else {
                             None
                         },
-                    )),
+                    )).push(
+                        Button::new("切换主题").on_press(Message::ButtonChangeTheme)
+                    )
+                    ,
             );
         Container::new(col).into()
     }
@@ -273,8 +300,10 @@ pub enum Message {
     ButtonAnalysisDatabase,
     AnalysisDatabaseMessage(AnalysisDatabaseMessage),
     OpenImage(Vec<u8>),
+    OptionWindow(iced::window::Id),
     CloseWindow(iced::window::Id),
     FontLoaded,
+    ButtonChangeTheme,
 }
 
 enum Body {

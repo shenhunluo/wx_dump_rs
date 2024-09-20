@@ -4,7 +4,6 @@ use iced::{
     widget::{Button, Column, Container, Row, Space},
     Length,
 };
-use iced_runtime::Command;
 use tokio::sync::watch::{Receiver, Sender};
 
 use crate::action::get_database::get_database;
@@ -48,7 +47,7 @@ impl GetDatabaseBody {
     pub fn check_command_running(&self) -> bool {
         self.command_running
     }
-    pub fn check_scroll(&self) -> Command<Message> {
+    pub fn check_scroll(&self) -> iced::Task<Message> {
         self.print_info_text.check_scroll()
     }
     pub fn update(
@@ -56,7 +55,7 @@ impl GetDatabaseBody {
         msg: GetDatabaseMessage,
         config: &ConfigBody,
         show_user_info_body: &ShowUserInfoBody,
-    ) -> Command<Message> {
+    ) -> iced::Task<Message> {
         match msg {
             GetDatabaseMessage::ButtonStart => {
                 self.command_running = true;
@@ -67,7 +66,7 @@ impl GetDatabaseBody {
                 let account = self.account.trim().to_owned();
                 let print_info = self.print_info_text.clone();
                 let key = Arc::new(RwLock::new(vec![0]));
-                iced::Command::perform(
+                iced::Task::perform(
                     async move {
                         let r: Result<(), anyhow::Error> = get_database(
                             &wechat_path,
@@ -114,11 +113,11 @@ impl GetDatabaseBody {
                 if let Some(account) = show_user_info_body.get_account() {
                     self.account = account.clone();
                 }
-                iced::Command::none()
+                iced::Task::none()
             }
             GetDatabaseMessage::InputAccount(s) => {
                 self.account = s;
-                iced::Command::none()
+                iced::Task::none()
             }
             GetDatabaseMessage::InputSelectDir(s) => {
                 if s.len() == 0 {
@@ -128,13 +127,13 @@ impl GetDatabaseBody {
                         self.select_dir = select_dir.to_string();
                     }
                 }
-                iced::Command::none()
+                iced::Task::none()
             }
             GetDatabaseMessage::ButtonSelectDir => {
                 self.select_dir_index_tx
                     .send(self.select_dir.parse().unwrap())
                     .unwrap();
-                iced::Command::none()
+                iced::Task::none()
             }
             GetDatabaseMessage::CommandFinished(r) => {
                 self.command_running = false;

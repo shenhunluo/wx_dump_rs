@@ -15,7 +15,7 @@ use plotters::{
     drawing::IntoDrawingArea,
     element::PathElement,
     series::{Histogram, LineSeries},
-    style::{Color as PlottersColor, ShapeStyle},
+    style::{Color as PlottersColor, RGBColor, RGBAColor, ShapeStyle},
 };
 
 use crate::gui::Message;
@@ -94,7 +94,8 @@ impl ReportInfo {
         msg: AnalysisDatabaseReportMessage,
         msg_info: &MsgInfo,
         contact: &HashMap<Option<String>, Contact>,
-    ) -> iced::Command<Message> {
+        theme: &iced::theme::Theme,
+    ) -> iced::Task<Message> {
         match msg {
             AnalysisDatabaseReportMessage::InputReportCountByUserTopStart(input) => {
                 if input.trim().parse::<usize>().is_ok() || input.trim().len() == 0 {
@@ -122,7 +123,6 @@ impl ReportInfo {
                 let d = &self.count_by_user[(start - 1)..end];
                 self.count_by_user_top_start = start.to_string();
                 self.count_by_user_top_end = end.to_string();
-
                 self.report_image = Some(Self::rgb_to_rgba(&Self::get_report_histogram_image(
                     "不同用户的聊天记录总数",
                     "总数",
@@ -133,6 +133,7 @@ impl ReportInfo {
                         SegmentValue::Last => "".to_string(),
                     },
                     d,
+                    theme,
                 )));
             }
             AnalysisDatabaseReportMessage::DatePickerReportCountByDateStartUnderlay => {
@@ -184,6 +185,7 @@ impl ReportInfo {
                     &Self::get_report_line_series_image_order_by_date(
                         "不同时间的聊天记录总数",
                         &data,
+                        theme
                     ),
                 ));
             }
@@ -232,6 +234,7 @@ impl ReportInfo {
                         SegmentValue::Last => "".to_string(),
                     },
                     d,
+                    theme,
                 )));
             }
             AnalysisDatabaseReportMessage::DatePickerReportCountByDateTopStartUnderlay => {
@@ -312,6 +315,7 @@ impl ReportInfo {
                         SegmentValue::Last => "".to_string(),
                     },
                     &d,
+                    theme,
                 )));
             }
             AnalysisDatabaseReportMessage::ButtonReportCountByDayTable => {
@@ -353,6 +357,7 @@ impl ReportInfo {
                         SegmentValue::Last => "".to_string(),
                     },
                     &d,
+                    theme,
                 )));
             }
             AnalysisDatabaseReportMessage::ButtonReportCountByWeekdayTable => {
@@ -394,6 +399,7 @@ impl ReportInfo {
                         SegmentValue::Last => "".to_string(),
                     },
                     &d,
+                    theme,
                 )));
             }
             AnalysisDatabaseReportMessage::ButtonReportCountByHourTable => {
@@ -435,6 +441,7 @@ impl ReportInfo {
                         SegmentValue::Last => "".to_string(),
                     },
                     &d,
+                    theme,
                 )));
             }
             AnalysisDatabaseReportMessage::ButtonReportCountByYearTable => {
@@ -476,6 +483,7 @@ impl ReportInfo {
                         SegmentValue::Last => "".to_string(),
                     },
                     &d,
+                    theme,
                 )));
             }
             AnalysisDatabaseReportMessage::SelectionListUserListForDate(t) => {
@@ -520,6 +528,7 @@ impl ReportInfo {
                         SegmentValue::Last => "".to_string(),
                     },
                     &d,
+                    theme,
                 )));
             }
             AnalysisDatabaseReportMessage::ButtonReportClearUserSelectedForJieba => {
@@ -577,6 +586,7 @@ impl ReportInfo {
                         SegmentValue::Last => "".to_string(),
                     },
                     &d,
+                    theme,
                 )));
             }
             AnalysisDatabaseReportMessage::ButtonReportJieBaTfIdf => {
@@ -611,27 +621,61 @@ impl ReportInfo {
                         SegmentValue::Last => "".to_string(),
                     },
                     &d,
+                    theme,
                 )));
             }
         }
-        iced::Command::none()
+        iced::Task::none()
+    }
+
+    fn get_report_background_color(theme: &iced::theme::Theme) -> RGBColor {
+        match theme {
+            iced::theme::Theme::Light => plotters::style::WHITE,
+            iced::theme::Theme::Dark => plotters::style::BLACK,
+            _ => todo!()
+        }
+    }
+
+    fn get_report_text_color(theme: &iced::theme::Theme) -> RGBColor {
+        match theme {
+            iced::theme::Theme::Light => plotters::style::BLACK,
+            iced::theme::Theme::Dark => plotters::style::WHITE,
+            _ => todo!()
+        }
+    }
+
+    fn get_report_bold_line_color(theme: &iced::theme::Theme) -> RGBAColor {
+        match theme {
+            iced::theme::Theme::Light => plotters::style::WHITE.mix(0.3),
+            iced::theme::Theme::Dark => RGBColor(200, 200, 200).mix(0.3),
+            _ => todo!(),
+        }
+    }
+
+    fn get_report_axis_color(theme: &iced::theme::Theme) -> RGBColor {
+        match theme {
+            iced::theme::Theme::Light => plotters::style::BLACK,
+            iced::theme::Theme::Dark => plotters::style::WHITE,
+            _ => todo!()
+        }
     }
 
     fn get_report_line_series_image_order_by_date(
         title: &str,
         d: &[(NaiveDate, String, usize)],
+        theme: &iced::theme::Theme,
     ) -> Vec<u8> {
         let mut vec = vec![0u8; REPORT_IMAGE_WIDTH as usize * REPORT_IMAGE_HEIGHT as usize * 3];
         {
             let root =
                 BitMapBackend::with_buffer(vec.as_mut(), (REPORT_IMAGE_WIDTH, REPORT_IMAGE_HEIGHT))
                     .into_drawing_area();
-            root.fill(&plotters::style::WHITE).unwrap();
+            root.fill(&Self::get_report_background_color(theme)).unwrap();
             let mut chart = ChartBuilder::on(&root)
                 .x_label_area_size(35)
                 .y_label_area_size(40)
                 .margin(5)
-                .caption(title, ("楷体", 50.0))
+                .caption(title, ("楷体", 50.0, &Self::get_report_text_color(theme)))
                 .build_cartesian_2d(
                     d.first()
                         .unwrap_or(&(NaiveDate::default(), String::default(), usize::default()))
@@ -645,10 +689,13 @@ impl ReportInfo {
             chart
                 .configure_mesh()
                 .disable_x_mesh()
-                .bold_line_style(plotters::style::WHITE.mix(0.3))
+                .bold_line_style(&Self::get_report_bold_line_color(theme))
+                .axis_style(&Self::get_report_axis_color(theme))
                 .y_desc("总数")
+                .y_label_style(&Self::get_report_text_color(theme))
                 .x_desc("排名")
-                .axis_desc_style(("楷体", 15))
+                .y_label_style(&Self::get_report_text_color(theme))
+                .axis_desc_style(("楷体", 15, &Self::get_report_text_color(theme)))
                 .draw()
                 .unwrap();
             let mut map: HashMap<String, Vec<(NaiveDate, usize)>> = HashMap::new();
@@ -688,11 +735,11 @@ impl ReportInfo {
             chart
                 .configure_series_labels()
                 .border_style(ShapeStyle {
-                    color: plotters::style::BLACK.into(),
+                    color: Self::get_report_text_color(theme).into(),
                     filled: false,
                     stroke_width: 0,
                 })
-                .label_font(("楷体", 20))
+                .label_font(("楷体", 20, &Self::get_report_text_color(theme)))
                 .draw()
                 .unwrap();
             root.present().unwrap();
@@ -706,6 +753,7 @@ impl ReportInfo {
         y_desc: &str,
         x_formatter: F,
         d: &[(impl ToString + Clone + Eq + Hash, usize)],
+        theme: &iced::theme::Theme,
     ) -> Vec<u8>
     where
         F: Fn(&SegmentValue<usize>) -> String,
@@ -715,12 +763,12 @@ impl ReportInfo {
             let root =
                 BitMapBackend::with_buffer(vec.as_mut(), (REPORT_IMAGE_WIDTH, REPORT_IMAGE_HEIGHT))
                     .into_drawing_area();
-            root.fill(&plotters::style::WHITE).unwrap();
+            root.fill(&Self::get_report_background_color(theme)).unwrap();
             let mut chart = ChartBuilder::on(&root)
                 .x_label_area_size(35)
                 .y_label_area_size(40)
                 .margin(5)
-                .caption(title, ("楷体", 50.0))
+                .caption(title, ("楷体", 50.0, &Self::get_report_text_color(theme)))
                 .build_cartesian_2d(
                     (1..d.len()).into_segmented(),
                     0..d.iter().map(|(_, count)| *count).max().unwrap_or(0),
@@ -730,10 +778,13 @@ impl ReportInfo {
                 .configure_mesh()
                 .x_label_formatter(&x_formatter)
                 .disable_x_mesh()
-                .bold_line_style(plotters::style::WHITE.mix(0.3))
+                .axis_style(&Self::get_report_axis_color(theme))
+                .bold_line_style(&Self::get_report_bold_line_color(theme))
                 .y_desc(y_desc)
+                .y_label_style(&Self::get_report_text_color(theme))
                 .x_desc(x_desc)
-                .axis_desc_style(("楷体", 15))
+                .x_label_style(&Self::get_report_text_color(theme))
+                .axis_desc_style(("楷体", 15, &Self::get_report_text_color(theme)))
                 .draw()
                 .unwrap();
             let mut color_map = HashMap::new();
@@ -761,11 +812,11 @@ impl ReportInfo {
             chart
                 .configure_series_labels()
                 .border_style(ShapeStyle {
-                    color: plotters::style::BLACK.into(),
+                    color: Self::get_report_text_color(theme).into(),
                     filled: false,
                     stroke_width: 0,
                 })
-                .label_font(("楷体", 17))
+                .label_font(("楷体", 17, &Self::get_report_text_color(theme)))
                 .draw()
                 .unwrap();
             root.present().unwrap();
@@ -864,7 +915,9 @@ impl ReportInfo {
     pub fn draw(&self) -> Container<Message> {
         if let Some(err) = self.err_info.as_ref() {
             Container::new(
-                Text::new(err).style(iced::theme::Text::Color(Color::from_rgb(1.0, 0.0, 0.0))),
+                Text::new(err).style(|_| iced::widget::text::Style{
+                    color: Some(Color::from_rgb(1.0, 0.0, 0.0))
+                }),
             )
         } else {
             Container::new({
@@ -1012,7 +1065,7 @@ impl ReportInfo {
                         .spacing(5)
                     );
                 if let Some(image) = &self.report_image {
-                    col = col.push(Image::new(Handle::from_pixels(
+                    col = col.push(Image::new(Handle::from_rgba(
                         REPORT_IMAGE_WIDTH,
                         REPORT_IMAGE_HEIGHT,
                         image.clone(),

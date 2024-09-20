@@ -132,12 +132,13 @@ impl AnalysisDatabaseBody {
         &mut self,
         msg: AnalysisDatabaseMessage,
         config_body: &ConfigBody,
-    ) -> iced::Command<Message> {
+        theme: &iced::theme::Theme,
+    ) -> iced::Task<Message> {
         match msg {
             AnalysisDatabaseMessage::UpdateAnalysisDatabase => {
                 self.decrypted_path = config_body.decrypt_path.trim().to_owned();
                 self.wechat_path = config_body.wechat_dir.to_owned();
-                iced::Command::none()
+                iced::Task::none()
             }
             AnalysisDatabaseMessage::ButtonAnalysis => {
                 self.analysis_running = true;
@@ -190,7 +191,7 @@ impl AnalysisDatabaseBody {
                     }
                 }
                 self.analysis_running = false;
-                iced::Command::none()
+                iced::Task::none()
             }
             AnalysisDatabaseMessage::ButtonSession(index, message_title) => {
                 self.msg_getting = true;
@@ -218,12 +219,12 @@ impl AnalysisDatabaseBody {
                             self.msg_info.message_scroll_id.clone(),
                             iced::widget::scrollable::RelativeOffset { x: 0.0, y: 1.0 },
                         ));
-                        return iced::command::Command::batch(command_vec);
+                        return iced::Task::batch(command_vec);
                     }
                     Err(e) => self.analysis_database_err_msg = Some(e.to_string()),
                 }
                 self.msg_getting = false;
-                iced::Command::none()
+                iced::Task::none()
             }
             AnalysisDatabaseMessage::ButtonBack => {
                 if let Some(prev_body) = self.prev_body.pop_back() {
@@ -246,7 +247,7 @@ impl AnalysisDatabaseBody {
                         }
                     }
                 } else {
-                    iced::Command::none()
+                    iced::Task::none()
                 }
             }
             AnalysisDatabaseMessage::ButtonMsgPrev => {
@@ -254,23 +255,23 @@ impl AnalysisDatabaseBody {
                     self.msg_info.msg_page -= 1;
                     self.msg_info.msg_page_input = (self.msg_info.msg_page + 1).to_string();
                 }
-                iced::Command::batch(self.get_msg_command_by_msg_page())
+                iced::Task::batch(self.get_msg_command_by_msg_page())
             }
             AnalysisDatabaseMessage::ButtonMsgNext => {
                 if self.msg_info.msg_page < self.msg_info.msg_list.len() / 100 {
                     self.msg_info.msg_page += 1;
                     self.msg_info.msg_page_input = (self.msg_info.msg_page + 1).to_string();
                 }
-                iced::Command::batch(self.get_msg_command_by_msg_page())
+                iced::Task::batch(self.get_msg_command_by_msg_page())
             }
             AnalysisDatabaseMessage::InputMsgPage(s) => {
                 self.msg_info.msg_page_input = s;
-                iced::Command::none()
+                iced::Task::none()
             }
             AnalysisDatabaseMessage::ButtonMsgJumpTo(p) => {
                 self.msg_info.msg_page = p;
                 self.msg_info.msg_page_input = (self.msg_info.msg_page + 1).to_string();
-                iced::Command::batch(self.get_msg_command_by_msg_page())
+                iced::Task::batch(self.get_msg_command_by_msg_page())
             }
             AnalysisDatabaseMessage::ButtonMsgPlayAudio(id, key) => {
                 if let Some(conn) = self.conn.as_mut().unwrap().media_msg_conn_map.get_mut(&key) {
@@ -289,11 +290,11 @@ impl AnalysisDatabaseBody {
                         .audio_err_texts
                         .insert(id, "未找到音频数据库".to_string());
                 }
-                iced::Command::none()
+                iced::Task::none()
             }
             AnalysisDatabaseMessage::ButtonMsgStopAudio => {
                 self.audio_stream = None;
-                iced::Command::none()
+                iced::Task::none()
             }
             AnalysisDatabaseMessage::ButtonTestSilkSdk => {
                 module::module_media_msg::test_for_silk(
@@ -305,7 +306,7 @@ impl AnalysisDatabaseBody {
                         .unwrap(),
                 )
                 .unwrap();
-                iced::Command::none()
+                iced::Task::none()
             }
             AnalysisDatabaseMessage::ButtonAnalyzeReport => {
                 self.report_info = ReportInfo::default();
@@ -527,15 +528,15 @@ impl AnalysisDatabaseBody {
                     Err(e) => self.report_info.err_info = Some(e.to_string()),
                 }
                 self.body = Body::Report;
-                iced::Command::none()
+                iced::Task::none()
             }
             AnalysisDatabaseMessage::ScrollSession(viewport) => {
                 self.session_info.absolute_offset = viewport.absolute_offset();
-                iced::Command::none()
+                iced::Task::none()
             }
             AnalysisDatabaseMessage::ScrollMsg(viewport) => {
                 self.msg_info.absolute_offset = viewport.absolute_offset();
-                iced::Command::none()
+                iced::Task::none()
             }
             AnalysisDatabaseMessage::ButtonSearchSession => {
                 self.msg_getting = true;
@@ -598,11 +599,11 @@ impl AnalysisDatabaseBody {
                     }
                 }
                 self.msg_getting = false;
-                iced::Command::none()
+                iced::Task::none()
             }
             AnalysisDatabaseMessage::InputSearchSession(input) => {
                 self.session_info.search_session = input;
-                iced::Command::none()
+                iced::Task::none()
             }
             AnalysisDatabaseMessage::ReqwestGetEmotion((url, result)) => {
                 let result = match result {
@@ -613,14 +614,14 @@ impl AnalysisDatabaseBody {
                     Err(e) => Err(e),
                 };
                 self.emotion_map.insert(url, result);
-                iced::Command::none()
+                iced::Task::none()
             }
             AnalysisDatabaseMessage::OpenFile(path) => {
                 crate::util::open_file(path).ok();
-                iced::Command::none()
+                iced::Task::none()
             }
             AnalysisDatabaseMessage::AnalysisDatabaseReportMessage(msg) => {
-                self.report_info.update(msg, &self.msg_info, &self.contact)
+                self.report_info.update(msg, &self.msg_info, &self.contact,theme)
             }
         }
     }
@@ -679,7 +680,7 @@ impl AnalysisDatabaseBody {
         }
     }
 
-    fn get_msg_command_by_msg_page(&self) -> Vec<iced::Command<Message>> {
+    fn get_msg_command_by_msg_page(&self) -> Vec<iced::Task<Message>> {
         let mut emotion_vec = vec![];
         for (_, msg) in self.get_msg_by_msg_page() {
             match msg.load_msg_data(&self.wechat_path) {
@@ -698,7 +699,7 @@ impl AnalysisDatabaseBody {
             .map(|url| {
                 let url1 = url.clone();
                 let url2 = url.clone();
-                iced::Command::<Message>::perform(
+                iced::Task::<Message>::perform(
                     async move {
                         let r = reqwest::get(url1).await?;
                         r.bytes().await.map(|byte| byte.to_vec())
@@ -706,7 +707,7 @@ impl AnalysisDatabaseBody {
                     move |r| {
                         Message::AnalysisDatabaseMessage(
                             AnalysisDatabaseMessage::ReqwestGetEmotion((
-                                url2,
+                                url2.clone(),
                                 r.map_err(|e| e.to_string()),
                             )),
                         )
@@ -754,7 +755,7 @@ impl AnalysisDatabaseBody {
                                             Ok(image) => {
                                                 Container::new(
                                                     Button::new(
-                                                        Image::new(Handle::from_memory(image.clone()))
+                                                        Image::new(Handle::from_bytes(image.clone()))
                                                     )
                                                     .padding(0)
                                                     .on_press(Message::OpenImage(image))
@@ -796,7 +797,9 @@ impl AnalysisDatabaseBody {
                                                 );
                                                 if let Some(s) = self.msg_info.audio_err_texts.get(&id) {
                                                     col = col.push(
-                                                        Text::new(s).style(iced::theme::Text::Color(Color::from_rgb(1.0, 0.0, 0.0)))
+                                                        Text::new(s).style(|_| iced::widget::text::Style{
+                                                            color: Some(Color::from_rgb(1.0, 0.0, 0.0))
+                                                        })
                                                     )
                                                 }
                                                 col
@@ -810,7 +813,7 @@ impl AnalysisDatabaseBody {
                                                     Ok(image_data) => {
                                                         match image_data {
                                                             ImageData::Image(image) => {
-                                                                Container::new(Image::new(Handle::from_memory(image.clone())))
+                                                                Container::new(Image::new(Handle::from_bytes(image.clone())))
                                                             },
                                                             ImageData::Gif(frames) => {
                                                                 Container::new(iced_gif::Gif::new(frames))
@@ -842,7 +845,7 @@ impl AnalysisDatabaseBody {
                                             Ok(image) => {
                                                 Container::new(
                                                     Button::new(
-                                                        Image::new(Handle::from_memory(image))
+                                                        Image::new(Handle::from_bytes(image))
                                                     ).padding(0)
                                                     .on_press_maybe(
                                                         if let Ok(Some(video_path)) = video_path {
@@ -879,13 +882,25 @@ impl AnalysisDatabaseBody {
                                     col
                                 }
                             ).width(Length::Fill).align_x(iced::alignment::Horizontal::Right))
-                            .push(container.align_x(iced::alignment::Horizontal::Right).style(iced::theme::Container::Custom(Box::new(MsgContainerTheme::Right))))
+                            .push(container.align_x(iced::alignment::Horizontal::Right).style(|_theme| 
+                                iced::widget::container::Style::default()
+                                    .background(Color::from_rgb(0.2, 0.2, 0.8))
+                                    .color(Color::from_rgb(0.8, 0.8, 0.2))
+                                ))
                             .push(Space::with_width(20))
                         ;
                     } else {
                         row = row
                             .push(Space::with_width(10))
-                            .push(container.align_x(iced::alignment::Horizontal::Left).style(iced::theme::Container::Custom(Box::new(MsgContainerTheme::Left))))
+                            .push(container.align_x(iced::alignment::Horizontal::Left).style(|theme|
+                                iced::widget::container::Style::default()
+                                    .background(
+                                        match theme {
+                                            iced::Theme::Dark => Color::from_rgb(0.2, 0.2, 0.2),
+                                            _ => Color::from_rgb(0.8, 0.8, 0.8)
+                                        }
+                                    )
+                            ))
                             .push(Container::new(
                                 {
                                     let mut col = Column::new();
@@ -934,7 +949,7 @@ impl AnalysisDatabaseBody {
                             ),
                     )
                     .width(Length::Fill)
-                    .style(iced::theme::Button::Secondary)
+                    .style(|theme,status| iced::widget::button::secondary(theme, status))
                     .on_press_maybe(
                         if !self.analysis_running && !self.msg_getting {
                             Some(Message::AnalysisDatabaseMessage(
@@ -1162,27 +1177,4 @@ enum Body {
     Session,
     Msg,
     Report,
-}
-
-enum MsgContainerTheme {
-    Left,
-    Right,
-}
-
-impl iced::widget::container::StyleSheet for MsgContainerTheme {
-    type Style = iced::Theme;
-
-    fn appearance(&self, style: &Self::Style) -> iced::widget::container::Appearance {
-        let mut s = style.appearance(&iced::theme::Container::Box);
-        match self {
-            MsgContainerTheme::Left => {
-                s.background = Some(iced::Background::Color(Color::from_rgb(0.8, 0.8, 0.8)))
-            }
-            MsgContainerTheme::Right => {
-                s.background = Some(iced::Background::Color(Color::from_rgb(0.2, 0.2, 0.8)));
-                s.text_color = Some(Color::from_rgb(0.8, 0.8, 0.2));
-            }
-        }
-        s
-    }
 }

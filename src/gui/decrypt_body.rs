@@ -48,7 +48,7 @@ impl DecryptBody {
     pub fn check_command_running(&self) -> bool {
         self.command_running
     }
-    pub fn check_scroll(&self) -> iced::Command<Message> {
+    pub fn check_scroll(&self) -> iced::Task<Message> {
         self.print_info_text.check_scroll()
     }
     pub fn update(
@@ -56,7 +56,7 @@ impl DecryptBody {
         msg: DecryptMessage,
         config: &ConfigBody,
         show_user_info: &ShowUserInfoBody,
-    ) -> iced::Command<Message> {
+    ) -> iced::Task<Message> {
         match msg {
             DecryptMessage::UpdateDecrypt => {
                 self.save_path = config.save_path.trim().to_owned();
@@ -72,7 +72,7 @@ impl DecryptBody {
                         self.input_base64_key_err_msg = None;
                     }
                 }
-                iced::Command::none()
+                iced::Task::none()
             }
             DecryptMessage::ButtonStart => match &self.key {
                 Some(key) => {
@@ -81,7 +81,7 @@ impl DecryptBody {
                     let print_info_text = self.print_info_text.clone();
                     let save_path = self.save_path.clone();
                     let decrypt_path = self.decrypt_path.clone();
-                    iced::Command::<Message>::perform(
+                    iced::Task::<Message>::perform(
                         async move {
                             match decrypt(&save_path, &decrypt_path, &key, false, |s| {
                                 print_info_text.push_new_len(s);
@@ -99,13 +99,13 @@ impl DecryptBody {
                 }
                 None => {
                     self.print_info_text.push_new_err_len("请输入正确的key");
-                    iced::Command::none()
+                    iced::Task::none()
                 }
             },
             DecryptMessage::InputBase64Key(s) => {
                 self.input_base64_key = s;
                 self.input_base64_key_err_msg = None;
-                iced::Command::none()
+                iced::Task::none()
             }
             DecryptMessage::ButtonBase64Key => {
                 match string_to_u8_vec(
@@ -128,12 +128,12 @@ impl DecryptBody {
                             Some(format!("key格式化失败,错误信息:{}", e.to_string()))
                     }
                 }
-                iced::Command::none()
+                iced::Task::none()
             }
             DecryptMessage::InputHexKey(s) => {
                 self.input_hex_key = s;
                 self.input_hex_key_err_msg = None;
-                iced::Command::none()
+                iced::Task::none()
             }
             DecryptMessage::ButtonHexKey => {
                 match string_to_u8_vec(&self.input_hex_key.trim().to_owned(), &"hex".to_string()) {
@@ -153,7 +153,7 @@ impl DecryptBody {
                             Some(format!("key格式化失败,错误信息:{}", e.to_string()))
                     }
                 }
-                iced::Command::none()
+                iced::Task::none()
             }
             DecryptMessage::CommandFinished(r) => {
                 self.command_running = false;
