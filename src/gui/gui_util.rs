@@ -57,11 +57,9 @@ where
             )
             .push(if let Some(btm_msg) = btm_msg {
                 Container::new(
-                    Button::new(
-                        Text::new(btm_data.to_string()).align_x(Horizontal::Center),
-                    )
-                    .on_press(Into::<Message>::into(btm_msg))
-                    .width(60),
+                    Button::new(Text::new(btm_data.to_string()).align_x(Horizontal::Center))
+                        .on_press(Into::<Message>::into(btm_msg))
+                        .width(60),
                 )
             } else {
                 Container::new(Space::with_width(60))
@@ -69,10 +67,9 @@ where
     );
     if let Some(msg) = err_msg {
         col = col.push(
-            Text::new(msg.to_string())
-                .style(|_| iced::widget::text::Style{
-                    color: Some(Color::from_rgb(1.0, 0.0, 0.0))
-                }),
+            Text::new(msg.to_string()).style(|_| iced::widget::text::Style {
+                color: Some(Color::from_rgb(1.0, 0.0, 0.0)),
+            }),
         )
     }
     col
@@ -145,10 +142,7 @@ impl PrintInfoText {
         }
     }
     pub fn push_new_len(&self, str: impl ToString) {
-        self.data
-            .write()
-            .unwrap()
-            .push((str.to_string(), None));
+        self.data.write().unwrap().push((str.to_string(), None));
     }
     pub fn push_new_err_len(&self, str: impl ToString) {
         self.data
@@ -179,12 +173,10 @@ impl PrintInfoText {
             Scrollable::new({
                 let mut col = Column::new().width(Length::Fill);
                 for (s, c) in self.data.read().unwrap().iter() {
-                    let c= c.clone();
+                    let c = c.clone();
                     col = col.push(
                         Text::new(s.replace('\t', "    ").to_owned())
-                            .style(move |_| iced::widget::text::Style{
-                                color: c
-                            }),
+                            .style(move |_| iced::widget::text::Style { color: c }),
                     )
                 }
                 col

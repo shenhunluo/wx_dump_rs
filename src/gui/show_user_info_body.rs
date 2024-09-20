@@ -39,11 +39,7 @@ impl ShowUserInfoBody {
     pub fn check_scroll(&self) -> iced::Task<Message> {
         self.print_info_text.check_scroll()
     }
-    pub fn update(
-        &mut self,
-        msg: ShowUserInfoMessage,
-        config: &ConfigBody,
-    ) -> iced::Task<Message> {
+    pub fn update(&mut self, msg: ShowUserInfoMessage, config: &ConfigBody) -> iced::Task<Message> {
         match msg {
             ShowUserInfoMessage::UpdateWeChatInfo => {
                 self.command_running = true;
@@ -98,12 +94,12 @@ impl ShowUserInfoBody {
                     }
                 }
             }
-            ShowUserInfoMessage::ButtonCopyKeyHex => 
-                iced::clipboard::write(u8_to_string(&self.key.unwrap(), &"hex".to_string()).unwrap())
-            ,
-            ShowUserInfoMessage::ButtonCopyKeyBase64 => 
-                iced::clipboard::write(u8_to_string(&self.key.unwrap(), &"base64".to_string()).unwrap())
-            ,
+            ShowUserInfoMessage::ButtonCopyKeyHex => iced::clipboard::write(
+                u8_to_string(&self.key.unwrap(), &"hex".to_string()).unwrap(),
+            ),
+            ShowUserInfoMessage::ButtonCopyKeyBase64 => iced::clipboard::write(
+                u8_to_string(&self.key.unwrap(), &"base64".to_string()).unwrap(),
+            ),
         }
     }
     pub fn draw(&self) -> Container<Message> {

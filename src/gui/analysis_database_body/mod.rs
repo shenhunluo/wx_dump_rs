@@ -621,7 +621,8 @@ impl AnalysisDatabaseBody {
                 iced::Task::none()
             }
             AnalysisDatabaseMessage::AnalysisDatabaseReportMessage(msg) => {
-                self.report_info.update(msg, &self.msg_info, &self.contact,theme)
+                self.report_info
+                    .update(msg, &self.msg_info, &self.contact, theme)
             }
         }
     }
@@ -882,7 +883,7 @@ impl AnalysisDatabaseBody {
                                     col
                                 }
                             ).width(Length::Fill).align_x(iced::alignment::Horizontal::Right))
-                            .push(container.align_x(iced::alignment::Horizontal::Right).style(|_theme| 
+                            .push(container.align_x(iced::alignment::Horizontal::Right).style(|_theme|
                                 iced::widget::container::Style::default()
                                     .background(Color::from_rgb(0.2, 0.2, 0.8))
                                     .color(Color::from_rgb(0.8, 0.8, 0.2))
@@ -949,7 +950,7 @@ impl AnalysisDatabaseBody {
                             ),
                     )
                     .width(Length::Fill)
-                    .style(|theme,status| iced::widget::button::secondary(theme, status))
+                    .style(|theme, status| iced::widget::button::secondary(theme, status))
                     .on_press_maybe(
                         if !self.analysis_running && !self.msg_getting {
                             Some(Message::AnalysisDatabaseMessage(

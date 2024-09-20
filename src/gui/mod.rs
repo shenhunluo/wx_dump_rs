@@ -8,7 +8,8 @@ use self::{
     show_user_info_body::{ShowUserInfoBody, ShowUserInfoMessage},
 };
 use iced::{
-    widget::{Button, Column, Container, Image, Row, Space}, Length, Subscription
+    widget::{Button, Column, Container, Image, Row, Space},
+    Length, Subscription,
 };
 
 mod analysis_database_body;
@@ -41,7 +42,7 @@ impl WxDumpGui {
 
     pub fn new() -> (Self, iced::Task<Message>) {
         let icon: &[u8] = include_bytes!("../image/icon.png");
-        let (id,task) = iced::window::open(iced::window::Settings { 
+        let (id, task) = iced::window::open(iced::window::Settings {
             icon: iced::window::icon::from_file_data(icon, None).ok(),
             ..iced::window::Settings::default()
         });
@@ -60,7 +61,7 @@ impl WxDumpGui {
             iced::Task::<Message>::batch(vec![
                 iced::font::load(iced_aw::BOOTSTRAP_FONT_BYTES).map(|_| Message::FontLoaded),
                 iced::font::load(iced_aw::NERD_FONT_BYTES).map(|_| Message::FontLoaded),
-                task.map(Message::OptionWindow)
+                task.map(Message::OptionWindow),
             ]),
         )
     }
@@ -131,17 +132,18 @@ impl WxDumpGui {
                 let r = self.analysis_database_body.update(
                     AnalysisDatabaseMessage::UpdateAnalysisDatabase,
                     &self.config_body,
-                    &self.theme
+                    &self.theme,
                 );
                 self.body = Body::AnalysisDatabase;
                 return r;
             }
             Message::AnalysisDatabaseMessage(msg) => {
-                return self.analysis_database_body.update(msg, &self.config_body,&self.theme)
+                return self
+                    .analysis_database_body
+                    .update(msg, &self.config_body, &self.theme)
             }
             Message::OpenImage(image) => {
-                let (id, command) =
-                    iced::window::open(iced::window::settings::Settings::default());
+                let (id, command) = iced::window::open(iced::window::settings::Settings::default());
                 self.image_id.insert(id, image);
                 return command.map(Message::OptionWindow);
             }
@@ -152,12 +154,12 @@ impl WxDumpGui {
                 }
                 self.image_id.remove(&id);
             }
-            Message::FontLoaded => {},
+            Message::FontLoaded => {}
             Message::ButtonChangeTheme => {
                 self.theme = match self.theme {
                     iced::theme::Theme::Light => iced::theme::Theme::Dark,
                     iced::theme::Theme::Dark => iced::theme::Theme::Light,
-                    _ => todo!()
+                    _ => todo!(),
                 }
             }
         }
@@ -277,10 +279,8 @@ impl WxDumpGui {
                         } else {
                             None
                         },
-                    )).push(
-                        Button::new("切换主题").on_press(Message::ButtonChangeTheme)
-                    )
-                    ,
+                    ))
+                    .push(Button::new("切换主题").on_press(Message::ButtonChangeTheme)),
             );
         Container::new(col).into()
     }

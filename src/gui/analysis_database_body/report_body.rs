@@ -15,7 +15,7 @@ use plotters::{
     drawing::IntoDrawingArea,
     element::PathElement,
     series::{Histogram, LineSeries},
-    style::{Color as PlottersColor, RGBColor, RGBAColor, ShapeStyle},
+    style::{Color as PlottersColor, RGBAColor, RGBColor, ShapeStyle},
 };
 
 use crate::gui::Message;
@@ -185,7 +185,7 @@ impl ReportInfo {
                     &Self::get_report_line_series_image_order_by_date(
                         "不同时间的聊天记录总数",
                         &data,
-                        theme
+                        theme,
                     ),
                 ));
             }
@@ -632,7 +632,7 @@ impl ReportInfo {
         match theme {
             iced::theme::Theme::Light => plotters::style::WHITE,
             iced::theme::Theme::Dark => plotters::style::BLACK,
-            _ => todo!()
+            _ => todo!(),
         }
     }
 
@@ -640,7 +640,7 @@ impl ReportInfo {
         match theme {
             iced::theme::Theme::Light => plotters::style::BLACK,
             iced::theme::Theme::Dark => plotters::style::WHITE,
-            _ => todo!()
+            _ => todo!(),
         }
     }
 
@@ -656,7 +656,7 @@ impl ReportInfo {
         match theme {
             iced::theme::Theme::Light => plotters::style::BLACK,
             iced::theme::Theme::Dark => plotters::style::WHITE,
-            _ => todo!()
+            _ => todo!(),
         }
     }
 
@@ -670,7 +670,8 @@ impl ReportInfo {
             let root =
                 BitMapBackend::with_buffer(vec.as_mut(), (REPORT_IMAGE_WIDTH, REPORT_IMAGE_HEIGHT))
                     .into_drawing_area();
-            root.fill(&Self::get_report_background_color(theme)).unwrap();
+            root.fill(&Self::get_report_background_color(theme))
+                .unwrap();
             let mut chart = ChartBuilder::on(&root)
                 .x_label_area_size(35)
                 .y_label_area_size(40)
@@ -763,7 +764,8 @@ impl ReportInfo {
             let root =
                 BitMapBackend::with_buffer(vec.as_mut(), (REPORT_IMAGE_WIDTH, REPORT_IMAGE_HEIGHT))
                     .into_drawing_area();
-            root.fill(&Self::get_report_background_color(theme)).unwrap();
+            root.fill(&Self::get_report_background_color(theme))
+                .unwrap();
             let mut chart = ChartBuilder::on(&root)
                 .x_label_area_size(35)
                 .y_label_area_size(40)
@@ -914,11 +916,9 @@ impl ReportInfo {
     }
     pub fn draw(&self) -> Container<Message> {
         if let Some(err) = self.err_info.as_ref() {
-            Container::new(
-                Text::new(err).style(|_| iced::widget::text::Style{
-                    color: Some(Color::from_rgb(1.0, 0.0, 0.0))
-                }),
-            )
+            Container::new(Text::new(err).style(|_| iced::widget::text::Style {
+                color: Some(Color::from_rgb(1.0, 0.0, 0.0)),
+            }))
         } else {
             Container::new({
                 let mut col = Column::new();

@@ -14,12 +14,16 @@ pub struct Flags {}
 pub struct Args {}
 fn main() -> anyhow::Result<()> {
     let _args = Args::parse();
-    iced::daemon(gui::WxDumpGui::title, gui::WxDumpGui::update, gui::WxDumpGui::view)
+    iced::daemon(
+        gui::WxDumpGui::title,
+        gui::WxDumpGui::update,
+        gui::WxDumpGui::view,
+    )
     .subscription(gui::WxDumpGui::subscription)
     .default_font(iced::Font::with_name("楷体"))
     .theme(gui::WxDumpGui::theme)
     .run_with(gui::WxDumpGui::new)
-    .map_err(|e| anyhow::anyhow!("{:?}",e))
+    .map_err(|e| anyhow::anyhow!("{:?}", e))
     // gui::WxDumpGui::run(Settings {
     //     default_font: iced::Font::with_name("楷体"),
     //     // default_font:Some(iced::Font::Default),

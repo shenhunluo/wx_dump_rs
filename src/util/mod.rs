@@ -430,7 +430,7 @@ pub mod test {
     use super::open_file;
 
     #[test]
-    pub fn test_open_file(){
-        println!("result : {:?}",open_file("abcd".to_string()));
+    pub fn test_open_file() {
+        println!("result : {:?}", open_file("abcd".to_string()));
     }
 }
