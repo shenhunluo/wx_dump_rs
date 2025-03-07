@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs::File, io::Read};
 
-use anyhow::{anyhow, Ok};
+use anyhow::{Ok, anyhow};
 use byteorder::{LittleEndian, ReadBytesExt};
 use windows::Win32::{
     Foundation::HANDLE,

@@ -1,7 +1,7 @@
 [package]
 name = "wx_dump_rs"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [[bin]]
 name = "wx_dump_rs"
@@ -11,6 +11,10 @@ required-features = ["default"]
 name = "wx_dump_rs_gui"
 path = "src/main_gui.rs"
 required-features = ["gui"]
+[[bin]]
+name = "find_key_for_4"
+path = "src/find_key_for_4.rs"
+required-features = ["default"]
 
 [features]
 default = ["shell"]
@@ -32,6 +36,7 @@ gui = [
     "reqwest",
     "iced_gif",
     "jieba-rs",
+    "rig-core",
 ]
 dev = []
 
@@ -49,11 +54,13 @@ windows = { version = "*", features = [
 ], optional = true }
 anyhow = { version = "*", features = ["backtrace"] }
 serde_json = "*"
+serde = { version = "*", features = ["derive"]}
 clap = { version = "*", features = ["derive"] }
 base64 = "*"
 dirs = "*"
 pbkdf2 = { version = "*", features = ["hmac"] }
 sha1 = "*"
+sha2 = "*"
 hmac = "*"
 cbc = "*"
 aes = "*"
@@ -81,6 +88,7 @@ cpal = { version = "*", optional = true }
 chrono = { version = "*", optional = true }
 plotters = { version = "*", optional = true }
 xml = { version = "*", optional = true }
-reqwest = { version = "*", optional = true }
+reqwest = { version = "*", features = ["stream"], optional = true }
+rig-core = { version = "*", features = ["derive"], optional = true }
 iced_gif = { version = "*", path = "iced_gif", optional = true }
 jieba-rs ={ version = "*", optional = true , features = ["textrank","tfidf"]}

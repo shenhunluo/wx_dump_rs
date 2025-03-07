@@ -4,23 +4,23 @@ use anyhow::anyhow;
 use base64::Engine;
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt};
 use windows::{
-    core::PCSTR,
     Win32::{
         Foundation::{GetLastError, HANDLE},
-        Storage::FileSystem::{VerQueryValueA, VS_FIXEDFILEINFO},
+        Storage::FileSystem::{VS_FIXEDFILEINFO, VerQueryValueA},
         System::{
             Diagnostics::ToolHelp::{
-                CreateToolhelp32Snapshot, Module32Next, Process32Next, Toolhelp32ReadProcessMemory,
-                MODULEENTRY32, PROCESSENTRY32, TH32CS_SNAPMODULE, TH32CS_SNAPPROCESS,
+                CreateToolhelp32Snapshot, MODULEENTRY32, Module32Next, PROCESSENTRY32,
+                Process32Next, TH32CS_SNAPMODULE, TH32CS_SNAPPROCESS, Toolhelp32ReadProcessMemory,
             },
             LibraryLoader::{
-                FindResourceA, LoadLibraryExA, LoadResource, LOAD_LIBRARY_AS_DATAFILE,
+                FindResourceA, LOAD_LIBRARY_AS_DATAFILE, LoadLibraryExA, LoadResource,
             },
-            Memory::{VirtualQueryEx, MEMORY_BASIC_INFORMATION},
+            Memory::{MEMORY_BASIC_INFORMATION, VirtualQueryEx},
             Threading::{OpenProcess, PROCESS_ALL_ACCESS},
         },
         UI::WindowsAndMessaging::RT_VERSION,
     },
+    core::PCSTR,
 };
 
 pub fn get_wechat_path(wechat_path: &Option<String>) -> Result<PathBuf, anyhow::Error> {
@@ -267,11 +267,15 @@ pub fn get_version(module: &MODULEENTRY32) -> anyhow::Result<String> {
     unsafe {
         let image = LoadLibraryExA(
             PCSTR::from_raw(module.szExePath.as_ptr() as *const u8),
-            HANDLE::default(),
+            Some(HANDLE::default()),
             LOAD_LIBRARY_AS_DATAFILE,
         )?;
-        let res_info = FindResourceA(image, PCSTR(1u8 as _), PCSTR(RT_VERSION.as_ptr() as _))?;
-        let res_data = LoadResource(image, res_info)?;
+        let res_info = FindResourceA(
+            Some(image),
+            PCSTR(1u8 as _),
+            PCSTR(RT_VERSION.as_ptr() as _),
+        )?;
+        let res_data = LoadResource(Some(image), res_info)?;
         let mut info = VS_FIXEDFILEINFO::default();
         let mut info_ref = &mut info as *mut _ as *mut c_void;
         let mut size = std::mem::size_of::<VS_FIXEDFILEINFO>() as u32;
@@ -371,7 +375,7 @@ pub fn get_all_memory_by_handle(handle: &HANDLE) -> anyhow::Result<Vec<(usize, u
 #[cfg(feature = "gui")]
 pub fn get_file_dialog() -> Result<String, anyhow::Error> {
     use windows::Win32::{
-        System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER},
+        System::Com::{CLSCTX_INPROC_SERVER, CoCreateInstance},
         UI::Shell::{IFileDialog, SIGDN_FILESYSPATH},
     };
     unsafe {
@@ -390,8 +394,8 @@ pub fn get_file_dialog() -> Result<String, anyhow::Error> {
 #[cfg(feature = "gui")]
 pub fn get_folder_dialog() -> Result<String, anyhow::Error> {
     use windows::Win32::{
-        System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER},
-        UI::Shell::{IFileDialog, FOS_PICKFOLDERS, SIGDN_FILESYSPATH},
+        System::Com::{CLSCTX_INPROC_SERVER, CoCreateInstance},
+        UI::Shell::{FOS_PICKFOLDERS, IFileDialog, SIGDN_FILESYSPATH},
     };
     unsafe {
         let file_dialog: IFileDialog = CoCreateInstance(

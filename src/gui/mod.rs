@@ -8,8 +8,8 @@ use self::{
     show_user_info_body::{ShowUserInfoBody, ShowUserInfoMessage},
 };
 use iced::{
-    widget::{Button, Column, Container, Image, Row, Space},
     Length, Subscription,
+    widget::{Button, Column, Container, Image, Row, Space},
 };
 
 mod analysis_database_body;
@@ -102,7 +102,7 @@ impl WxDumpGui {
                     msg,
                     &self.config_body,
                     &self.show_user_info_body,
-                )
+                );
             }
             Message::ShowUserInfoMessage(msg) => {
                 return self.show_user_info_body.update(msg, &self.config_body);
@@ -112,7 +112,7 @@ impl WxDumpGui {
                 Body::ShowUserInfo => return self.show_user_info_body.check_scroll(),
                 Body::GetDatabase => return self.get_database_body.check_scroll(),
                 Body::Decrypt => return self.decrypt_body.check_scroll(),
-                Body::AnalysisDatabase => todo!(),
+                Body::AnalysisDatabase => return self.analysis_database_body.check_arc_data(),
             },
             Message::DecryptMessage(msg) => {
                 return self
@@ -140,7 +140,7 @@ impl WxDumpGui {
             Message::AnalysisDatabaseMessage(msg) => {
                 return self
                     .analysis_database_body
-                    .update(msg, &self.config_body, &self.theme)
+                    .update(msg, &self.config_body, &self.theme);
             }
             Message::OpenImage(image) => {
                 let (id, command) = iced::window::open(iced::window::settings::Settings::default());
@@ -202,7 +202,14 @@ impl WxDumpGui {
                         iced::Subscription::none()
                     }
                 }
-                Body::AnalysisDatabase => iced::Subscription::none(),
+                Body::AnalysisDatabase => {
+                    if self.analysis_database_body.check_command_running() {
+                        iced::time::every(std::time::Duration::from_millis(10))
+                            .map(|_| Message::CheckArcData)
+                    } else {
+                        iced::Subscription::none()
+                    }
+                }
             },
         ])
     }

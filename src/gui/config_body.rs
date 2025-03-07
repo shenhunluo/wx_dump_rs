@@ -2,7 +2,7 @@ use iced::widget::{Column, Container};
 
 use crate::util::{get_file_dialog, get_folder_dialog};
 
-use super::{gui_util::set_col_with_text_input, Message};
+use super::{Message, gui_util::set_col_with_text_input};
 
 #[derive(Debug, Clone)]
 pub struct ConfigBody {

@@ -3,8 +3,8 @@ use std::hash::Hash;
 
 use chrono::{NaiveDate, Weekday};
 use iced::{
-    widget::{image::Handle, Button, Column, Container, Image, PickList, Row, Text, TextInput},
     Color, Length,
+    widget::{Button, Column, Container, Image, PickList, Row, Text, TextInput, image::Handle},
 };
 use iced_aw::DatePicker;
 use jieba_rs::{Jieba, KeywordExtract, KeywordExtractConfig, TextRank, TfIdf};
@@ -20,7 +20,7 @@ use plotters::{
 
 use crate::gui::Message;
 
-use super::{module::module_macro_msg::Contact, AnalysisDatabaseMessage, MsgInfo};
+use super::{AnalysisDatabaseMessage, MsgInfo, module::module_macro_msg::Contact};
 
 const REPORT_IMAGE_WIDTH: u32 = 1024;
 const REPORT_IMAGE_HEIGHT: u32 = 768;

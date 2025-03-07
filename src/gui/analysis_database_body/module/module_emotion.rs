@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 
-use diesel::{query_dsl::methods::SelectDsl, Queryable, RunQueryDsl, SqliteConnection};
+use diesel::{Queryable, RunQueryDsl, SqliteConnection, query_dsl::methods::SelectDsl};
 
 use crate::gui::analysis_database_body::schema::schema_emotion;
 

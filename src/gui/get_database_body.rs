@@ -1,18 +1,18 @@
 use std::sync::{Arc, RwLock};
 
 use iced::{
-    widget::{Button, Column, Container, Row, Space},
     Length,
+    widget::{Button, Column, Container, Row, Space},
 };
 use tokio::sync::watch::{Receiver, Sender};
 
 use crate::action::get_database::get_database;
 
 use super::{
-    config_body::ConfigBody,
-    gui_util::{set_col_with_text, set_col_with_text_input, PrintInfoText},
-    show_user_info_body::ShowUserInfoBody,
     Message,
+    config_body::ConfigBody,
+    gui_util::{PrintInfoText, set_col_with_text, set_col_with_text_input},
+    show_user_info_body::ShowUserInfoBody,
 };
 
 pub struct GetDatabaseBody {

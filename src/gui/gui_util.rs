@@ -1,11 +1,11 @@
 use cpal::{
-    traits::{DeviceTrait, HostTrait, StreamTrait},
     SampleFormat, Stream, StreamConfig,
+    traits::{DeviceTrait, HostTrait, StreamTrait},
 };
 use iced::{
+    Color, Length,
     alignment::{Horizontal, Vertical},
     widget::{Button, Column, Container, Row, Scrollable, Space, Text, TextInput},
-    Color, Length,
 };
 use std::sync::RwLock;
 

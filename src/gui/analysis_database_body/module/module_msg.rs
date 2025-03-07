@@ -1,12 +1,14 @@
 use std::{collections::HashMap, fs::File, io::Read, path::PathBuf};
 
 use diesel::{
-    backend::Backend, deserialize::FromSql, sql_types::Binary, sqlite::Sqlite, ExpressionMethods,
-    QueryDsl, Queryable, RunQueryDsl, SqliteConnection,
+    ExpressionMethods, QueryDsl, Queryable, RunQueryDsl, SqliteConnection, backend::Backend,
+    deserialize::FromSql, sql_types::Binary, sqlite::Sqlite,
 };
 use xml::EventReader;
 
 use crate::{gui::analysis_database_body::schema::schema_msg, util::get_wechat_path};
+
+use super::module_macro_msg::Contact;
 
 #[derive(Queryable, Debug)]
 pub struct Dbinfo {
@@ -151,7 +153,7 @@ impl Msg {
                         return format!(
                             "{} 音视频通话，旧版数据无法解析",
                             iced_aw::Bootstrap::Telephone
-                        )
+                        );
                     }
                     _ => {}
                 }
@@ -225,6 +227,29 @@ impl Msg {
         } else {
             Err(anyhow::anyhow!("未找到图片路径"))
         }
+    }
+
+    pub fn get_user_name(&self, contact: &HashMap<Option<String>, Contact>) -> Option<String> {
+        if let Some(byte_ex) = &self.bytes_extra {
+            if let Some(data) = byte_ex.map.get(&1) {
+                if let Some(data) = data.get(0) {
+                    if let Some(contact) = contact.get(&Some(data.to_owned())) {
+                        let text = contact
+                            .nick_name
+                            .as_ref()
+                            .cloned()
+                            .unwrap_or("".to_string());
+                        if let Some(remark) = &contact.remark {
+                            if remark.len() > 0 {
+                                return Some(format!("{}({})", text, remark));
+                            }
+                        }
+                        return Some(text);
+                    }
+                }
+            }
+        }
+        None
     }
 }
 
@@ -318,8 +343,7 @@ pub fn get_msg_by_user_name(
     user_name: &Option<String>,
     conns: &mut HashMap<usize, SqliteConnection>,
 ) -> Result<Vec<(usize, Msg)>, anyhow::Error> {
-    let mut keys = conns.keys().map(|k| *k).collect::<Vec<_>>();
-    keys.sort();
+    let keys = conns.keys().map(|k| *k).collect::<Vec<_>>();
     let mut vec = vec![];
     for k in keys {
         let conn = conns.get_mut(&k).unwrap();
@@ -331,6 +355,11 @@ pub fn get_msg_by_user_name(
             vec.push((k, msg));
         }
     }
+    vec.sort_by(|(_, a), (_, b)| {
+        a.create_time
+            .unwrap_or_default()
+            .cmp(&b.create_time.unwrap_or_default())
+    });
     Ok(vec)
 }
 

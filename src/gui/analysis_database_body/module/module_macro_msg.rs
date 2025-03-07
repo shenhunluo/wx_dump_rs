@@ -5,8 +5,8 @@ use std::collections::HashMap;
 
 use crate::gui::analysis_database_body::schema::schema_macro_msg;
 use diesel::{
-    deserialize::FromSql, sql_types::Binary, sqlite::Sqlite, Connection, ExpressionMethods,
-    Identifiable, QueryDsl, Queryable, RunQueryDsl, SqliteConnection,
+    Connection, ExpressionMethods, Identifiable, QueryDsl, Queryable, RunQueryDsl,
+    SqliteConnection, deserialize::FromSql, sql_types::Binary, sqlite::Sqlite,
 };
 
 #[derive(Queryable, Debug)]

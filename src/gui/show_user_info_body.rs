@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
 use iced::{
-    widget::{Button, Column, Container, Row, Space},
     Length,
+    widget::{Button, Column, Container, Row, Space},
 };
 
 use crate::{action::show_info::show_user_info, util::u8_to_string, wx_util};
 
-use super::{config_body::ConfigBody, gui_util::PrintInfoText, Message};
+use super::{Message, config_body::ConfigBody, gui_util::PrintInfoText};
 
 pub struct ShowUserInfoBody {
     print_info_text: Arc<PrintInfoText>,

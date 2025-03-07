@@ -8,24 +8,26 @@ use chrono::{DateTime, Datelike, Local, Timelike};
 use cpal::Stream;
 use diesel::SqliteConnection;
 use iced::{
-    widget::{
-        scrollable::{AbsoluteOffset, Viewport},
-        Button, Column, Container, Image, Row, Scrollable, Space, Text, TextInput,
-    },
     Color, Length,
+    widget::{
+        Button, Column, Container, Image, Row, Scrollable, Space, Text, TextInput,
+        scrollable::{AbsoluteOffset, Viewport},
+    },
 };
 use iced_runtime::core::{image::Handle, text::Shaping};
+use ollama_body::{OLLamaBody, OLLamaMessage};
 use report_body::{AnalysisDatabaseReportMessage, ReportInfo, UserForSelect};
 
 use self::module::module_macro_msg::{Contact, Session};
 
 use super::{
+    Message,
     config_body::ConfigBody,
     gui_util::{self, set_col_with_text, set_col_with_text_input},
-    Message,
 };
 
 mod module;
+mod ollama_body;
 mod report_body;
 mod schema;
 
@@ -45,6 +47,7 @@ pub struct AnalysisDatabaseBody {
     msg_getting: bool,
     wechat_path: Option<String>,
     prev_body: LinkedList<PrevBody>,
+    ollama_body: OLLamaBody,
 }
 
 #[derive(Clone)]
@@ -123,6 +126,7 @@ impl AnalysisDatabaseBody {
             prev_body: LinkedList::new(),
             report_info: ReportInfo::default(),
             chat_room_user_list: HashMap::new(),
+            ollama_body: OLLamaBody::new(),
         }
     }
     fn get_user_name(&self, user: &Option<String>) -> UserForSelect {
@@ -328,48 +332,48 @@ impl AnalysisDatabaseBody {
                             &mut self.conn.as_mut().unwrap().msg_conn_map,
                         )
                     }
-                    Body::Report => Err(anyhow::anyhow!("错误的页面")),
+                    _ => Err(anyhow::anyhow!("错误的页面")),
                 };
                 match report_data {
                     Ok(vec) => {
                         self.report_info.all_msg_count = vec.len();
 
                         macro_rules! build_report_data {
-                            ($([$ident:ident => ($x:expr),($y:expr),($z:expr)]),+ $(,)? ) => {
-                                $(let mut $ident = HashMap::new();)*
-                                for data in vec {
-                                    let user = if data.is_sender.unwrap() == 1 {
-                                        None
-                                    } else {
-                                        if let Some(data_extra) = data.bytes_extra {
-                                            if let Some(user_name) = data_extra.map.get(&1) {
-                                                Some(user_name[0].clone())
+                                    ($([$ident:ident => ($x:expr),($y:expr),($z:expr)]),+ $(,)? ) => {
+                                        $(let mut $ident = HashMap::new();)*
+                                        for data in vec {
+                                            let user = if data.is_sender.unwrap() == 1 {
+                                                None
                                             } else {
-                                                Some(data.str_talker.unwrap())
-                                            }
-                                        } else {
-                                            Some(data.str_talker.unwrap())
+                                                if let Some(data_extra) = data.bytes_extra {
+                                                    if let Some(user_name) = data_extra.map.get(&1) {
+                                                        Some(user_name[0].clone())
+                                                    } else {
+                                                        Some(data.str_talker.unwrap())
+                                                    }
+                                                } else {
+                                                    Some(data.str_talker.unwrap())
+                                                }
+                                            };
+                                            let date = DateTime::from_timestamp(data.create_time.unwrap() as i64, 0).unwrap();
+                                            $(
+                                                let f = $x;
+                                                let key = f(&user,&date.into());
+                                                if let Some(count) = $ident.get_mut(&key) {
+                                                    *count += 1;
+                                                } else {
+                                                    $ident.insert(key, 1);
+                                                }
+                                            )*
                                         }
+                                        $(
+                                            self.report_info.$ident = $ident.iter()
+                                                .map($y)
+                                                .collect();
+                                            self.report_info.$ident.sort_by($z);
+                                        )*
                                     };
-                                    let date = DateTime::from_timestamp(data.create_time.unwrap() as i64, 0).unwrap();
-                                    $(
-                                        let f = $x;
-                                        let key = f(&user,&date.into());
-                                        if let Some(count) = $ident.get_mut(&key) {
-                                            *count += 1;
-                                        } else {
-                                            $ident.insert(key, 1);
-                                        }
-                                    )*
                                 }
-                                $(
-                                    self.report_info.$ident = $ident.iter()
-                                        .map($y)
-                                        .collect();
-                                    self.report_info.$ident.sort_by($z);
-                                )*
-                            };
-                        }
 
                         build_report_data!([
                             count_by_user => (
@@ -624,6 +628,29 @@ impl AnalysisDatabaseBody {
                 self.report_info
                     .update(msg, &self.msg_info, &self.contact, theme)
             }
+            AnalysisDatabaseMessage::ButtonOLLamaOpen => {
+                match self.body {
+                    Body::Session => {
+                        self.prev_body
+                            .push_back(PrevBody::Session(self.session_info.clone()));
+                    }
+                    Body::Msg => {
+                        self.prev_body
+                            .push_back(PrevBody::Msg(self.msg_info.clone()));
+                    }
+                    _ => (),
+                };
+                self.ollama_body.update_msg(
+                    &self.msg_info.msg_list,
+                    &self.contact,
+                    &self.msg_info.message_title,
+                );
+                self.body = Body::OLLama;
+                iced::Task::none()
+            }
+            AnalysisDatabaseMessage::OLLamaMessage(ollama_msg) => {
+                self.ollama_body.update(ollama_msg)
+            }
         }
     }
 
@@ -718,6 +745,12 @@ impl AnalysisDatabaseBody {
             .collect::<Vec<_>>();
         command_vec
     }
+    pub fn check_command_running(&self) -> bool {
+        self.ollama_body.check_command_running()
+    }
+    pub fn check_arc_data(&self) -> iced::Task<Message> {
+        self.ollama_body.check_arc_data()
+    }
     fn draw_message(&self) -> Container<Message> {
         Container::new({
             let mut col = Column::new().spacing(10);
@@ -727,20 +760,8 @@ impl AnalysisDatabaseBody {
                     let mut row = Row::new();
                     let container = Container::new({
                         let mut col = Column::new().spacing(3);
-                        if let Some(byte_ex) = &msg.bytes_extra {
-                            if let Some(data) = byte_ex.map.get(&1) {
-                                if let Some(data) = data.get(0) {
-                                    if let Some(contact) = self.contact.get(&Some(data.to_owned())) {
-                                        let mut text = contact.nick_name.as_ref().cloned().unwrap_or("".to_string());
-                                        if let Some(remark) = &contact.remark {
-                                            if remark.len() > 0 {
-                                                text = format!("{}({})",text,remark);
-                                            }
-                                        }
-                                        col = col.push(Text::new(text).size(19).shaping(Shaping::Advanced));
-                                    }
-                                }
-                            }
+                        if let Some(text) = msg.get_user_name(&self.contact) {
+                            col = col.push(Text::new(text).size(19).shaping(Shaping::Advanced));
                         }
                         col = col.push(
                                 Space::with_height(3)
@@ -1090,6 +1111,17 @@ impl AnalysisDatabaseBody {
                                     None
                                 },
                             ));
+                        if let Body::Msg = self.body {
+                            row = row.push(Button::new("OLLama").on_press_maybe(
+                                if !self.analysis_running && !self.msg_getting {
+                                    Some(Message::AnalysisDatabaseMessage(
+                                        AnalysisDatabaseMessage::ButtonOLLamaOpen,
+                                    ))
+                                } else {
+                                    None
+                                },
+                            ))
+                        }
                         #[cfg(feature = "dev")]
                         {
                             row = row.push(Button::new("开发用：测试silk库").on_press(
@@ -1115,6 +1147,18 @@ impl AnalysisDatabaseBody {
                         );
                         row
                     });
+                }
+                Body::OLLama => {
+                    col = col
+                        .push(
+                            Scrollable::new(self.ollama_body.draw().width(Length::Fill))
+                                .height(Length::Fill),
+                        )
+                        .push(Row::new().spacing(5).push(Space::with_width(5)).push(
+                            Button::new("返回").on_press(Message::AnalysisDatabaseMessage(
+                                AnalysisDatabaseMessage::ButtonBack,
+                            )),
+                        ));
                 }
             }
             col = set_col_with_text(
@@ -1158,6 +1202,8 @@ pub enum AnalysisDatabaseMessage {
     ScrollMsg(Viewport),
     ReqwestGetEmotion((String, Result<Vec<u8>, String>)),
     OpenFile(String),
+    ButtonOLLamaOpen,
+    OLLamaMessage(OLLamaMessage),
 }
 
 impl Into<Message> for AnalysisDatabaseMessage {
@@ -1178,4 +1224,5 @@ enum Body {
     Session,
     Msg,
     Report,
+    OLLama,
 }
