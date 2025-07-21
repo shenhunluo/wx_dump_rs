@@ -181,7 +181,7 @@ impl OLLamaBody {
                             //     }
                             // }
                             let client = OllamaClient::from_url(&base_url);
-                            let embedding_model = client.embedding_model(&rag_model);  
+                            let embedding_model = client.embedding_model(&rag_model);
                             let index = vector_store.index(embedding_model);
                             println!("begin");
                             let agent = client

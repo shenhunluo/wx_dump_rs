@@ -83,7 +83,6 @@ impl GetDatabaseBody {
                                         let r =
                                             rx.changed().await.map(|_| *rx.borrow_and_update())?;
                                         if r == 0 {
-                                            println!("111");
                                             continue;
                                         } else {
                                             if key.read().unwrap().contains(&r) {
