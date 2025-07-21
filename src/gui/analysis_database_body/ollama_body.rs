@@ -3,16 +3,14 @@ use std::{collections::HashMap, sync::Arc, u64};
 use crate::gui::{gui_util::{set_col_with_text, set_col_with_text_input}, Message};
 use anyhow::Ok;
 use chrono::{DateTime, Local};
-use futures::StreamExt;
 use iced::{
     Length,
     widget::{Column, Container, Row, Space, Text, text::Shaping},
 };
-use reqwest::ClientBuilder;
-use rig::{completion::Chat, providers::ollama::{Client as OllamaClient, EmbeddingModel as OllamaEmbeddingModel}, streaming::StreamingChat, vector_store::in_memory_store::{InMemoryVectorIndex, InMemoryVectorStore}};
+use rig::{completion::Chat, providers::ollama::Client as OllamaClient, vector_store::in_memory_store::InMemoryVectorStore};
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
-
+use rig::client::{EmbeddingsClient,CompletionClient};
 use super::{
     AnalysisDatabaseMessage,
     module::{module_macro_msg::Contact, module_msg::Msg},
